@@ -1,0 +1,44 @@
+# Dépendances
+/vendor/
+
+# Variables d'environnement (secrets)
+.env
+.env.local
+.env.*.local
+
+# Fichiers uploadés
+/public/uploads/
+/storage/
+
+# Logs
+*.log
+/logs/
+
+# Cache & sessions PHP
+/cache/
+/tmp/
+
+# Fichiers IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Composer lock (optionnel : à conserver si déploiement reproductible)
+# composer.lock
+
+# Fichiers de build Node (si ajout d'assets front)
+node_modules/
+/public/build/
+
+#module de test api
+test_agent.py
+test_report.html
+
+#database
+database.sql

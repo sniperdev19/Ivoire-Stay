@@ -1,0 +1,13 @@
+Options -Indexes
+
+RewriteEngine On
+
+# Passer le header Authorization à PHP (nécessaire en mode CGI/FastCGI)
+RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Si le fichier ou dossier existe, le servir directement
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Tout le reste → index.php (front controller)
+RewriteRule ^ index.php [L,QSA]

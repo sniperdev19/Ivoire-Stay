@@ -1,0 +1,157 @@
+<?php
+
+namespace Controllers;
+
+use Core\{Request, Response, PlanGate, Guard};
+use Models\{Invoice, Payment, Booking, Establishment};
+use Services\PdfService;
+
+class InvoiceController
+{
+    private function estabId(Request $req): int
+    {
+        return Guard::resolveEstabId($req);
+    }
+
+    private function gate(): void
+    {
+        $user  = $_REQUEST['_user'];
+        $estab = Establishment::find($user['establishment_id'] ?? 0) ?? [];
+        PlanGate::require($estab, 'invoices');
+    }
+
+    public function index(Request $req, array $params = []): void
+    {
+        $this->gate();
+        $estabId = $this->estabId($req);
+        if (!$estabId) Response::error('establishment_id requis');
+        $filters = array_filter(['status' => $req->get('status')]);
+        Response::success(Invoice::allWithDetails($estabId, $filters));
+    }
+
+    public function store(Request $req, array $params = []): void
+    {
+        $this->gate();
+        $data = $req->all();
+        if (empty($data['booking_id'])) Response::error('booking_id requis');
+
+        $booking = Guard::requireBooking((int) $data['booking_id']);
+
+        $existing = Invoice::first(['booking_id' => $data['booking_id']]);
+        if ($existing) Response::error('Facture déjà existante pour cette réservation', 409);
+
+        $id = Invoice::createForBooking(
+            (int) $data['booking_id'],
+            (float) ($data['amount'] ?? $booking['total_amount']),
+            (float) ($data['tax_rate'] ?? 0)
+        );
+
+        Response::success(Invoice::findWithDetails($id), 'Facture créée', 201);
+    }
+
+    public function show(Request $req, array $params = []): void
+    {
+        $id = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+        Guard::requireInvoice($id);
+        Response::success(Invoice::findWithDetails($id));
+    }
+
+    public function update(Request $req, array $params = []): void
+    {
+        $id = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+        Guard::requireInvoice($id);
+
+        $data    = $req->all();
+        $allowed = ['status','tax_rate','amount_ht','amount_ttc'];
+        $update  = array_intersect_key($data, array_flip($allowed));
+        if (!empty($update)) Invoice::update($id, $update);
+
+        Response::success(Invoice::findWithDetails($id), 'Facture mise à jour');
+    }
+
+    public function pdf(Request $req, array $params = []): void
+    {
+        $this->gate();
+        $id  = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+        Guard::requireInvoice($id);
+        $inv = Invoice::findWithDetails($id);
+        if (!$inv) Response::notFound('Facture introuvable');
+
+        try {
+            $pdfPath = PdfService::generateInvoice($inv);
+            Invoice::update($id, ['pdf_path' => $pdfPath]);
+
+            // Serve the PDF if it's a real PDF
+            $absPath = BASE_PATH . '/' . $pdfPath;
+            if (file_exists($absPath) && str_ends_with($absPath, '.pdf')) {
+                header('Content-Type: application/pdf');
+                header('Content-Disposition: inline; filename="' . $inv['invoice_number'] . '.pdf"');
+                readfile($absPath);
+                exit;
+            }
+
+            Response::success(['pdf_path' => $pdfPath]);
+        } catch (\Exception $e) {
+            Response::error('Erreur génération PDF: ' . $e->getMessage());
+        }
+    }
+
+    // ─── Payments ─────────────────────────────────────────────────────────────
+
+    public function payments(Request $req, array $params = []): void
+    {
+        $estabId = $this->estabId($req);
+        if (!$estabId) Response::error('establishment_id requis');
+        $filters = array_filter([
+            'method' => $req->get('method'),
+            'status' => $req->get('status'),
+        ]);
+        Response::success(Payment::allWithDetails($estabId, $filters));
+    }
+
+    public function storePayment(Request $req, array $params = []): void
+    {
+        $data = $req->all();
+        $required = ['booking_id', 'invoice_id', 'amount', 'method'];
+        foreach ($required as $f) {
+            if (empty($data[$f])) Response::error("Champ requis : $f");
+        }
+
+        // La facture et la réservation doivent être dans le périmètre, et liées
+        $inv     = Guard::requireInvoice((int) $data['invoice_id']);
+        Guard::requireBooking((int) $data['booking_id']);
+        if ((int) $inv['booking_id'] !== (int) $data['booking_id']) {
+            Response::error('Facture et réservation incohérentes');
+        }
+
+        $id = Payment::create([
+            'booking_id' => (int) $data['booking_id'],
+            'invoice_id' => (int) $data['invoice_id'],
+            'amount'     => (float) $data['amount'],
+            'method'     => $data['method'],
+            'type'       => $data['type'] ?? 'full',
+            'status'     => 'completed',
+        ]);
+
+        // Check if invoice is fully paid
+        $inv      = Invoice::find((int) $data['invoice_id']);
+        $paid     = Invoice::paidAmount((int) $data['invoice_id']);
+        if ($inv && $paid >= (float) $inv['amount_ttc']) {
+            Invoice::update((int) $data['invoice_id'], ['status' => 'paid']);
+        }
+
+        Response::success(Payment::find($id), 'Paiement enregistré', 201);
+    }
+
+    public function updatePayment(Request $req, array $params = []): void
+    {
+        $id = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+        Guard::requirePayment($id);
+
+        $data    = $req->all();
+        $allowed = ['amount','method','type','status'];
+        $update  = array_intersect_key($data, array_flip($allowed));
+        Payment::update($id, $update);
+        Response::success(Payment::find($id), 'Paiement mis à jour');
+    }
+}
