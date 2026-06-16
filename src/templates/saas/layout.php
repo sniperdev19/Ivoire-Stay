@@ -1,5 +1,18 @@
-<?php
+﻿<?php
 // Wrapper SaaS : attend $content, $title, $page, $base_url
+// Assets par page (optionnels, définis en tête du template enfant) :
+//   $pageCss : string|array  → public/assets/css/pages/<nom>.css
+//   $pageJs  : string|array  → public/assets/js/pages/<nom>.js
+/**
+ * @var string $content  HTML de la page enfant, injecté par Response::render().
+ * @var string $title    Titre de la page.
+ * @var string $page     Clé de la page active (pour le menu).
+ * @var string $base_url URL de base de l'app.
+ */
+$content = $content ?? '';
+$base    = $base_url ?? '';
+$pageCss = isset($pageCss) ? (array) $pageCss : [];
+$pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -8,476 +21,38 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title><?= isset($title) ? htmlspecialchars($title) : 'Ivoire Stay SaaS' ?></title>
 
-  <!-- Tailwind CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Alpine.js CDN -->
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- PWA -->
+  <meta name="theme-color" content="#1B4332">
+  <link rel="manifest" href="<?= $base ?>/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="<?= $base ?>/assets/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Ivoire Stay">
+  <script defer src="<?= $base ?>/assets/js/pwa.js"></script>
+
   <!-- Google Fonts : Inter uniquement -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <style>
-    :root {
-      --saas-sidebar: #0F2B20;
-      --saas-sidebar-hover: #1B4332;
-      --saas-content: #F8F6F2;
-      --saas-card: #FFFFFF;
-      --saas-gold: #C9A84C;
-      --saas-gold-light: rgba(201,168,76,0.12);
-      --saas-text: #1a1a2e;
-      --saas-text-muted: #6B7280;
-      --saas-border: rgba(0,0,0,0.06);
-      --saas-success: #16a34a;
-      --saas-danger: #DC2626;
-      --saas-warning: #D97706;
-    }
+  <!-- Tailwind (base + utilitaires) + styles composant SaaS, compilés ensemble -->
+  <link rel="stylesheet" href="<?= $base ?>/assets/css/saas.css">
 
-    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: var(--saas-content);
-      color: var(--saas-text);
-    }
-    button, input, select, textarea { font: inherit; }
-    a { color: inherit; }
+  <!-- CSS spécifique à la page -->
+  <?php foreach ($pageCss as $css): ?>
+  <link rel="stylesheet" href="<?= $base ?>/assets/css/pages/<?= htmlspecialchars($css) ?>.css">
+  <?php endforeach; ?>
 
-    .saas-layout {
-      display: flex;
-      min-height: 100vh;
-      background: var(--saas-content);
-    }
+  <!-- JS global + JS de page (définis avant Alpine pour exposer les composants x-data) -->
+  <script defer src="<?= $base ?>/assets/js/saas.js"></script>
+  <?php foreach ($pageJs as $js): ?>
+  <script defer src="<?= $base ?>/assets/js/pages/<?= htmlspecialchars($js) ?>.js"></script>
+  <?php endforeach; ?>
 
-    .saas-sidebar {
-      width: 260px;
-      min-height: 100vh;
-      background: var(--saas-sidebar);
-      display: flex;
-      flex-direction: column;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 40;
-      transition: transform 0.3s ease;
-    }
-    .saas-sidebar-logo {
-      padding: 24px 20px 20px 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-    .saas-sidebar-logo img { height: 34px; width: auto; filter: brightness(0) invert(1); opacity: 0.92; }
-    .saas-sidebar-logo .brand-title {
-      color: white;
-      font-size: 14px;
-      font-weight: 700;
-      line-height: 1;
-    }
-    .saas-sidebar-logo .brand-subtitle {
-      color: rgba(255,255,255,0.45);
-      font-size: 10px;
-      margin-top: 2px;
-    }
-
-    .saas-nav-section { padding: 8px 12px; margin-top: 6px; }
-    .saas-nav-label {
-      font-size: 10px;
-      font-weight: 600;
-      color: rgba(255,255,255,0.32);
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      padding: 12px 8px 6px 8px;
-    }
-    .saas-nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: 12px;
-      color: rgba(255,255,255,0.7);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      margin-bottom: 2px;
-      cursor: pointer;
-    }
-    .saas-nav-item:hover {
-      background: rgba(255,255,255,0.08);
-      color: white;
-    }
-    .saas-nav-item.active {
-      background: rgba(201,168,76,0.16);
-      color: var(--saas-gold);
-      border: 1px solid rgba(201,168,76,0.22);
-    }
-    .saas-nav-item svg {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-      color: rgba(255,255,255,0.45);
-      transition: color 0.2s;
-    }
-    .saas-nav-item:hover svg { color: white; }
-    .saas-nav-item.active svg { color: var(--saas-gold); }
-
-    .nav-badge {
-      margin-left: auto;
-      background: var(--saas-gold);
-      color: white;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 50px;
-      min-width: 20px;
-      text-align: center;
-    }
-
-    .saas-plan-card {
-      margin: 12px;
-      padding: 16px;
-      background: var(--saas-gold-light);
-      border: 1px solid rgba(201,168,76,0.2);
-      border-radius: 16px;
-    }
-    .saas-plan-card .plan-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    .saas-plan-card .plan-label {
-      font-size: 11px;
-      color: rgba(255,255,255,0.7);
-    }
-    .saas-plan-card .plan-pill {
-      background: rgba(201,168,76,0.2);
-      border: 1px solid rgba(201,168,76,0.3);
-      color: var(--saas-gold);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 50px;
-    }
-    .saas-plan-card .plan-copy {
-      font-size: 12px;
-      color: rgba(255,255,255,0.7);
-      margin-bottom: 10px;
-      line-height: 1.5;
-    }
-    .saas-plan-card a {
-      display: block;
-      text-align: center;
-      background: linear-gradient(135deg, var(--saas-gold), #A67C2E);
-      color: white;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 8px;
-      border-radius: 10px;
-      text-decoration: none;
-      transition: all 0.2s ease;
-    }
-    .saas-plan-card a:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-    }
-
-    .saas-topbar {
-      position: fixed;
-      top: 0;
-      left: 260px;
-      right: 0;
-      height: 64px;
-      background: rgba(248,246,242,0.92);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--saas-border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 28px;
-      z-index: 30;
-    }
-
-    .saas-content {
-      margin-left: 260px;
-      margin-top: 64px;
-      flex: 1;
-      padding: 28px;
-      min-height: calc(100vh - 64px);
-      background: var(--saas-content);
-    }
-
-    .saas-card,
-    .kpi-card {
-      background: var(--saas-card);
-      border-radius: 16px;
-      border: 1px solid rgba(0,0,0,0.05);
-      box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-      padding: 24px;
-    }
-    .saas-card-hover {
-      transition: box-shadow 0.2s, transform 0.2s;
-    }
-    .saas-card-hover:hover {
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-      transform: translateY(-2px);
-    }
-
-    .kpi-card {
-      position: relative;
-      overflow: hidden;
-      padding: 20px 24px;
-    }
-    .kpi-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--saas-gold), #E8D5A3);
-    }
-
-    .btn-saas-primary,
-    .btn-saas-secondary,
-    .btn-saas-danger {
-      border-radius: 10px;
-      padding: 9px 20px;
-      font-size: 14px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-      text-decoration: none;
-    }
-    .btn-saas-primary {
-      background: linear-gradient(135deg, var(--saas-gold), #A67C2E);
-      color: white;
-      border: none;
-      font-weight: 600;
-    }
-    .btn-saas-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(201,168,76,0.35);
-    }
-    .btn-saas-secondary {
-      background: white;
-      color: #374151;
-      border: 1px solid rgba(0,0,0,0.1);
-      font-weight: 500;
-    }
-    .btn-saas-secondary:hover {
-      background: #F9FAFB;
-      border-color: rgba(0,0,0,0.15);
-    }
-    .btn-saas-danger {
-      background: #FEF2F2;
-      color: var(--saas-danger);
-      border: 1px solid rgba(220,38,38,0.15);
-      font-weight: 500;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 3px 10px;
-      border-radius: 50px;
-      font-size: 12px;
-      font-weight: 500;
-    }
-    .badge-success { background:#DCFCE7; color:var(--saas-success); }
-    .badge-warning { background:#FEF3C7; color:var(--saas-warning); }
-    .badge-danger  { background:#FEF2F2; color:var(--saas-danger); }
-    .badge-info    { background:#EFF6FF; color:#2563EB; }
-    .badge-gold {
-      background: var(--saas-gold-light);
-      color: var(--saas-gold);
-      border: 1px solid rgba(201,168,76,0.25);
-    }
-
-    .saas-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .saas-table th {
-      text-align: left;
-      font-size: 11px;
-      font-weight: 600;
-      color: #9CA3AF;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 12px 16px;
-      border-bottom: 1px solid rgba(0,0,0,0.06);
-      background: #FAFAFA;
-    }
-    .saas-table td {
-      padding: 14px 16px;
-      font-size: 14px;
-      color: #374151;
-      border-bottom: 1px solid rgba(0,0,0,0.04);
-      vertical-align: middle;
-    }
-    .saas-table tr:hover td { background: rgba(201,168,76,0.03); }
-    .saas-table tr:last-child td { border-bottom: none; }
-
-    .saas-input {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1px solid rgba(0,0,0,0.1);
-      border-radius: 10px;
-      font-size: 14px;
-      color: #374151;
-      background: white;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .saas-input:focus {
-      outline: none;
-      border-color: var(--saas-gold);
-      box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
-    }
-    .saas-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 6px;
-    }
-
-    .saas-modal-bg {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
-      backdrop-filter: blur(4px);
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .saas-modal {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.2);
-      max-width: 560px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .saas-modal-header {
-      padding: 20px 24px;
-      border-bottom: 1px solid rgba(0,0,0,0.06);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .saas-modal-body { padding: 24px; }
-    .saas-modal-footer {
-      padding: 16px 24px;
-      border-top: 1px solid rgba(0,0,0,0.06);
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(201,168,76,0.3);
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover { background: var(--saas-gold); }
-
-    .saas-toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 200;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .toast-item {
-      background: white;
-      border-radius: 12px;
-      padding: 14px 18px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 14px;
-      min-width: 300px;
-      border-left: 4px solid var(--saas-gold);
-      animation: slideInRight 0.3s ease;
-    }
-    @keyframes slideInRight {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
-    @media (max-width: 768px) {
-      .saas-sidebar { transform: translateX(-100%); }
-      .saas-sidebar.mobile-open { transform: translateX(0); }
-      .saas-topbar { left: 0; }
-      .saas-content { margin-left: 0; }
-    }
-  </style>
+  <!-- Alpine.js en dernier : s'initialise après la définition des composants -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 
 <body>
 <div class="saas-layout"
-  x-data="{
-    sidebarOpen: false,
-    user: JSON.parse(localStorage.getItem('user') ?? 'null'),
-    establishment: null,
-    establishments: [],
-
-    init() {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        window.location.href = '<?= $base_url ?? '' ?>/login';
-        return;
-      }
-
-      const stored = localStorage.getItem('establishments');
-      if (stored) {
-        try { this.establishments = JSON.parse(stored); } catch (e) { this.establishments = []; }
-      }
-
-      const estId = localStorage.getItem('establishment_id');
-      if (estId && this.establishments.length) {
-        this.establishment = this.establishments.find(e => e.id == estId) ?? this.establishments[0];
-      }
-    },
-
-    logout() {
-      localStorage.clear();
-      window.location.href = '<?= $base_url ?? '' ?>/login';
-    },
-
-    switchEstablishment(id) {
-      localStorage.setItem('establishment_id', id);
-      this.establishment = this.establishments.find(e => e.id == id);
-      window.location.reload();
-    },
-
-    get userName() {
-      return this.user?.name ?? 'Utilisateur';
-    },
-    get userRole() {
-      return this.user?.role ?? 'owner';
-    },
-    get userInitials() {
-      const parts = this.userName.split(' ').filter(Boolean);
-      return (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '');
-    },
-    get canSeeFinance() {
-      return ['owner','superadmin'].includes(this.userRole);
-    },
-    get canSeeSettings() {
-      return ['owner','superadmin'].includes(this.userRole);
-    }
-  }"
+  x-data="saasLayout('<?= $base_url ?? '' ?>')"
   x-init="init()"
 >
   <aside class="saas-sidebar" :class="sidebarOpen ? 'mobile-open' : ''">

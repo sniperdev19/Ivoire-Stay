@@ -1,148 +1,16 @@
+<?php /** @var string $base_url */ if (!isset($base_url)) $base_url = rtrim(APP_URL, "/"); ?>
 <?php
 // Template page réservation injectée dans le layout vitrine.
 // Variables disponibles : $title, $room_id
+/** @var int|string|null $room_id Identifiant de la chambre, injecté par Response::render(). */
+$room_id = $room_id ?? null;
+$pageCss = 'booking';
+$pageJs  = 'booking';
 ?>
 
-<div x-data="{
-  room: null,
-  loading: true,
-  error: null,
-  step: 1,
-  form: {
-    room_id: <?= json_encode($room_id) ?>,
-    check_in: '',
-    check_out: '',
-    client_name: '',
-    client_email: '',
-    client_phone: ''
-  },
-  errors: {},
-  booking: null,
-  submitting: false,
-  bookingError: null,
-
-  get nights() {
-    if (!this.form.check_in || !this.form.check_out) return 0;
-    const d1 = new Date(this.form.check_in);
-    const d2 = new Date(this.form.check_out);
-    return Math.max(0, Math.round((d2 - d1) / 86400000));
-  },
-
-  get totalPrice() {
-    return (this.room?.base_price ?? 0) * this.nights;
-  },
-
-  async init() {
-    const params = new URLSearchParams(window.location.search);
-    this.form.check_in = params.get('check_in') ?? '';
-    this.form.check_out = params.get('check_out') ?? '';
-    await this.loadRoom();
-  },
-
-  async loadRoom() {
-    this.loading = true;
-    this.error = null;
-    try {
-      const res = await fetch('/api/public/rooms/' + this.form.room_id);
-      const data = await res.json();
-      if (data.success) {
-        this.room = data.data?.room ?? data.data ?? null;
-      } else {
-        this.error = 'Chambre introuvable.';
-      }
-    } catch (e) {
-      this.error = 'Erreur de chargement.';
-    } finally {
-      this.loading = false;
-    }
-  },
-
-  validateStep1() {
-    this.errors = {};
-    if (!this.form.check_in) {
-      this.errors.check_in = "Date d'arrivée requise";
-    }
-    if (!this.form.check_out) {
-      this.errors.check_out = "Date de départ requise";
-    }
-    if (this.form.check_in && this.form.check_out && this.nights <= 0) {
-      this.errors.check_out = 'La date de départ doit être après l\'arrivée';
-    }
-    return Object.keys(this.errors).length === 0;
-  },
-
-  validateStep2() {
-    this.errors = {};
-    if (!this.form.client_name) {
-      this.errors.client_name = 'Nom complet requis';
-    }
-    if (!this.form.client_email) {
-      this.errors.client_email = 'Email requis';
-    } else if (!/^\S+@\S+\.\S+$/.test(this.form.client_email)) {
-      this.errors.client_email = 'Email invalide';
-    }
-    if (!this.form.client_phone) {
-      this.errors.client_phone = 'Téléphone requis';
-    }
-    return Object.keys(this.errors).length === 0;
-  },
-
-  nextStep() {
-    if (this.step === 1) {
-      if (!this.validateStep1()) return;
-      this.step = 2;
-    } else if (this.step === 2) {
-      if (!this.validateStep2()) return;
-      this.step = 3;
-    }
-  },
-
-  prevStep() {
-    this.errors = {};
-    if (this.step > 1) this.step -= 1;
-  },
-
-  formatPrice(p) {
-    return p == null ? '' : new Intl.NumberFormat('fr-FR').format(p) + ' FCFA';
-  },
-
-  formatDate(value) {
-    if (!value) return '';
-    const date = new Date(value);
-    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
-  },
-
-  async submitBooking() {
-    if (this.submitting) return;
-    this.bookingError = null;
-    this.submitting = true;
-    try {
-      const res = await fetch('/api/public/booking', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(this.form)
-      });
-      const data = await res.json();
-      if (data.success) {
-        this.booking = data.data ?? data;
-      } else {
-        this.bookingError = data.message || 'Impossible de finaliser la réservation.';
-      }
-    } catch (e) {
-      this.bookingError = 'Erreur lors de la réservation.';
-    } finally {
-      this.submitting = false;
-    }
-  }
-}"
+<div x-data="bookingPage('<?= rtrim($base_url, '/') ?>', <?= json_encode($room_id) ?>)"
  x-init="init()"
  class="pt-36 min-h-screen bg-[var(--color-cream)]">
-
-  <style>
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-    @keyframes scaleIn { from { transform: scale(0); } to { transform: scale(1); } }
-    .shimmer-bg { background: linear-gradient(90deg,#f0ebe1 25%,#e8ddd0 50%,#f0ebe1 75%); background-size:200% 100%; animation: shimmer 1.5s infinite; }
-  </style>
 
   <!-- BARRE DE PROGRESSION -->
   <div class="sticky top-20 z-40 glass-card-strong bg-[rgba(250,247,242,0.95)] backdrop-blur-md border-b border-[rgba(201,168,76,0.2)] py-4 px-4 max-w-4xl mx-auto">

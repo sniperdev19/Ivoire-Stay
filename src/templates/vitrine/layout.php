@@ -1,11 +1,21 @@
-<?php $base = 'http://localhost/Ivoire-Stay/public'; ?>
 <?php
 /**
  * Layout principal pour la vitrine
  * Injecte : $title (string) et $content (HTML rendu de la page enfant)
  * Respecte le design system fourni (glassmorphisme, typographie, couleurs)
+ *
+ * Assets par page (optionnels, définis en tête du template enfant) :
+ *   $pageCss : string|array  → public/assets/css/pages/<nom>.css
+ *   $pageJs  : string|array  → public/assets/js/pages/<nom>.js
+ *
+ * @var string $title    Titre de la page, injecté par Response::render().
+ * @var string $content  HTML de la page enfant, injecté par Response::render().
+ * @var string $base_url URL de base de l'app, injectée par Response::render().
  */
+$content = $content ?? '';
 $base = $base_url ?? rtrim(APP_URL, '/');
+$pageCss = isset($pageCss) ? (array) $pageCss : [];
+$pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -15,98 +25,34 @@ $base = $base_url ?? rtrim(APP_URL, '/');
   <meta name="theme-color" content="#FAF7F2">
   <title><?= htmlspecialchars($title ?? 'Ivoire Stay') ?></title>
 
+  <!-- PWA -->
+  <link rel="manifest" href="<?= $base ?>/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="<?= $base ?>/assets/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Ivoire Stay">
+  <script defer src="<?= $base ?>/assets/js/pwa.js"></script>
+
   <!-- Google Fonts : Cormorant Garamond (titres) + Inter (UI) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CDN (pas de build tooling) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind (base + utilitaires) + styles composant vitrine, compilés ensemble -->
+  <link rel="stylesheet" href="<?= $base ?>/assets/css/vitrine.css">
 
-  <!-- Alpine.js pour le menu mobile -->
+  <!-- CSS spécifique à la page -->
+  <?php foreach ($pageCss as $css): ?>
+  <link rel="stylesheet" href="<?= $base ?>/assets/css/pages/<?= htmlspecialchars($css) ?>.css">
+  <?php endforeach; ?>
+
+  <!-- JS global + JS de page (définis avant Alpine pour exposer les composants x-data) -->
+  <script defer src="<?= $base ?>/assets/js/vitrine.js"></script>
+  <?php foreach ($pageJs as $js): ?>
+  <script defer src="<?= $base ?>/assets/js/pages/<?= htmlspecialchars($js) ?>.js"></script>
+  <?php endforeach; ?>
+
+  <!-- Alpine.js en dernier : s'initialise après la définition des composants -->
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-  <!-- Variables couleurs et styles réutilisables -->
-  <style>
-    :root{
-      --color-gold: #C9A84C;
-      --color-gold-light: #E8D5A3;
-      --color-gold-dark: #A67C2E;
-      --color-forest: #1B4332;
-      --color-forest-light: #2D6A4F;
-      --color-forest-dark: #0F2B20;
-      --color-cream: #FAF7F2;
-      --color-cream-dark: #F0EBE1;
-      --color-white-glass: rgba(255,255,255,0.72);
-    }
-
-    /* Design system global */
-    html,body{height:100%;}
-    body{background:var(--color-cream); font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color:var(--color-forest);}
-    .font-display{ font-family: 'Cormorant Garamond', serif; }
-
-    /* Glassmorphisme utilitaires */
-    .glass-card {
-      background: rgba(255, 255, 255, 0.72);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(201, 168, 76, 0.25);
-      border-radius: 24px;
-      box-shadow: 0 8px 32px rgba(27, 67, 50, 0.08);
-    }
-    .glass-card-strong {
-      background: rgba(255, 255, 255, 0.88);
-      backdrop-filter: blur(32px);
-      -webkit-backdrop-filter: blur(32px);
-      border: 1px solid rgba(201, 168, 76, 0.35);
-      border-radius: 32px;
-      box-shadow: 0 16px 48px rgba(27, 67, 50, 0.12);
-    }
-
-    /* Boutons */
-    .btn-gold{
-      background: linear-gradient(135deg, #C9A84C, #E8D5A3, #C9A84C);
-      background-size: 200% auto;
-      color: white;
-      border-radius: 50px;
-      padding: 12px 28px;
-      font-weight: 600;
-      transition: background-position 0.4s ease, transform 0.2s ease;
-      font-family: 'Inter', sans-serif;
-    }
-    .btn-gold:hover{ background-position: right center; transform: translateY(-1px); }
-
-    .btn-outline-gold{
-      border: 1.5px solid var(--color-gold);
-      color: var(--color-forest);
-      border-radius: 50px;
-      padding: 11px 28px;
-      font-weight: 500;
-      transition:all 0.3s ease;
-      font-family: 'Inter', sans-serif;
-      background: transparent;
-    }
-    .btn-outline-gold:hover{ background: var(--color-gold); color: white; }
-
-    /* Navbar link underline animé */
-    .nav-link{ position: relative; display: inline-block; padding: 6px 4px; }
-    .nav-link::after{ content: ''; position: absolute; left:50%; transform: translateX(-50%); bottom:0; width:0; height:2px; background: var(--color-gold); transition: width 250ms ease; }
-    .nav-link:hover::after{ width:60%; }
-
-    /* Footer */
-    .site-footer{ background: var(--color-forest); color: #F6EFE6; }
-    .site-footer a{ color: #F6EFE6; transition: color 300ms ease; }
-    .site-footer a:hover{ color: var(--color-gold); }
-
-    /* Scrollbar élégante */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: var(--color-cream); }
-    ::-webkit-scrollbar-thumb { background: var(--color-gold); border-radius: 3px; }
-
-    /* Mobile menu backdrop style */
-    .mobile-drawer{ background: rgba(255,255,255,0.92); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-bottom:1px solid rgba(201,168,76,0.18); }
-
-  </style>
 
 </head>
 <body class="bg-[var(--color-cream)]">
@@ -118,24 +64,8 @@ $base = $base_url ?? rtrim(APP_URL, '/');
   $current = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
   $base = $base_url ?? rtrim(APP_URL, '/');
 ?>
-  <nav 
-    x-data="{ scrolled: false, mobileOpen: false, init(){
-      const isHome = window.location.pathname === '/'
-        || window.location.pathname.endsWith('/public/')
-        || window.location.pathname.endsWith('/public');
-
-      if (!isHome) {
-        this.scrolled = true;
-      }
-
-      window.addEventListener('scroll', () => {
-        if (isHome) {
-          this.scrolled = window.scrollY > 80;
-        } else {
-          this.scrolled = true;
-        }
-      });
-    } }"
+  <nav
+    x-data="vitrineNav()"
     x-init="init()"
     :style="scrolled ? `
       position: fixed;
@@ -180,7 +110,7 @@ $base = $base_url ?? rtrim(APP_URL, '/');
       </a>
 
       <!-- LIENS DESKTOP -->
-      <div style="display:flex; align-items:center; gap:8px;" class="hidden md:flex">
+      <div class="hidden md:flex items-center gap-2">
         <?php 
           $links = [
             ['label'=>'Accueil',      'href'=> $base . '/'],
@@ -205,24 +135,17 @@ $base = $base_url ?? rtrim(APP_URL, '/');
       </div>
 
       <!-- BOUTONS DROITE -->
-      <div style="display:flex;align-items:center;gap:10px;">
-        <!-- Connexion -->
-        <a href="<?= $base ?>/login"
-          :style="scrolled ?
-            'border:1.5px solid #C9A84C;color:#1B4332;background:transparent;font-family:Inter,sans-serif;font-size:14px;font-weight:500;padding:8px 20px;border-radius:50px;text-decoration:none;transition:all 0.3s;'
-            :
-            'border:1.5px solid rgba(255,255,255,0.6);color:white;background:transparent;font-family:Inter,sans-serif;font-size:14px;font-weight:500;padding:8px 20px;border-radius:50px;text-decoration:none;transition:all 0.3s;'"
-        >
-          Connexion
-        </a>
-
-        <!-- Commencer (toujours gold) -->
-        <a href="<?= $base ?>/register" style="background:linear-gradient(135deg,#C9A84C,#A67C2E); color:white;font-family:Inter,sans-serif; font-size:14px;font-weight:600; padding:8px 22px;border-radius:50px; text-decoration:none; box-shadow:0 4px 16px rgba(201,168,76,0.35); transition:all 0.3s; white-space:nowrap;">
-          Commencer
-        </a>
+      <div class="flex items-center gap-2.5">
+        <!-- Commencer : desktop uniquement -->
+        <div class="hidden md:flex items-center gap-2.5">
+          <!-- Commencer (toujours gold) -->
+          <a href="<?= $base ?>/register" style="background:linear-gradient(135deg,#C9A84C,#A67C2E); color:white;font-family:Inter,sans-serif; font-size:14px;font-weight:600; padding:8px 22px;border-radius:50px; text-decoration:none; box-shadow:0 4px 16px rgba(201,168,76,0.35); transition:all 0.3s; white-space:nowrap;">
+            Commencer
+          </a>
+        </div>
 
         <!-- Burger mobile -->
-        <button 
+        <button
           @click="mobileOpen = !mobileOpen"
           class="md:hidden"
           :style="scrolled ? 'color:#1B4332;background:none;border:none;cursor:pointer;padding:4px;' : 'color:white;background:none;border:none;cursor:pointer;padding:4px;'"
@@ -250,7 +173,6 @@ $base = $base_url ?? rtrim(APP_URL, '/');
         <a href="<?= $link['href'] ?>" style="display:block; color:#1B4332; font-family:Inter,sans-serif; font-size:15px; font-weight:500; padding:12px 16px; border-radius:12px; text-decoration:none; transition:background 0.2s;" onmouseover="this.style.background='rgba(201,168,76,0.1)'" onmouseout="this.style.background='transparent'"><?= $link['label'] ?></a>
       <?php endforeach; ?>
       <div style="border-top:1px solid rgba(201,168,76,0.2); margin:8px 0; padding-top:8px; display:flex; flex-direction:column; gap:8px;">
-        <a href="<?= $base ?>/login" style="display:block; text-align:center; border:1.5px solid #C9A84C; color:#1B4332; font-family:Inter,sans-serif; font-size:14px; padding:10px; border-radius:12px; text-decoration:none;">Connexion</a>
         <a href="<?= $base ?>/register" style="display:block; text-align:center; background:#C9A84C; color:white; font-family:Inter,sans-serif; font-size:14px; font-weight:600; padding:10px; border-radius:12px; text-decoration:none;">Commencer</a>
       </div>
     </div>
@@ -289,7 +211,6 @@ $base = $base_url ?? rtrim(APP_URL, '/');
         <div>
           <h4 class="font-display text-lg mb-3">SaaS</h4>
           <ul class="space-y-2">
-            <li><a href="<?= $base ?>/login">Connexion</a></li>
             <li><a href="<?= $base ?>/register">S'inscrire</a></li>
             <li><a href="<?= $base ?>/">Fonctionnalités</a></li>
             <li><a href="<?= $base ?>/contact">Support</a></li>

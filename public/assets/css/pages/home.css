@@ -1,0 +1,133 @@
+/* ============================================================
+   Ivoire Stay — Page d'accueil (vitrine/home.php)
+   Section "Destinations phares" : carrousel + grille
+   ============================================================ */
+
+/* Piste du carrousel — responsive (les tailles des cartes viennent de home.js) */
+.dest-carousel-track {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px 40px 48px 40px;
+  min-height: 580px;
+  overflow: visible;
+}
+@media (max-width: 1023px) {
+  .dest-carousel-track { min-height: 480px; padding: 16px 16px 36px; gap: 10px; }
+}
+@media (max-width: 639px) {
+  .dest-carousel-track { min-height: 430px; padding: 8px 8px 28px; gap: 0; }
+}
+
+.dest-slide-item {
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dest-img-wrap {
+  overflow: hidden;
+  position: relative;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dest-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dest-slide-item:hover .dest-img-wrap img { transform: scale(1.07); }
+.dest-hover-desc {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 28px 24px 24px 24px;
+  background: linear-gradient(to top,
+    rgba(10, 30, 20, 0.97) 0%,
+    rgba(10, 30, 20, 0.75) 55%,
+    transparent 100%);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.dest-slide-item:hover .dest-hover-desc {
+  opacity: 1;
+  transform: translateY(0);
+}
+.dest-nav-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  color: white;
+  flex-shrink: 0;
+}
+.dest-nav-btn:hover {
+  background: #C9A84C;
+  border-color: #C9A84C;
+  transform: scale(1.1);
+}
+.d-dot {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.4s ease;
+}
+.d-dot.d-dot-active {
+  width: 32px !important;
+  background: #C9A84C;
+}
+.dest-grid-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+.dest-grid-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
+}
+.dest-grid-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+.dest-grid-card:hover img { transform: scale(1.05); }
+.dest-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top,
+    rgba(10, 30, 20, 0.90) 0%,
+    rgba(10, 30, 20, 0.35) 50%,
+    transparent 100%);
+  transition: background 0.4s ease;
+}
+.dest-grid-card:hover .dest-grid-overlay {
+  background: linear-gradient(to top,
+    rgba(10, 30, 20, 0.97) 0%,
+    rgba(10, 30, 20, 0.55) 60%,
+    rgba(10, 30, 20, 0.1) 100%);
+}
+.dest-grid-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+}

@@ -1,3 +1,4 @@
+<?php /** @var string $base_url */ if (!isset($base_url)) $base_url = rtrim(APP_URL, "/"); ?>
 <?php ?>
 <!-- Aide & FAQ — template injecté via $content -->
 

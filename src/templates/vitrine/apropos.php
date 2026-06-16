@@ -1,3 +1,4 @@
+<?php /** @var string $base_url */ if (!isset($base_url)) $base_url = rtrim(APP_URL, "/"); ?>
 <?php ?>
 <!-- SECTION 1 — HERO APROPOS -->
 <section class="pt-36 min-h-[480px] bg-gradient-to-br from-[#1B4332] to-[#2D6A4F] relative overflow-hidden flex items-center">

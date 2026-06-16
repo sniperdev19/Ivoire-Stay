@@ -1,0 +1,18 @@
+/* ============================================================
+   Ivoire Stay — Page réservation (vitrine/booking.php)
+   Effets de chargement et d'apparition.
+   ============================================================ */
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes scaleIn {
+  from { transform: scale(0); }
+  to   { transform: scale(1); }
+}
+.shimmer-bg {
+  background: linear-gradient(90deg, #f0ebe1 25%, #e8ddd0 50%, #f0ebe1 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}

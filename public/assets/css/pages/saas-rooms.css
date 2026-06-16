@@ -1,0 +1,117 @@
+/* ============================================================
+   Ivoire Stay — Page SaaS : rooms (saas/rooms.php)
+   ============================================================ */
+
+.room-tab {
+  padding: 9px 20px; border-radius: 10px;
+  font-size: 14px; font-weight: 500;
+  cursor: pointer; border: none;
+  background: transparent; color: #6B7280;
+  transition: all 0.2s;
+}
+.room-tab:hover { background: rgba(0,0,0,0.05); }
+.room-tab.active {
+  background: white; color: #111827;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+}
+
+/* Card chambre (vue grille) */
+.room-card {
+  border-radius: 14px; border: 2px solid transparent;
+  background: white; padding: 14px;
+  cursor: pointer; transition: all 0.2s;
+  position: relative; overflow: visible;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.room-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+.room-card.status-available   { border-color: rgba(37,99,235,0.25); }
+.room-card.status-occupied    { border-color: rgba(22,163,74,0.25); }
+.room-card.status-maintenance { border-color: rgba(217,119,6,0.25); }
+.room-card.status-cleaning    { border-color: rgba(124,58,237,0.25); }
+.room-card.status-blocked     { border-color: rgba(107,114,128,0.2); opacity: 0.7; }
+
+/* Pastille statut */
+.status-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  display: inline-block; flex-shrink: 0;
+}
+
+/* Menu rapide statut */
+.status-menu {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  background: white; border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+  border: 1px solid rgba(0,0,0,0.07);
+  min-width: 170px; z-index: 50; overflow: hidden;
+}
+.status-menu-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: background 0.15s;
+  border: none; background: transparent; width: 100%;
+  text-align: left;
+}
+.status-menu-item:hover { background: #F9FAFB; }
+
+/* Filtre tags */
+.filter-pill {
+  padding: 5px 12px; border-radius: 50px;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: white; color: #6B7280; transition: all 0.2s;
+}
+.filter-pill.active {
+  background: #C9A84C; color: white; border-color: #C9A84C;
+}
+
+/* Type card */
+.type-card {
+  background: white; border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  padding: 20px; transition: all 0.2s;
+}
+.type-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.room-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 12px;
+}
+@media(max-width:1280px){ .room-grid { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+@media(max-width:900px){ .room-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media(max-width:580px){ .room-grid { grid-template-columns: 1fr; } }
+
+.room-info { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; }
+.room-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:14px 0; }
+@media(max-width:900px){ .room-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:640px){ .room-stats { grid-template-columns:1fr; } }
+
+.room-table { width:100%; border-collapse:collapse; }
+.room-table th, .room-table td { padding:14px 16px; border-bottom:1px solid rgba(0,0,0,0.06); }
+.room-table th { text-align:left; color:#4B5563; font-size:13px; }
+.room-table tbody tr:hover { background:rgba(201,168,76,0.04); }
+
+.saas-toast {
+  position:fixed; bottom:24px; right:24px; z-index:80;
+}
+.toast-box {
+  min-width:260px; background:white; border:1px solid rgba(0,0,0,0.08);
+  border-left:4px solid var(--saas-gold); border-radius:14px;
+  box-shadow:0 16px 40px rgba(15,23,42,0.14);
+  padding:16px 18px; color:#111827;
+}
+.toast-box.error { border-left-color:#DC2626; }
+
+.saas-modal-bg { position:fixed; inset:0; background:rgba(15,23,42,0.35); display:grid; place-items:center; z-index:70; padding:20px; }
+.saas-modal { width:100%; max-width:720px; background:white; border-radius:24px; overflow:hidden; box-shadow:0 24px 60px rgba(15,23,42,0.18); }
+.saas-modal-header, .saas-modal-footer { padding:20px 24px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.saas-modal-body { padding:0 24px 24px; }
+.saas-modal-header h2 { margin:0; font-size:18px; font-weight:700; }
+.saas-modal-body label { display:block; margin-bottom:8px; font-size:13px; color:#4B5563; }
+.saas-modal-body .saas-input, .saas-modal-body textarea, .saas-modal-body select { width:100%; }
+.saas-modal-footer { border-top:1px solid rgba(0,0,0,0.06); }
+
+.status-pill { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:9999px; font-size:13px; font-weight:600; }

@@ -24,6 +24,8 @@ class Response
 
     public static function render(string $template, array $data = []): never
     {
+        // Disponible dans tous les templates (peut être surchargé via $data)
+        $base_url = APP_URL;
         extract($data);
         $templatePath = SRC_PATH . '/templates/' . $template . '.php';
 

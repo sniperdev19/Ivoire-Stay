@@ -1,0 +1,24 @@
+/* ============================================================
+   Ivoire Stay — Page SaaS : clients (saas/clients.php)
+   ============================================================ */
+
+/* Ligne client cliquable */
+.client-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.client-row:hover td { background: rgba(201,168,76,0.03) !important; }
+/* Avatar couleur */
+.client-avatar {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 700;
+  color: white; flex-shrink: 0;
+}
+/* Stat client dans modal */
+.client-stat { background: #FAFAFA; border-radius: 12px; padding: 14px; text-align:center; }
+.client-stat-value { font-size:20px; font-weight:800; color:#111827; line-height:1; margin-bottom:4px; }
+.client-stat-label { font-size:11px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.05em; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer { 0% { background-position:200% 0 } 100% { background-position:-200% 0 } }
+.cl-shimmer { background: linear-gradient(90deg,#f8f6f2 25%,#f0ebe1 50%,#f8f6f2 75%); background-size:400% 100%; animation: shimmer 1.4s linear infinite; border-radius:8px; }

@@ -1,0 +1,36 @@
+/* ============================================================
+   Ivoire Stay — Page SaaS : bookings (saas/bookings.php)
+   ============================================================ */
+
+  .status-tab {
+    display:inline-flex;align-items:center;gap:6px;
+    padding:8px 16px;border-radius:10px;
+    font-size:13px;font-weight:500;
+    cursor:pointer;border:1px solid transparent;
+    transition:all 0.2s;white-space:nowrap;
+    background:transparent;color:#6B7280;
+  }
+  .status-tab:hover { background:rgba(0,0,0,0.04); }
+  .status-tab.active {
+    background:white;color:#111827;
+    border-color:rgba(0,0,0,0.1);
+    box-shadow:0 1px 4px rgba(0,0,0,0.08);
+  }
+  .status-tab .tab-count {
+    background:rgba(0,0,0,0.08);color:#6B7280;
+    font-size:11px;font-weight:700;
+    padding:1px 6px;border-radius:50px;
+  }
+  .status-tab.active .tab-count {
+    background:#C9A84C;color:white;
+  }
+  .booking-row { cursor:pointer;transition:background 0.15s; }
+  .booking-row:hover td { background:rgba(201,168,76,0.03) !important; }
+  .action-btn-success { background:#DCFCE7;color:#16a34a;border:1px solid rgba(22,163,74,0.2); }
+  .action-btn-info    { background:#EFF6FF;color:#2563EB;border:1px solid rgba(37,99,235,0.2); }
+  .action-btn-gold    { background:rgba(201,168,76,0.1);color:#C9A84C;border:1px solid rgba(201,168,76,0.25); }
+  .action-btn-danger  { background:#FEF2F2;color:#DC2626;border:1px solid rgba(220,38,38,0.2); }
+  .table-empty { padding:32px;text-align:center;color:#9CA3AF; }
+  .table-empty button { margin-top:14px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { animation: spin 1s linear infinite; }

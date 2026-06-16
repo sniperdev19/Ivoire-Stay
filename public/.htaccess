@@ -1,5 +1,8 @@
 Options -Indexes
 
+# Type MIME du manifeste PWA (sinon le navigateur peut le rejeter)
+AddType application/manifest+json .webmanifest
+
 RewriteEngine On
 
 # Passer le header Authorization à PHP (nécessaire en mode CGI/FastCGI)

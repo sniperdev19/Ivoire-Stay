@@ -1,0 +1,112 @@
+/* Entrée Tailwind — vitrine. Compilé vers public/assets/css/vitrine.css
+   Build : ./tailwindcss.exe -i src/vitrine.input.css -o public/assets/css/vitrine.css --minify */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Styles composant de l'espace vitrine — en @layer components
+   pour que les utilitaires Tailwind (bg-…, text-…) puissent les surcharger. */
+@layer components {
+/* ============================================================
+   Ivoire Stay — Styles globaux VITRINE (B2C)
+   Design system : glassmorphisme, typographie, couleurs
+   Chargé par src/templates/vitrine/layout.php
+   ============================================================ */
+
+:root {
+  --color-gold: #C9A84C;
+  --color-gold-light: #E8D5A3;
+  --color-gold-dark: #A67C2E;
+  --color-forest: #1B4332;
+  --color-forest-light: #2D6A4F;
+  --color-forest-dark: #0F2B20;
+  --color-cream: #FAF7F2;
+  --color-cream-dark: #F0EBE1;
+  --color-white-glass: rgba(255, 255, 255, 0.72);
+}
+
+/* Design system global */
+html, body { height: 100%; }
+body {
+  background: var(--color-cream);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  color: var(--color-forest);
+}
+.font-display { font-family: 'Cormorant Garamond', serif; }
+
+/* Glassmorphisme utilitaires */
+.glass-card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(27, 67, 50, 0.08);
+}
+.glass-card-strong {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 32px;
+  box-shadow: 0 16px 48px rgba(27, 67, 50, 0.12);
+}
+
+/* Boutons */
+.btn-gold {
+  background: linear-gradient(135deg, #C9A84C, #E8D5A3, #C9A84C);
+  background-size: 200% auto;
+  color: white;
+  border-radius: 50px;
+  padding: 12px 28px;
+  font-weight: 600;
+  transition: background-position 0.4s ease, transform 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+.btn-gold:hover { background-position: right center; transform: translateY(-1px); }
+
+.btn-outline-gold {
+  border: 1.5px solid var(--color-gold);
+  color: var(--color-forest);
+  border-radius: 50px;
+  padding: 11px 28px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+  background: transparent;
+}
+.btn-outline-gold:hover { background: var(--color-gold); color: white; }
+
+/* Navbar link underline animé */
+.nav-link { position: relative; display: inline-block; padding: 6px 4px; }
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-gold);
+  transition: width 250ms ease;
+}
+.nav-link:hover::after { width: 60%; }
+
+/* Footer */
+.site-footer { background: var(--color-forest); color: #F6EFE6; }
+.site-footer a { color: #F6EFE6; transition: color 300ms ease; }
+.site-footer a:hover { color: var(--color-gold); }
+
+/* Scrollbar élégante */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-cream); }
+::-webkit-scrollbar-thumb { background: var(--color-gold); border-radius: 3px; }
+
+/* Mobile menu backdrop style */
+.mobile-drawer {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.18);
+}
+}

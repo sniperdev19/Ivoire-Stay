@@ -1,6 +1,19 @@
 <?php
 // Contenu injecté dans le layout : sections statiques de la page d'accueil
 // Sections : HERO, avantages, carrousel, CTA final
+$pageCss = 'home';
+$pageJs  = 'home';
+
+$base_url = $base_url ?? rtrim(APP_URL, '/');
+
+// Données du carrousel "Destinations phares" (injectées en JS via json_encode)
+$destinations = [
+  ['name' => 'Abidjan',      'region' => 'District Autonome', 'count' => 142, 'tag' => 'Ville & Affaires',    'desc' => "Capitale économique entre lagune, gratte-ciels et vie nocturne trépidante. Hub incontournable de l'Afrique de l'Ouest.", 'img' => $base_url . '/assets/carrouss1.jpg'],
+  ['name' => 'Yamoussoukro', 'region' => 'Centre',           'count' => 38,  'tag' => 'Culture & Histoire',   'desc' => "Capitale politique, terre de la Basilique Notre-Dame de la Paix et de sérénité ivoirienne.",                       'img' => $base_url . '/assets/carrouss2.jpg'],
+  ['name' => 'Grand-Bassam', 'region' => 'Sud-Comoé',        'count' => 27,  'tag' => 'Plage & Patrimoine',   'desc' => "Ancienne capitale coloniale classée UNESCO, plages dorées, galeries d'art et fruits de mer.",                      'img' => $base_url . '/assets/carrouss3.jpg'],
+  ['name' => 'San-Pédro',    'region' => 'Bas-Sassandra',    'count' => 19,  'tag' => 'Nature & Évasion',     'desc' => "Port moderne, forêt tropicale et eaux turquoise du Sud-Ouest ivoirien.",                                          'img' => $base_url . '/assets/carrouss4.jpg'],
+  ['name' => 'Assinie',      'region' => 'Sud-Comoé',        'count' => 31,  'tag' => 'Plage & Détente',      'desc' => "Station balnéaire prisée entre océan Atlantique et lagune Aby. Cocotiers et sable blanc.",                        'img' => 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800'],
+];
 ?>
 
 <section class="relative min-h-screen overflow-hidden" style="background-image:url('<?= $base_url ?? rtrim(APP_URL, '/') ?>/assets/bg_home.jpg'); background-size:cover; background-position:center; background-attachment:fixed;">
@@ -134,84 +147,6 @@
 </section>
 
 <section class="relative overflow-hidden py-[90px]" style="background-image:url('<?= $base_url ?>/assets/back_destination.jpg'); background-size:cover; background-position:center;">
-  <style>
-    .dest-slide-item { flex-shrink: 0; cursor: pointer; transition: all 0.6s cubic-bezier(0.4,0,0.2,1); }
-    .dest-img-wrap { overflow: hidden; position: relative; transition: all 0.6s cubic-bezier(0.4,0,0.2,1); }
-    .dest-img-wrap img { width:100%; height:100%; object-fit:cover; display:block; transition: transform 0.7s cubic-bezier(0.4,0,0.2,1); }
-    .dest-slide-item:hover .dest-img-wrap img { transform: scale(1.07); }
-    .dest-hover-desc {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      padding: 28px 24px 24px 24px;
-      background: linear-gradient(to top,
-        rgba(10,30,20,0.97) 0%,
-        rgba(10,30,20,0.75) 55%,
-        transparent 100%);
-      opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.4s ease, transform 0.4s ease;
-      display: flex; flex-direction: column;
-      justify-content: flex-end;
-    }
-    .dest-slide-item:hover .dest-hover-desc {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    .dest-nav-btn {
-      width:48px; height:48px; border-radius:50%;
-      background:rgba(255,255,255,0.12);
-      backdrop-filter:blur(12px);
-      border:1px solid rgba(255,255,255,0.25);
-      cursor:pointer; display:flex; align-items:center;
-      justify-content:center; transition:all 0.3s; color:white;
-      flex-shrink:0;
-    }
-    .dest-nav-btn:hover {
-      background:#C9A84C; border-color:#C9A84C;
-      transform:scale(1.1);
-    }
-    .d-dot {
-      height:4px; border-radius:2px;
-      background:rgba(255,255,255,0.3);
-      cursor:pointer; transition:all 0.4s ease;
-    }
-    .d-dot.d-dot-active {
-      width:32px!important; background:#C9A84C;
-    }
-    .dest-grid-card {
-      position: relative; overflow: hidden;
-      border-radius: 20px; cursor: pointer;
-      transition: transform 0.35s ease, box-shadow 0.35s ease;
-    }
-    .dest-grid-card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 20px 48px rgba(0,0,0,0.35);
-    }
-    .dest-grid-card img {
-      width:100%; height:100%; object-fit:cover; display:block;
-      transition: transform 0.5s ease;
-    }
-    .dest-grid-card:hover img { transform:scale(1.05); }
-    .dest-grid-overlay {
-      position:absolute; inset:0;
-      background:linear-gradient(to top,
-        rgba(10,30,20,0.90) 0%,
-        rgba(10,30,20,0.35) 50%,
-        transparent 100%);
-      transition: background 0.4s ease;
-    }
-    .dest-grid-card:hover .dest-grid-overlay {
-      background:linear-gradient(to top,
-        rgba(10,30,20,0.97) 0%,
-        rgba(10,30,20,0.55) 60%,
-        rgba(10,30,20,0.1) 100%);
-    }
-    .dest-grid-content {
-      position:absolute; bottom:0; left:0; right:0;
-      padding:20px;
-    }
-  </style>
-
   <div style="position:relative;z-index:3;margin-bottom:-2px;">
     <svg viewBox="0 0 1440 80" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;" preserveAspectRatio="none">
       <path d="M0,60 C360,0 1080,80 1440,20 L1440,0 L0,0 Z" fill="#FAF7F2"/>
@@ -234,45 +169,10 @@
       <p style="font-family:Inter,sans-serif;font-size:17px;color:rgba(255,255,255,0.65);max-width:560px;margin:0 auto;line-height:1.7;">De la lagune d'Abidjan aux plages de Sassandra, découvrez plus de <strong style="color:#C9A84C;">13 destinations</strong> soigneusement référencées sur notre plateforme.</p>
     </div>
 
-    <div x-data="{
-      current: 0,
-      paused: false,
-      timer: null,
-      items: [
-        { name:'Abidjan', region:'District Autonome', count:142, tag:'Ville & Affaires', desc:'Capitale économique entre lagune, gratte-ciels et vie nocturne trépidante. Hub incontournable de l\'Afrique de l\'Ouest.', img:'<?= $base_url ?>/assets/carrouss1.jpg' },
-        { name:'Yamoussoukro', region:'Centre', count:38, tag:'Culture & Histoire', desc:'Capitale politique, terre de la Basilique Notre-Dame de la Paix et de sérénité ivoirienne.', img:'<?= $base_url ?>/assets/carrouss2.jpg' },
-        { name:'Grand-Bassam', region:'Sud-Comoé', count:27, tag:'Plage & Patrimoine', desc:'Ancienne capitale coloniale classée UNESCO, plages dorées, galeries d\'art et fruits de mer.', img:'<?= $base_url ?>/assets/carrouss3.jpg' },
-        { name:'San-Pédro', region:'Bas-Sassandra', count:19, tag:'Nature & Évasion', desc:'Port moderne, forêt tropicale et eaux turquoise du Sud-Ouest ivoirien.', img:'<?= $base_url ?>/assets/carrouss4.jpg' },
-        { name:'Assinie', region:'Sud-Comoé', count:31, tag:'Plage & Détente', desc:'Station balnéaire prisée entre océan Atlantique et lagune Aby. Cocotiers et sable blanc.', img:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800' }
-      ],
-      get total() { return this.items.length; },
-      idx(offset) { return (this.current + offset + this.total) % this.total; },
-      goTo(i) { this.current = i; },
-      goNext() { this.current = this.idx(1); },
-      goPrev() { this.current = this.idx(-1); },
-      startAuto() { this.timer = setInterval(() => { if (!this.paused) this.goNext(); }, 3800); },
-      stopAuto() { this.paused = true; },
-      resumeAuto() { this.paused = false; },
-      styleFor(pos) {
-        const styles = {
-          center:'width:440px;height:520px;z-index:10;opacity:1;transform:scale(1) translateY(0);',
-          r1:'width:320px;height:440px;z-index:7;opacity:0.82;transform:scale(0.93) translateY(18px);',
-          l1:'width:320px;height:440px;z-index:7;opacity:0.82;transform:scale(0.93) translateY(18px);',
-          r2:'width:210px;height:320px;z-index:4;opacity:0.5;transform:scale(0.83) translateY(32px);',
-          l2:'width:210px;height:320px;z-index:4;opacity:0.5;transform:scale(0.83) translateY(32px);'
-        };
-        return styles[pos] ?? 'width:0;opacity:0;';
-      },
-      radiusFor(pos) {
-        return pos==='center' ? 'border-radius:28px;' : pos.includes('1') ? 'border-radius:22px;' : 'border-radius:16px;';
-      },
-      shadowFor(pos) {
-        return pos==='center' ? 'box-shadow:0 40px 80px rgba(0,0,0,0.55);' : pos.includes('1') ? 'box-shadow:0 20px 48px rgba(0,0,0,0.35);' : 'box-shadow:0 8px 24px rgba(0,0,0,0.2);';
-      }
-    }"
+    <div x-data="homeCarousel(<?= htmlspecialchars(json_encode($destinations, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') ?>)"
     x-init="startAuto()"
   >
-      <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:20px 40px 48px 40px;min-height:580px;overflow:visible;">
+      <div class="dest-carousel-track">
         <template x-for="(dest, i) in items" :key="dest.name">
           <div class="dest-slide-item relative" 
             @mouseenter="stopAuto()" @mouseleave="resumeAuto()"

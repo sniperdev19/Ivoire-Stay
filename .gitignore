@@ -42,3 +42,9 @@ test_report.html
 
 #database
 database.sql
+
+# Sauvegarde des templates avant refactor CSS/JS (copie de sécurité locale)
+/_backup_templates/
+
+# Binaire Tailwind CLI autonome (40 Mo) — à retélécharger si besoin
+/tailwindcss.exe

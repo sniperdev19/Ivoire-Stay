@@ -1,92 +1,16 @@
+<?php /** @var string $base_url */ if (!isset($base_url)) $base_url = rtrim(APP_URL, "/"); ?>
 <?php
 // Template page propriété injecté dans le layout vitrine.
 // Variables disponibles : $title, $property_id
+/** @var int|string|null $property_id Identifiant de l'établissement, injecté par Response::render(). */
+$property_id = $property_id ?? null;
+$pageCss = 'property';
+$pageJs  = 'property';
 ?>
 
-<div x-data="{
-  property: null,
-  rooms: [],
-  availability: {},
-  loading: true,
-  error: null,
-  activePhoto: 0,
-  lightboxOpen: false,
-  selectedRoom: null,
-  checkIn: '',
-  checkOut: '',
-
-  async init() {
-    const id = <?= json_encode($property_id) ?>;
-    if (!id) {
-      this.error = 'Établissement introuvable.';
-      this.loading = false;
-      return;
-    }
-    await this.loadProperty(id);
-  },
-
-  async loadProperty(id) {
-    this.loading = true;
-    this.error = null;
-    try {
-      const res = await fetch('/api/public/property/' + id);
-      const data = await res.json();
-      if (data.success) {
-        this.property = data.data.establishment ?? data.data ?? null;
-        this.rooms = Array.isArray(data.data.rooms) ? data.data.rooms : [];
-        this.activePhoto = 0;
-        this.rooms.forEach(room => { if (room?.id) this.loadAvailability(room.id); });
-      } else {
-        this.error = 'Établissement introuvable.';
-      }
-    } catch (e) {
-      this.error = 'Erreur de chargement.';
-    } finally {
-      this.loading = false;
-    }
-  },
-
-  async loadAvailability(roomId) {
-    if (!roomId) return;
-    try {
-      const res = await fetch('/api/public/availability/' + roomId);
-      const data = await res.json();
-      this.availability = { ...this.availability, [roomId]: data.data ?? {} };
-    } catch (e) {
-      // Pas de message d'erreur utilisateur pour les disponibilités
-    }
-  },
-
-  formatPrice(p) {
-    return p == null ? '' : new Intl.NumberFormat('fr-FR').format(p) + ' FCFA';
-  },
-
-  getStars(n) {
-    const count = Number.isInteger(n) ? n : 4;
-    return '★'.repeat(count) + '☆'.repeat(5 - count);
-  },
-
-  nextPhoto() {
-    this.activePhoto = (this.activePhoto + 1) % (this.property?.photos?.length || 1);
-  },
-
-  prevPhoto() {
-    this.activePhoto = (this.activePhoto - 1 + (this.property?.photos?.length || 1)) % (this.property?.photos?.length || 1);
-  },
-
-  bookRoom(room) {
-    if (!this.checkIn || !this.checkOut) return;
-    const params = new URLSearchParams({ check_in: this.checkIn, check_out: this.checkOut });
-    window.location.href = '/booking/' + room.id + '?' + params;
-  }
-}"
+<div x-data="propertyPage('<?= rtrim($base_url, '/') ?>', <?= json_encode($property_id) ?>)"
  x-init="init()"
  class="w-full">
-
-  <style>
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-    .shimmer-bg { background: linear-gradient(90deg,#f0ebe1 25%,#e8ddd0 50%,#f0ebe1 75%); background-size:200% 100%; animation: shimmer 1.5s infinite; }
-  </style>
 
   <!-- ÉTAT LOADING -->
   <div x-show="loading" class="space-y-6 px-4 py-10">
@@ -113,7 +37,8 @@
   </div>
 
   <!-- SECTION 1 — GALERIE PHOTOS -->
-  <section x-show="property && !loading" class="pt-36 relative h-[560px] bg-[var(--color-forest)] overflow-hidden">
+  <template x-if="property && !loading">
+  <section class="pt-36 relative h-[560px] bg-[var(--color-forest)] overflow-hidden">
     <img x-bind:src="property.photos?.[activePhoto]?.url || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200'"
          alt="Photo principale de l'établissement"
          class="w-full h-full object-cover" />
@@ -166,9 +91,11 @@
       Voir toutes les photos
     </button>
   </section>
+  </template>
 
   <!-- SECTION 2 — CONTENU PRINCIPAL -->
-  <section x-show="property && !loading" class="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
+  <template x-if="property && !loading">
+  <section class="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
 
     <!-- COLONNE GAUCHE -->
     <div class="space-y-10">
@@ -323,8 +250,10 @@
       </div>
     </aside>
   </section>
+  </template>
 
   <!-- SECTION 3 — LIGHTBOX -->
+  <template x-if="property">
   <div x-show="lightboxOpen" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
     <div class="relative w-full max-w-6xl h-full bg-white/95 rounded-[24px] overflow-hidden">
       <button @click="lightboxOpen = false" class="absolute top-4 right-4 z-20 glass-card p-3 rounded-full">
@@ -369,6 +298,7 @@
       </div>
     </div>
   </div>
+  </template>
 
 </div>
 

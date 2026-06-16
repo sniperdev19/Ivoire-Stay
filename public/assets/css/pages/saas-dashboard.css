@@ -1,0 +1,20 @@
+/* ============================================================
+   Ivoire Stay — Page SaaS : dashboard (saas/dashboard.php)
+   ============================================================ */
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.db-shimmer {
+  background: linear-gradient(90deg, #F8F6F2 25%, #F0EBE1 50%, #F8F6F2 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 12px;
+}
+.kpi-grid   { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+.main-grid  { display:grid; grid-template-columns:3fr 2fr; gap:16px; margin-bottom:20px; }
+.bottom-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:1200px){ .kpi-grid  { grid-template-columns:repeat(2,1fr)!important; } }
+@media(max-width:900px) { .main-grid { grid-template-columns:1fr!important; } }
+@media(max-width:640px) { .kpi-grid  { grid-template-columns:1fr!important; } .bottom-grid{ grid-template-columns:1fr!important; } }
