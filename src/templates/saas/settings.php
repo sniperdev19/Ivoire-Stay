@@ -1,12 +1,68 @@
-<?php ?>
+<?php
+// Fournir un fallback pour $base_url si non injecté
+$base_url = $base_url ?? rtrim(APP_URL, '/');
+?>
 <!-- Paramètres — template injecté via $content -->
 
 <div x-data="{
   establishment:null, loading:true, subscription:null, plans:[], activeTab:'general', saving:false, saveError:null, saveSuccess:false,
   form: { name:'', type:'hotel', address:'', city:'', phone:'', email:'', description:'', website:'' },
 
-  apiHeaders(){ return { 'Content-Type':'application/json', 'Authorization':'Bearer '+localStorage.getItem('token') }; },
-  estId(){ return localStorage.getItem('establishment_id')||'1'; },
+  // Photo de couverture
+  photoPreview: null,
+  photoFile: null,
+  photoUploading: false,
+  photoSuccess: false,
+  photoError: null,
+
+  async uploadPhoto() {
+    if (!this.photoFile) return;
+    this.photoUploading = true;
+    this.photoSuccess = false;
+    this.photoError = null;
+    try {
+      const estId = this.estId();
+      const formData = new FormData();
+      formData.append('photo', this.photoFile);
+      const res = await fetch(
+        '<?= $base_url ?>/api/establishments/' + estId + '/photo',
+        {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+          body: formData
+        }
+      );
+      const data = await res.json();
+      if (data.success) {
+        this.photoSuccess = true;
+        setTimeout(() => this.photoSuccess = false, 3000);
+      } else {
+        this.photoError = data.message ?? 'Erreur upload photo.';
+      }
+    } catch(e) {
+      this.photoError = 'Erreur réseau.';
+    } finally {
+      this.photoUploading = false;
+    }
+  },
+
+  handlePhotoFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    this.photoFile = file;
+    const reader = new FileReader();
+    reader.onload = (ev) => { this.photoPreview = ev.target.result; };
+    reader.readAsDataURL(file);
+  },
+
+  apiHeaders(){ const token = localStorage.getItem('token') ?? ''; return { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token }; },
+  estId(){
+    let id = localStorage.getItem('establishment_id');
+    if (id && id !== 'null' && id !== 'undefined') return id;
+    try { const list = JSON.parse(localStorage.getItem('establishments') || '[]'); if (Array.isArray(list) && list.length > 0) { id = list[0].id ?? list[0].establishment_id; if (id) { localStorage.setItem('establishment_id', String(id)); return String(id); } } } catch(e) {}
+    try { const user = JSON.parse(localStorage.getItem('user') || '{}'); if (user.establishment_id) { localStorage.setItem('establishment_id', String(user.establishment_id)); return String(user.establishment_id); } } catch(e) {}
+    return '1';
+  },
 
   async init(){ this.loading=true; try{ const [estRes, subRes, plansRes] = await Promise.all([ fetch('<?= $base_url ?>/api/establishments/'+this.estId(),{headers:this.apiHeaders()}).then(r=>r.json()), fetch('<?= $base_url ?>/api/subscriptions/status?establishment_id='+this.estId(),{headers:this.apiHeaders()}).then(r=>r.json()), fetch('<?= $base_url ?>/api/subscriptions/plans',{headers:this.apiHeaders()}).then(r=>r.json()) ]); if(estRes.success){ this.establishment = estRes.data?.establishment ?? estRes.data; this.form = { name:this.establishment?.name??'', type:this.establishment?.type??'hotel', address:this.establishment?.address??'', city:this.establishment?.city??'', phone:this.establishment?.phone??'', email:this.establishment?.email??'', description:this.establishment?.description??'', website:this.establishment?.website??'' }; } if(subRes.success) this.subscription = subRes.data?.subscription ?? subRes.data; if(plansRes.success) this.plans = plansRes.data?.plans ?? plansRes.data ?? []; }catch(e){ this.form.name='Mon Établissement'; } finally{ this.loading=false; } },
 
@@ -31,6 +87,139 @@
 
   <!-- Général -->
   <div x-show="activeTab==='general'">
+    <div class="saas-card" style="margin-bottom:20px;padding:0;overflow:hidden;">
+      <div style="padding:20px 24px 16px;border-bottom:1px solid rgba(0,0,0,0.05);">
+        <h3 style="font-size:15px;font-weight:700;color:#111827;margin:0 0 4px;">
+          Photo de couverture
+        </h3>
+        <p style="font-size:12px;color:#9CA3AF;margin:0;">
+          Cette photo apparaît sur la vitrine publique et dans les résultats de recherche.
+        </p>
+      </div>
+
+      <div style="padding:24px;display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
+
+        <!-- Aperçu -->
+        <div style="
+          width:280px;height:160px;border-radius:12px;
+          overflow:hidden;background:#F3F4F6;
+          border:2px dashed rgba(0,0,0,0.1);
+          flex-shrink:0;position:relative;
+        ">
+          <!-- Image actuelle ou preview -->
+          <img
+            x-show="photoPreview"
+            :src="photoPreview"
+            style="width:100%;height:100%;object-fit:cover;display:block;">
+          <img
+            x-show="!photoPreview && establishment?.cover_photo"
+            :src="'<?= $base_url ?>/' + (establishment?.cover_photo ?? '').replace(/^\/+/, '')"
+            style="width:100%;height:100%;object-fit:cover;display:block;"
+            @error="$event.target.style.display='none'">
+          <!-- Placeholder si pas de photo -->
+          <div
+            x-show="!photoPreview && !establishment?.cover_photo"
+            style="width:100%;height:100%;display:flex;flex-direction:column;
+              align-items:center;justify-content:center;gap:8px;">
+            <svg xmlns="http://www.w3.org/2000/svg"
+              style="width:32px;height:32px;color:#D1D5DB;" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2
+                0 012.828 0L20 20M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0
+                00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span style="font-size:11px;color:#9CA3AF;">Aucune photo</span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:12px;">
+
+          <div style="font-size:12px;color:#6B7280;line-height:1.6;">
+            Formats acceptés : <strong>JPG, PNG, WebP</strong><br>
+            Taille maximale : <strong>5 Mo</strong><br>
+            Dimensions recommandées : <strong>1200 × 600 px</strong>
+          </div>
+
+          <!-- Input file caché -->
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            id="coverPhotoInput"
+            style="display:none;"
+            @change="handlePhotoFile($event)">
+
+          <!-- Bouton choisir -->
+          <button
+            class="btn-saas-secondary"
+            type="button"
+            @click="document.getElementById('coverPhotoInput').click()"
+            style="width:fit-content;">
+            <svg xmlns="http://www.w3.org/2000/svg"
+              style="width:14px;height:14px;" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0
+                0L8 8m4-4v12"/>
+            </svg>
+            Choisir une photo
+          </button>
+
+          <!-- Nom fichier sélectionné -->
+          <div x-show="photoFile"
+            style="font-size:12px;color:#374151;display:flex;
+              align-items:center;gap:6px;">
+            <svg xmlns="http://www.w3.org/2000/svg"
+              style="width:13px;height:13px;color:#C9A84C;" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4
+                4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+            </svg>
+            <span x-text="photoFile?.name"></span>
+          </div>
+
+          <!-- Bouton upload -->
+          <button
+            class="btn-saas-primary"
+            type="button"
+            x-show="photoFile"
+            @click="uploadPhoto()"
+            :disabled="photoUploading"
+            style="width:fit-content;">
+            <div x-show="photoUploading"
+              style="width:14px;height:14px;border-radius:50%;
+                border:2px solid rgba(255,255,255,0.3);
+                border-top-color:white;
+                animation:spin 0.7s linear infinite;">
+            </div>
+            <span x-show="!photoUploading">Enregistrer la photo</span>
+            <span x-show="photoUploading">Envoi en cours…</span>
+          </button>
+
+          <!-- Succès -->
+          <div x-show="photoSuccess"
+            style="display:flex;align-items:center;gap:8px;
+              font-size:13px;color:#16a34a;font-weight:500;">
+            <svg xmlns="http://www.w3.org/2000/svg"
+              style="width:15px;height:15px;" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            Photo mise à jour avec succès !
+          </div>
+
+          <!-- Erreur -->
+          <div x-show="photoError"
+            style="font-size:12px;color:#DC2626;"
+            x-text="photoError">
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="saas-card" style="padding:24px;">
       <h3>Informations de l'établissement</h3>
       <p style="color:#6B7280;margin-top:6px;">Ces informations apparaissent sur votre vitrine publique</p>

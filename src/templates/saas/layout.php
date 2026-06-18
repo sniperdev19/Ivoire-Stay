@@ -1,5 +1,7 @@
 <?php
 // Wrapper SaaS : attend $content, $title, $page, $base_url
+// Fournir un fallback pour $base_url si non injecté
+$base_url = $base_url ?? rtrim(APP_URL, '/');
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -431,6 +433,8 @@
     user: JSON.parse(localStorage.getItem('user') ?? 'null'),
     establishment: null,
     establishments: [],
+    apiBase: '<?= rtrim($base_url, '/') ?>',
+    apiUrl(path) { return this.apiBase + path; },
 
     init() {
       const token = localStorage.getItem('token');
@@ -486,7 +490,10 @@
         <img src="<?= $base_url ?? '' ?>/assets/logo.png" alt="Ivoire Stay">
         <div>
           <div class="brand-title">Ivoire Stay</div>
-          <div class="brand-subtitle">SaaS Hôtelier</div>
+          <div class="brand-subtitle"
+            x-text="establishment?.name ?? 'SaaS Hôtelier'"
+            style="color:rgba(255,255,255,0.45);font-size:10px;margin-top:2px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+          </div>
         </div>
       </div>
     </div>
@@ -672,6 +679,10 @@
             $date = new DateTime();
             echo $jours[(int)$date->format('w')] . ' ' . $date->format('d') . ' ' . $mois[(int)$date->format('n') - 1] . ' ' . $date->format('Y');
           ?>
+        </div>
+        <div style="font-size:11px;color:#C9A84C;font-weight:500;margin-top:1px;"
+          x-text="establishment?.name ?? ''"
+          x-show="establishment?.name">
         </div>
       </div>
     </div>

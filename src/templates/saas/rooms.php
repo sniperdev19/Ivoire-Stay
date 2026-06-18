@@ -1,4 +1,7 @@
-﻿<?php ?>
+﻿<?php
+// Fournir un fallback pour $base_url si non injecté
+$base_url = $base_url ?? rtrim(APP_URL, '/');
+?>
 <style>/* Onglets principaux */
 .room-tab {
   padding: 9px 20px; border-radius: 10px;
@@ -132,6 +135,10 @@
   roomSaving: false,
   roomError: null,
 
+  pendingPhotos: [],
+  photoUploading: false,
+  newRoomId: null,
+
   showTypeModal: false,
   editingType: null,
   typeForm: { name:'', base_price:'', weekend_price:'', passage_price:'', capacity:2, description:'' },
@@ -148,7 +155,7 @@
     { id:3, name:'Suite Junior',         base_price:145000, weekend_price:175000, passage_price:65000, capacity:3, description:'Idéal pour les familles et longs séjours.' },
     { id:4, name:'Suite Présidentielle', base_price:320000, weekend_price:380000, passage_price:150000, capacity:4, description:'Luxe maximal avec espace salon.' }
   ],
-  fallbackRooms: [
+  /* fallbackRooms: [
     { id:1, name:'101', floor:'1', status:'occupied', room_type_id:1, room_type:{ name:'Standard', base_price:55000 }, notes:'' },
     { id:2, name:'102', floor:'1', status:'available', room_type_id:1, room_type:{ name:'Standard', base_price:55000 }, notes:'' },
     { id:3, name:'103', floor:'1', status:'occupied', room_type_id:2, room_type:{ name:'Deluxe', base_price:95000 }, notes:'' },
@@ -161,7 +168,7 @@
     { id:10, name:'302', floor:'3', status:'available', room_type_id:2, room_type:{ name:'Deluxe', base_price:95000 }, notes:'' },
     { id:11, name:'303', floor:'3', status:'occupied', room_type_id:1, room_type:{ name:'Standard', base_price:55000 }, notes:'' },
     { id:12, name:'304', floor:'3', status:'cleaning', room_type_id:3, room_type:{ name:'Suite Junior', base_price:145000 }, notes:'Ménage en cours' }
-  ],
+  ], */
 
   async init() {
     await this.loadRoomTypes();   /* types d'abord */
@@ -169,24 +176,47 @@
   },
 
   apiHeaders() {
+    const token = localStorage.getItem('token') ?? '';
     return {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + localStorage.getItem('token')
+      'Authorization': 'Bearer ' + token
     };
   },
   apiBase: '<?= rtrim($base_url, '/') ?>',
   apiUrl(path) { return this.apiBase + path; },
-  estId() { return localStorage.getItem('establishment_id') || '1'; },
+  estId() {
+    let id = localStorage.getItem('establishment_id');
+    if (id && id !== 'null' && id !== 'undefined') return id;
+    try {
+      const list = JSON.parse(localStorage.getItem('establishments') || '[]');
+      if (Array.isArray(list) && list.length > 0) {
+        id = list[0].id ?? list[0].establishment_id;
+        if (id) { localStorage.setItem('establishment_id', String(id)); return String(id); }
+      }
+    } catch (e) {}
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (user.establishment_id) { localStorage.setItem('establishment_id', String(user.establishment_id)); return String(user.establishment_id); }
+    } catch (e) {}
+    return '1';
+  },
 
   async loadRooms() {
     this.loadingRooms = true;
     try {
       const res = await fetch(this.apiUrl('/api/rooms?establishment_id=' + this.estId()), { headers: this.apiHeaders() });
       const data = await res.json();
-      this.rooms = data.success ? (Array.isArray(data.data) ? data.data : data.data?.rooms ?? data.data ?? []) : this.fallbackRooms;
-      if (!this.rooms.length) this.rooms = this.fallbackRooms;
+      if (data.success) {
+        this.rooms = Array.isArray(data.data) ? data.data : data.data?.rooms ?? data.data ?? [];
+        // Ne PAS activer le fallback si l'API répond avec succès
+      } else {
+        console.warn('API error:', data.message);
+        // Laisser le tableau vide — ne pas charger le fallback
+        this.rooms = [];
+      }
     } catch(e) {
-      this.rooms = this.fallbackRooms;
+      this.rooms = [];
+      console.error('Network error:', e);
     } finally {
       /* Enrichir avec room_type si absent */
       try {
@@ -279,6 +309,7 @@
     this.editingRoom = null;
     this.roomForm = { name:'', floor:'', room_type_id:'', status:'available', notes:'' };
     this.roomError = null;
+    this.pendingPhotos = [];
     this.showRoomModal = true;
   },
 
@@ -292,6 +323,7 @@
       notes: room.notes || ''
     };
     this.roomError = null;
+    this.pendingPhotos = [];
     this.showRoomModal = true;
   },
 
@@ -305,10 +337,19 @@
     try {
       const url = this.editingRoom ? this.apiUrl('/api/rooms/' + this.editingRoom.id) : this.apiUrl('/api/rooms');
       const method = this.editingRoom ? 'PUT' : 'POST';
+      // Construire explicitement le payload en mappant `name` -> `number`
+      const payload = {
+        establishment_id: this.estId(),
+        room_type_id: this.roomForm.room_type_id,
+        number: this.roomForm.name,
+        floor: this.roomForm.floor,
+        status: this.roomForm.status,
+        notes: this.roomForm.notes
+      };
       const res = await fetch(url, {
         method,
         headers: this.apiHeaders(),
-        body: JSON.stringify({ ...this.roomForm, establishment_id: this.estId() })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (data.success) {
@@ -323,6 +364,10 @@
         }
         this.showRoomModal = false;
         this.showToast(this.editingRoom ? 'Chambre modifiée.' : 'Chambre créée.', 'success');
+        const createdId = data.data?.id ?? data.data?.room?.id;
+        if (createdId && this.pendingPhotos.length) {
+          await this.uploadPendingPhotos(createdId);
+        }
       } else {
         this.roomError = data.message ?? 'Erreur lors de la sauvegarde.';
       }
@@ -331,6 +376,25 @@
     } finally {
       this.roomSaving = false;
     }
+  },
+
+  async uploadPendingPhotos(roomId) {
+    if (!this.pendingPhotos.length) return;
+    this.photoUploading = true;
+    for (const file of this.pendingPhotos) {
+      try {
+        const fd = new FormData();
+        fd.append('photo', file);
+        fd.append('is_cover', this.pendingPhotos.indexOf(file) === 0 ? '1' : '0');
+        await fetch(this.apiUrl('/api/rooms/' + roomId + '/photos'), {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') ?? '') },
+          body: fd
+        });
+      } catch(e) { console.error('Upload photo error:', e); }
+    }
+    this.pendingPhotos = [];
+    this.photoUploading = false;
   },
 
   async deleteRoom(id) {
@@ -696,6 +760,32 @@
           <label class="saas-label">Notes (optionnel)</label>
           <textarea class="saas-input" rows="4" x-model="roomForm.notes"></textarea>
         </div>
+        <div style="margin-top:18px;">
+          <label class="saas-label">Photos de la chambre</label>
+          <div style="border:2px dashed rgba(201,168,76,0.4);border-radius:12px;padding:20px;text-align:center;background:rgba(201,168,76,0.03);cursor:pointer;"
+            @click="$refs.photoInput.click()"
+            @dragover.prevent
+            @drop.prevent="pendingPhotos = [...pendingPhotos, ...$event.dataTransfer.files]">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:28px;height:28px;color:#C9A84C;margin:0 auto 8px;display:block;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <p style="font-size:13px;color:#9CA3AF;margin:0;">Cliquez ou glissez des photos ici</p>
+            <p style="font-size:11px;color:#C9A84C;margin:4px 0 0;">La première photo sera la photo de couverture</p>
+          </div>
+          <input type="file" x-ref="photoInput" accept="image/*" multiple style="display:none;"
+            @change="pendingPhotos = [...pendingPhotos, ...$event.target.files]" />
+          <div x-show="pendingPhotos.length > 0" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
+            <template x-for="(file, idx) in pendingPhotos" :key="idx">
+              <div style="position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,0.1);">
+                <img :src="URL.createObjectURL(file)" style="width:100%;height:100%;object-fit:cover;" />
+                <div x-show="idx===0" style="position:absolute;bottom:0;left:0;right:0;background:rgba(201,168,76,0.85);font-size:9px;color:white;text-align:center;padding:2px;">Couverture</div>
+                <button type="button"
+                  @click.stop="pendingPhotos = pendingPhotos.filter((_,i)=>i!==idx)"
+                  style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(220,38,38,0.85);border:none;color:white;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>
+              </div>
+            </template>
+          </div>
+        </div>
         <template x-if="roomError">
           <div style="margin-top:18px;padding:14px;border-radius:14px;background:rgba(254,226,226,0.4);border:1px solid rgba(220,38,38,0.2);color:#991B1B;">
             <strong>Erreur :</strong> <span x-text="roomError"></span>
@@ -704,7 +794,7 @@
       </div>
       <div class="saas-modal-footer">
         <button type="button" class="btn-saas-secondary" @click="showRoomModal=false">Annuler</button>
-        <button type="button" class="btn-saas-primary" @click="saveRoom()" x-bind="{ disabled: roomSaving }">
+        <button type="button" class="btn-saas-primary" @click="saveRoom()" :disabled="roomSaving" :style="roomSaving ? 'opacity:0.6;cursor:not-allowed;' : ''">
           <span x-show="!roomSaving" x-text="editingRoom ? 'Enregistrer' : 'Ajouter'"></span>
           <span x-show="roomSaving">Sauvegarde...</span>
         </button>
@@ -758,7 +848,7 @@
       </div>
       <div class="saas-modal-footer">
         <button type="button" class="btn-saas-secondary" @click="showTypeModal=false">Annuler</button>
-        <button type="button" class="btn-saas-primary" @click="saveType()" x-bind="{ disabled: typeSaving }">
+        <button type="button" class="btn-saas-primary" @click="saveType()" :disabled="typeSaving" :style="typeSaving ? 'opacity:0.6;cursor:not-allowed;' : ''">
           <span x-show="!typeSaving" x-text="editingType ? 'Enregistrer' : 'Créer le type'"></span>
           <span x-show="typeSaving">Sauvegarde...</span>
         </button>

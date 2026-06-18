@@ -1,4 +1,7 @@
-<?php ?>
+<?php
+// Fournir un fallback pour $base_url si non injecté
+$base_url = $base_url ?? rtrim(APP_URL, '/');
+?>
 <style>
 /* Ligne client cliquable */
 .client-row {
@@ -51,7 +54,7 @@
   toastTimer: null,
 
   // Fallback (12 clients fictifs)
-  fallbackClients: [
+  /* fallbackClients: [
     { id:1, name:'Kouamé Adou', email:'kouame@email.ci', phone:'+225 07 11 22 33', address:'Cocody, Abidjan', total_bookings:5, total_spent:1250000, last_visit:'2026-06-14', created_at:'2026-01-10' },
     { id:2, name:'Fatou Diallo', email:'fatou@email.ci', phone:'+225 05 44 55 66', address:'Plateau, Abidjan', total_bookings:3, total_spent:480000, last_visit:'2026-06-14', created_at:'2026-02-05' },
     { id:3, name:'Marc Koffi', email:'marc@email.ci', phone:'+225 01 77 88 99', address:'Yopougon, Abidjan', total_bookings:8, total_spent:2100000, last_visit:'2026-06-12', created_at:'2025-11-20' },
@@ -64,7 +67,7 @@
     { id:10, name:'Sita Koné', email:'sita@email.ci', phone:'+225 01 44 55 66', address:'Adjamé, Abidjan', total_bookings:2, total_spent:210000, last_visit:'2026-04-12', created_at:'2026-02-20' },
     { id:11, name:'Pauline Zongo', email:'pauline@email.ci', phone:'+225 05 22 33 44', address:'Zone 4, Abidjan', total_bookings:1, total_spent:60000, last_visit:'2026-06-01', created_at:'2026-05-05' },
     { id:12, name:'Eric N’Guessan', email:'eric@email.ci', phone:'+225 07 66 55 44', address:'Bingerville', total_bookings:7, total_spent:1320000, last_visit:'2026-05-30', created_at:'2025-12-12' }
-  ],
+  ], */
 
   fallbackHistory: [
     { id:1, room_name:'Suite Présidentielle', check_in:'2026-06-14', check_out:'2026-06-16', nights:2, total_price:640000, status:'confirmed' },
@@ -77,8 +80,17 @@
 
   apiBase: '<?= rtrim($base_url, '/') ?>',
   apiUrl(path) { return this.apiBase + path; },
-  apiHeaders() { return { 'Content-Type':'application/json', 'Authorization':'Bearer ' + localStorage.getItem('token') }; },
-  estId() { return localStorage.getItem('establishment_id') || '1'; },
+  apiHeaders() { const token = localStorage.getItem('token') ?? ''; return { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token }; },
+  estId() {
+    let id = localStorage.getItem('establishment_id');
+    if (id && id !== 'null' && id !== 'undefined') return id;
+    try {
+      const list = JSON.parse(localStorage.getItem('establishments') || '[]');
+      if (Array.isArray(list) && list.length > 0) { id = list[0].id ?? list[0].establishment_id; if (id) { localStorage.setItem('establishment_id', String(id)); return String(id); } }
+    } catch (e) {}
+    try { const user = JSON.parse(localStorage.getItem('user') || '{}'); if (user.establishment_id) { localStorage.setItem('establishment_id', String(user.establishment_id)); return String(user.establishment_id); } } catch (e) {}
+    return '1';
+  },
 
   // Charger clients
   async loadClients() {
@@ -87,17 +99,24 @@
       const url = this.apiUrl('/api/clients?establishment_id=' + this.estId()) + (this.search ? '&search=' + encodeURIComponent(this.search) : '');
       const res = await fetch(url, { headers: this.apiHeaders() });
       const data = await res.json();
-      const clients = data.success ? (data.data?.clients ?? data.data ?? []) : [];
-      this.clients = clients.map(c => ({
-        ...c,
-        name: c.name ?? [c.first_name, c.last_name].filter(Boolean).join(' ') || 'Client',
-        total_bookings: c.total_bookings ?? c.booking_count ?? 0,
-        total_spent: c.total_spent ?? 0,
-        last_visit: c.last_visit ?? c.last_booking ?? c.updated_at ?? null,
-      }));
-      if (!this.clients.length) this.clients = this.fallbackClients;
+      if (data.success) {
+        const clients = data.data?.clients ?? data.data ?? [];
+        this.clients = clients.map(c => ({
+          ...c,
+          name: c.name ?? ([c.first_name, c.last_name].filter(Boolean).join(' ') || 'Client'),
+          total_bookings: c.total_bookings ?? c.booking_count ?? 0,
+          total_spent: c.total_spent ?? 0,
+          last_visit: c.last_visit ?? c.last_booking ?? c.updated_at ?? null,
+        }));
+        // Ne PAS activer le fallback si l'API répond avec succès
+      } else {
+        console.warn('API error:', data.message);
+        // Laisser le tableau vide — ne pas charger le fallback
+        this.clients = [];
+      }
     } catch(e) {
-      this.clients = this.fallbackClients;
+      this.clients = [];
+      console.error('Network error:', e);
     } finally {
       this.loading = false;
     }

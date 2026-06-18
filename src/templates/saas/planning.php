@@ -1,4 +1,7 @@
-<?php ?>
+<?php
+// Fournir un fallback pour $base_url si non injecté
+$base_url = $base_url ?? rtrim(APP_URL, '/');
+?>
 <style>
   .planning-day-header {
     font-size:11px;font-weight:700;
@@ -67,7 +70,7 @@
   selectedBooking: null,
   showDetail: false,
 
-  fallbackRooms: [
+  /* fallbackRooms: [
     { id:1, name:'101', room_type:{ name:'Standard' } },
     { id:2, name:'102', room_type:{ name:'Standard' } },
     { id:3, name:'103', room_type:{ name:'Deluxe' } },
@@ -90,7 +93,7 @@
     { id:5, room_id:5, client_name:'Yao Brou',
       check_in:'2026-06-12', check_out:'2026-06-14',
       status:'checked_out', total_amount:640000 },
-  ],
+  ], */
 
   async init() {
     this.startDate = this.getMonday(new Date());
@@ -106,15 +109,15 @@
     return date;
   },
 
-  apiHeaders() {
-    return {
-      'Content-Type':'application/json',
-      'Authorization':'Bearer '
-        + localStorage.getItem('token')
-    };
-  },
+  apiHeaders() { const token = localStorage.getItem('token') ?? ''; return { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token }; },
+  apiBase: '<?= rtrim($base_url, '/') ?>',
+  apiUrl(path) { return this.apiBase + path; },
   estId() {
-    return localStorage.getItem('establishment_id')||'1';
+    let id = localStorage.getItem('establishment_id');
+    if (id && id !== 'null' && id !== 'undefined') return id;
+    try { const list = JSON.parse(localStorage.getItem('establishments') || '[]'); if (Array.isArray(list) && list.length > 0) { id = list[0].id ?? list[0].establishment_id; if (id) { localStorage.setItem('establishment_id', String(id)); return String(id); } } } catch(e) {}
+    try { const user = JSON.parse(localStorage.getItem('user') || '{}'); if (user.establishment_id) { localStorage.setItem('establishment_id', String(user.establishment_id)); return String(user.establishment_id); } } catch(e) {}
+    return '1';
   },
 
   async loadData() {
@@ -122,29 +125,24 @@
     this.error = null;
     try {
       const [roomsRes, planRes] = await Promise.all([
-        fetch('<?= $base_url ?>/api/rooms'
-          + '?establishment_id=' + this.estId(),
-          { headers: this.apiHeaders() }),
-        fetch('<?= $base_url ?>/api/planning'
-          + '?establishment_id=' + this.estId(),
-          { headers: this.apiHeaders() })
+        fetch(this.apiUrl('/api/rooms?establishment_id=' + this.estId()), { headers: this.apiHeaders() }),
+        fetch(this.apiUrl('/api/planning?establishment_id=' + this.estId()), { headers: this.apiHeaders() })
       ]);
 
       const roomsData = await roomsRes.json();
       const planData = await planRes.json();
 
-      let r = roomsData.success
-        ? (roomsData.data?.rooms
-            ?? roomsData.data ?? [])
-        : [];
-      this.rooms = r.length ? r : this.fallbackRooms;
+      if (roomsData.success) {
+        this.rooms = roomsData.data?.rooms ?? roomsData.data ?? [];
+        // Ne PAS activer le fallback si l'API répond avec succès
+      } else {
+        console.warn('API error:', roomsData.message);
+        this.rooms = [];
+      }
 
-      let b = planData.success
-        ? (planData.data?.bookings
-            ?? planData.data ?? [])
-        : [];
-      this.bookings = (b.length ? b : this.fallbackBookings)
-        .map(bk => ({
+      if (planData.success) {
+        const b = planData.data?.bookings ?? planData.data ?? [];
+        this.bookings = b.map(bk => ({
           ...bk,
           client_name: bk.client_name
             ?? bk.public_client?.name
@@ -153,11 +151,17 @@
           total_amount: bk.total_amount
             ?? bk.total_price ?? 0,
         }));
+        // Ne PAS activer le fallback si l'API répond avec succès
+      } else {
+        console.warn('API error:', planData.message);
+        this.bookings = [];
+      }
 
     } catch(e) {
-      this.rooms = this.fallbackRooms;
-      this.bookings = this.fallbackBookings;
-      this.error = 'Données de démonstration affichées.';
+      this.rooms = [];
+      this.bookings = [];
+      console.error('Network error:', e);
+      this.error = 'Impossible de charger le planning. Veuillez réessayer.';
     } finally {
       this.loading = false;
     }

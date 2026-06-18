@@ -1,12 +1,21 @@
-<?php ?>
+<?php
+// Fournir un fallback pour $base_url si non injecté
+$base_url = $base_url ?? rtrim(APP_URL, '/');
+?>
 <!-- Rapports & Analyses — template injecté via $content -->
 
 <div x-data="{
   stats: null, invoices: [], expenses: [], payments: [],
   loading: true, error: null, period: 'month',
 
-  apiHeaders() { return { 'Content-Type':'application/json', 'Authorization':'Bearer '+localStorage.getItem('token') }; },
-  estId() { return localStorage.getItem('establishment_id')||'1'; },
+  apiHeaders() { const token = localStorage.getItem('token') ?? ''; return { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token }; },
+  estId() {
+    let id = localStorage.getItem('establishment_id');
+    if (id && id !== 'null' && id !== 'undefined') return id;
+    try { const list = JSON.parse(localStorage.getItem('establishments') || '[]'); if (Array.isArray(list) && list.length > 0) { id = list[0].id ?? list[0].establishment_id; if (id) { localStorage.setItem('establishment_id', String(id)); return String(id); } } } catch(e) {}
+    try { const user = JSON.parse(localStorage.getItem('user') || '{}'); if (user.establishment_id) { localStorage.setItem('establishment_id', String(user.establishment_id)); return String(user.establishment_id); } } catch(e) {}
+    return '1';
+  },
 
   async init() {
     this.loading = true; this.error = null;

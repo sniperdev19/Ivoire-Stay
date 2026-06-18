@@ -17,38 +17,23 @@
 @media(max-width:640px) { .kpi-grid  { grid-template-columns:1fr!important; } .bottom-grid{ grid-template-columns:1fr!important; } }
 </style>
 
+<?php
+// Fournir un fallback pour $base_url si non injecté
+$base_url = $base_url ?? rtrim(APP_URL, '/');
+?>
+
 <div x-data="{
   stats: null,
   planning: [],
+  distribution: [],
   loading: true,
   error: null,
 
-  apiBase: '<?= $base_url ?>',
+  apiBase: '<?= rtrim($base_url, '/') ?>',
   apiUrl(path) { return this.apiBase + path; },
 
-  fallbackStats: {
-    revenue: 1245000,
-    occupancy_rate: 68,
-    active_bookings: 7,
-    available_rooms: 8,
-    total_rooms: 24,
-    expenses: 320000,
-    payments_received: 980000,
-    payments_pending: 265000,
-    net_profit: 925000,
-    month: 'Juin 2026'
-  },
-
-  fallbackPlanning: [
-    { id:1, client_name:'Kouamé Adou', room_name:'Suite Présidentielle', checkin:'2026-06-14', amount:320000, status:'confirmed' },
-    { id:2, client_name:'Fatou Diallo', room_name:'Chambre Deluxe', checkin:'2026-06-14', amount:95000, status:'pending' },
-    { id:3, client_name:'Marc Koffi', room_name:'Studio Standard', checkin:'2026-06-13', amount:55000, status:'checkout' },
-    { id:4, client_name:'Awa Traoré', room_name:'Chambre Deluxe', checkin:'2026-06-15', amount:190000, status:'confirmed' },
-    { id:5, client_name:'Yao Brou', room_name:'Suite Junior', checkin:'2026-06-14', amount:145000, status:'checkin' }
-  ],
-
   async init() {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') ?? '';
     let id = localStorage.getItem('establishment_id');
 
     if (!id) {
@@ -63,26 +48,31 @@
     }
 
     if (!id) {
-      this.stats = this.fallbackStats;
-      this.planning = this.fallbackPlanning;
+      this.stats = null;
+      this.planning = [];
       this.loading = false;
       return;
     }
 
-    const headers = { Authorization: 'Bearer ' + token };
+    const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token };
     try {
+      const statsUrl = this.apiUrl('/api/dashboard/stats?establishment_id=' + id);
+      const planUrl = this.apiUrl('/api/dashboard/planning?establishment_id=' + id);
+
       const [statsRes, planRes] = await Promise.all([
-        fetch(this.apiUrl('/api/dashboard/stats?establishment_id=' + id), { headers }),
-        fetch(this.apiUrl('/api/dashboard/planning?establishment_id=' + id), { headers })
+        fetch(statsUrl, { headers }),
+        fetch(planUrl, { headers })
       ]);
       const sData = await statsRes.json();
       const pData = await planRes.json();
 
-      this.stats = sData.success ? (sData.data ?? this.fallbackStats) : this.fallbackStats;
-      this.planning = pData.success ? (pData.data?.bookings ?? this.fallbackPlanning) : this.fallbackPlanning;
+      this.stats        = sData.success && sData.data ? sData.data : null;
+      this.distribution = sData.data?.distribution ?? [];
+      this.planning     = pData.success && pData.data?.bookings ? pData.data.bookings : [];
     } catch(e) {
-      this.stats = this.fallbackStats;
-      this.planning = this.fallbackPlanning;
+      this.stats    = null;
+      this.planning = [];
+      console.error('Dashboard API error:', e);
     } finally {
       this.loading = false;
     }
@@ -120,9 +110,17 @@
         Bonjour,
         <span style="color:#C9A84C;" x-text="(JSON.parse(localStorage.getItem('user')||'{}').name||'').split(' ')[0]||'Hôtelier'"></span>
       </h1>
-      <p style="font-size:13px;color:#9CA3AF;margin:0;">
+      <p style="font-size:13px;color:#9CA3AF;margin:0 0 6px 0;">
         Voici le résumé de votre activité · <span x-text="stats?.month ?? 'Ce mois'"></span>
       </p>
+      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,0.10);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:4px 10px;">
+        <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;color:#C9A84C;flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/>
+        </svg>
+        <span style="font-size:12px;font-weight:600;color:#C9A84C;"
+          x-text="JSON.parse(localStorage.getItem('establishments')||'[]').find(e=>e.id==localStorage.getItem('establishment_id'))?.name ?? 'Établissement'">
+        </span>
+      </div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <a href="<?= $base_url ?>/saas/bookings" class="btn-saas-primary" style="display:inline-flex;align-items:center;gap:8px;padding:0 14px;">
@@ -230,7 +228,6 @@
             <svg xmlns="http://www.w3.org/2000/svg" style="width:32px;height:32px;margin:0 auto 8px;display:block;color:#E5E7EB;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
             Aucune réservation récente
           </div>
-        </div>
 
         <div x-show="(planning||[]).length > 0" style="overflow-x:auto;">
             <table style="width:100%;border-collapse:collapse;">
@@ -244,13 +241,15 @@
                 </tr>
               </thead>
               <tbody>
-                <tr x-for="b in planning" :key="b.id" style="border-top:1px solid rgba(0,0,0,0.06);">
+                <template x-for="b in planning" :key="b.id">
+                  <tr style="border-top:1px solid rgba(0,0,0,0.06);">
                     <td style="padding:13px 20px;"><div style="display:flex;align-items:center;gap:10px;"><div style="width:30px;height:30px;border-radius:8px;background:rgba(201,168,76,0.12);display:grid;place-items:center;font-size:12px;font-weight:700;color:#C9A84C;" x-text="(b.client_name||'?').charAt(0).toUpperCase()"></div><span style="font-size:14px;font-weight:500;color:#111827;" x-text="b.client_name ?? '-'"></span></div></td>
                     <td style="padding:13px 16px;font-size:13px;color:#4B5563;" x-text="b.room_name ?? '-'"></td>
                     <td style="padding:13px 16px;font-size:13px;color:#4B5563;" x-text="formatDate(b.checkin ?? b.check_in)"></td>
                     <td style="padding:13px 20px;font-size:13px;font-weight:600;color:#111827;text-align:right;" x-text="formatPrice(b.amount ?? b.total_price)"></td>
                     <td style="padding:13px 16px;"><span :style="statusStyle(b.status)" x-text="statusLabel(b.status)"></span></td>
                   </tr>
+                </template>
               </tbody>
             </table>
           </div>
@@ -271,11 +270,21 @@
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;"><div style="font-size:22px;font-weight:800;color:#111827;" x-text="occupancyPct + '%' "></div><div style="font-size:11px;color:#9CA3AF;">Occupation</div></div>
         </div>
 
-        <?php $types = [ ['label'=>'Standard','pct'=>45,'color'=>'#C9A84C'], ['label'=>'Supérieure','pct'=>30,'color'=>'#2563EB'], ['label'=>'Suite','pct'=>15,'color'=>'#16A34A'], ['label'=>'Deluxe','pct'=>10,'color'=>'#7C3AED'] ]; ?>
         <div style="display:flex;flex-direction:column;gap:12px;">
-          <?php foreach($types as $t): ?>
-            <div style="display:flex;align-items:center;gap:10px;"><div style="width:8px;height:8px;border-radius:2px;background:<?= $t['color'] ?>;"></div><div style="font-size:13px;color:#374151;flex:1;"><?= htmlspecialchars($t['label']) ?></div><div style="font-size:13px;font-weight:600;color:#111827;min-width:32px;text-align:right;"><?= $t['pct'] ?>%</div><div style="width:80px;height:5px;background:rgba(0,0,0,0.06);border-radius:3px;overflow:hidden;"><div style="height:100%;width:<?= $t['pct'] ?>%;background:<?= $t['color'] ?>;border-radius:3px;"></div></div></div>
-          <?php endforeach; ?>
+          <template x-for="t in (distribution.length ? distribution : [
+            {name:'Standard', pct:0, color:'#C9A84C'},
+            {name:'Deluxe',   pct:0, color:'#2563EB'},
+            {name:'Suite',    pct:0, color:'#16A34A'}
+          ])" :key="t.name">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:8px;height:8px;border-radius:2px;" :style="'background:'+t.color"></div>
+              <div style="font-size:13px;color:#374151;flex:1;" x-text="t.name"></div>
+              <div style="font-size:13px;font-weight:600;color:#111827;min-width:32px;text-align:right;" x-text="t.pct+'%'"></div>
+              <div style="width:80px;height:5px;background:rgba(0,0,0,0.06);border-radius:3px;overflow:hidden;">
+                <div style="height:100%;border-radius:3px;" :style="'width:'+t.pct+'%;background:'+t.color"></div>
+              </div>
+            </div>
+          </template>
           <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.06);font-size:12px;color:#6B7280;">Total chambres : <strong style="color:#111827;" x-text="stats?.total_rooms ?? 0"></strong></div>
         </div>
       </div>

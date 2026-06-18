@@ -11,10 +11,18 @@
       const url = path.startsWith('http')
         ? path : '<?= $base ?>' + path;
       const res = await fetch(url, { cache:'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
       const txt = await res.text();
+      if (!res.ok) {
+        const clean = txt.replace(/<[^>]+>/g, '').trim();
+        const message = clean || 'Erreur serveur ' + res.status;
+        throw new Error(message);
+      }
       if (!txt) return null;
-      return JSON.parse(txt);
+      try {
+        return JSON.parse(txt);
+      } catch (err) {
+        throw new Error('Réponse API invalide');
+      }
     },
 
     async init() {
@@ -62,7 +70,7 @@
           qs ? ('?' + qs) : window.location.pathname);
 
         const data = await this.publicFetch(
-          '/api/public/search?' + qs);
+          '/api/public/search' + (qs ? '?' + qs : ''));
         if (!data?.success)
           throw new Error(data?.message || 'Erreur API');
 
@@ -80,8 +88,10 @@
         this.results    = items;
         this.totalCount = payload.total ?? items.length;
       } catch(e) {
-        this.error = e?.message
-          || 'Impossible de charger les résultats.';
+        const raw = String(e?.message || 'Impossible de charger les résultats.');
+        this.error = raw.includes('Erreur serveur') || raw.includes('500')
+          ? 'Service momentanément indisponible. Veuillez réessayer plus tard.'
+          : raw;
       } finally { this.loading = false; }
     },
 
@@ -93,12 +103,19 @@
     },
 
     photoUrl(r) {
+      const base = '<?= $base ?>';
       const fb = 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600';
-      const u = r?.photos?.[0]?.url
-        ?? r?.photo ?? r?.cover_photo ?? null;
+
+      // Priorité 1 : cover_photo de l'établissement
+      if (r?.cover_photo) {
+        const cp = r.cover_photo;
+        return cp.startsWith('http') ? cp : base + '/' + cp.replace(/^\/+/, '');
+      }
+
+      // Priorité 2 : première photo uploadée
+      const u = r?.photos?.[0]?.url ?? r?.photo ?? null;
       if (!u) return fb;
-      if (u.startsWith('http')) return u;
-      return '<?= $base ?>/' + u.replace(/^\/+/, '');
+      return u.startsWith('http') ? u : base + '/' + u.replace(/^\/+/, '');
     },
     formatPrice(p) {
       if (p == null || p === '') return '—';
@@ -232,6 +249,8 @@
 
       <div class="filter-divider"></div>
 
+      <span class="strip-section-label">Villes</span>
+
       <template x-for="dest in destinations.slice(0,5)"
         :key="dest.city">
         <button class="filter-chip"
@@ -244,6 +263,8 @@
       </template>
 
       <div class="filter-divider"></div>
+
+      <span class="strip-section-label">Type</span>
 
       <button class="filter-chip"
         :class="filters.type==='hotel'?'active':''"
@@ -284,90 +305,7 @@
   </div>
 
   <div class="search-main">
-    <aside class="search-sidebar">
-      <div class="sidebar-section">
-        <div class="sidebar-title">Destinations</div>
-        <template x-for="dest in destinations" :key="dest.city">
-          <button class="dest-btn"
-            :class="filters.city===dest.city?'active':''"
-            @click="filters.city=dest.city; search()">
-            <span x-text="dest.city"></span>
-            <span class="dest-count"
-              x-text="dest.count"></span>
-          </button>
-        </template>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="sidebar-title">Type</div>
-        <div class="type-grid">
-          <button class="type-btn"
-            :class="filters.type===''?'active':''"
-            @click="filters.type=''; search()">Tous</button>
-          <button class="type-btn"
-            :class="filters.type==='hotel'?'active':''"
-            @click="filters.type='hotel'; search()">Hôtel</button>
-          <button class="type-btn"
-            :class="filters.type==='residence'?'active':''"
-            @click="filters.type='residence'; search()">
-            Résidence</button>
-          <button class="type-btn"
-            :class="filters.type==='villa'?'active':''"
-            @click="filters.type='villa'; search()">Villa</button>
-        </div>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="sidebar-title">Budget (FCFA)</div>
-        <div style="display:flex;gap:8px;">
-          <input type="number" placeholder="Min"
-            style="width:50%;padding:8px 10px;border-radius:8px;
-              border:1px solid rgba(201,168,76,0.2);
-              background:#FAFAFA;font-size:12px;
-              font-family:Inter,sans-serif;"
-            disabled>
-          <input type="number" placeholder="Max"
-            style="width:50%;padding:8px 10px;border-radius:8px;
-              border:1px solid rgba(201,168,76,0.2);
-              background:#FAFAFA;font-size:12px;
-              font-family:Inter,sans-serif;"
-            disabled>
-        </div>
-        <p style="font-size:10px;color:#9CA3AF;
-          font-style:italic;margin-top:6px;">
-          Filtre prix bientôt disponible
-        </p>
-      </div>
-
-      <div class="sidebar-section"
-        x-show="filters.check_in || filters.check_out">
-        <div class="sidebar-title">Dates sélectionnées</div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <div x-show="filters.check_in"
-            style="display:flex;justify-content:space-between;
-              font-size:12px;">
-            <span style="color:#9CA3AF;">Arrivée</span>
-            <span style="font-weight:600;color:#1B4332;"
-              x-text="new Date(filters.check_in)
-                .toLocaleDateString('fr-FR',
-                {day:'numeric',month:'short'})">
-            </span>
-          </div>
-          <div x-show="filters.check_out"
-            style="display:flex;justify-content:space-between;
-              font-size:12px;">
-            <span style="color:#9CA3AF;">Départ</span>
-            <span style="font-weight:600;color:#1B4332;"
-              x-text="new Date(filters.check_out)
-                .toLocaleDateString('fr-FR',
-                {day:'numeric',month:'short'})">
-            </span>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <div class="results-zone">
+    <div>
       <div x-show="error"
         style="background:rgba(220,38,38,0.06);
           border:1px solid rgba(220,38,38,0.2);
@@ -443,40 +381,37 @@
       </div>
 
       <div x-show="loading">
-        <div class="results-grid">
-          <div class="skel-card"
-            style="grid-column:span 2;">
-            <div class="skel"
-              style="height:280px;border-radius:0;">
-            </div>
-            <div style="padding:16px;
-              display:flex;flex-direction:column;gap:10px;">
-              <div class="skel"
-                style="height:18px;width:55%;"></div>
-              <div class="skel"
-                style="height:13px;width:35%;"></div>
-              <div class="skel"
-                style="height:13px;width:70%;"></div>
-            </div>
+  <div class="results-grid">
+    <!-- Featured skeleton (2 cols) -->
+    <div class="skel-card" style="grid-column:span 2;">
+      <div class="skel" style="height:320px;border-radius:0;"></div>
+      <div style="padding:16px;display:flex;
+        flex-direction:column;gap:10px;">
+        <div class="skel" style="height:18px;width:50%;"></div>
+        <div class="skel" style="height:12px;width:30%;"></div>
+        <div class="skel" style="height:12px;width:70%;"></div>
+      </div>
+    </div>
+    <!-- 6 cards standard -->
+    <template x-for="i in 6">
+      <div class="skel-card">
+        <div class="skel" style="height:210px;border-radius:0;"></div>
+        <div style="padding:14px;display:flex;
+          flex-direction:column;gap:8px;">
+          <div class="skel" style="height:16px;width:65%;"></div>
+          <div class="skel" style="height:11px;width:40%;"></div>
+          <div class="skel" style="height:11px;width:80%;"></div>
+          <div style="display:flex;justify-content:space-between;
+            margin-top:8px;">
+            <div class="skel" style="height:20px;width:40%;"></div>
+            <div class="skel" style="height:32px;width:25%;
+              border-radius:10px;"></div>
           </div>
-          <template x-for="i in 4">
-            <div class="skel-card">
-              <div class="skel"
-                style="height:200px;border-radius:0;">
-              </div>
-              <div style="padding:16px;
-                display:flex;flex-direction:column;gap:8px;">
-                <div class="skel"
-                  style="height:16px;width:60%;"></div>
-                <div class="skel"
-                  style="height:12px;width:40%;"></div>
-                <div class="skel"
-                  style="height:12px;width:80%;"></div>
-              </div>
-            </div>
-          </template>
         </div>
       </div>
+    </template>
+  </div>
+</div>
 
       <div x-show="!loading && !results.length && !error"
         class="empty-state">
@@ -737,131 +672,100 @@
 /* ══ BARRE FILTRES RAPIDES ══ */
 .filter-strip {
   position: sticky; top: 0; z-index: 40;
-  background: rgba(250,247,242,0.97);
-  backdrop-filter: blur(20px);
+  background: rgba(250,247,242,0.98);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid rgba(201,168,76,0.15);
-  padding: 12px 24px;
-  box-shadow: 0 2px 12px rgba(27,67,50,0.06);
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(27,67,50,0.07);
 }
 .filter-strip-inner {
-  max-width: 1280px; margin: 0 auto;
+  max-width: 1400px; margin: 0 auto;
+  padding: 12px 32px;
   display: flex; align-items: center;
-  gap: 8px; overflow-x: auto;
+  gap: 6px; overflow-x: auto;
   scrollbar-width: none;
 }
 .filter-strip-inner::-webkit-scrollbar { display: none; }
+
+/* Section label dans la strip */
+.strip-section-label {
+  font-size: 10px; font-weight: 700;
+  color: #9CA3AF; text-transform: uppercase;
+  letter-spacing: 0.1em; padding: 0 4px;
+  white-space: nowrap; flex-shrink: 0;
+}
+
 .filter-chip {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 16px; border-radius: 50px;
+  padding: 8px 18px; border-radius: 50px;
   font-size: 13px; font-weight: 500;
   white-space: nowrap; cursor: pointer;
-  border: 1.5px solid rgba(201,168,76,0.25);
+  border: 1.5px solid rgba(201,168,76,0.2);
   background: white; color: #374151;
-  transition: all 0.2s; font-family: 'Inter', sans-serif;
+  transition: all 0.25s;
+  font-family: 'Inter', sans-serif;
+  flex-shrink: 0;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
 }
 .filter-chip:hover {
-  border-color: #C9A84C; color: #1B4332;
+  border-color: rgba(201,168,76,0.5);
+  color: #1B4332;
+  box-shadow: 0 2px 10px rgba(201,168,76,0.15);
 }
 .filter-chip.active {
-  background: #C9A84C; border-color: #C9A84C;
-  color: white;
+  background: linear-gradient(135deg, #C9A84C, #A67C2E);
+  border-color: transparent; color: white;
+  box-shadow: 0 4px 14px rgba(201,168,76,0.35);
 }
-.filter-chip svg { width: 13px; height: 13px; }
+.filter-chip svg { width: 12px; height: 12px; flex-shrink: 0; }
+
 .filter-divider {
-  width: 1px; height: 24px; flex-shrink: 0;
-  background: rgba(201,168,76,0.2);
+  width: 1px; height: 20px; flex-shrink: 0;
+  background: rgba(201,168,76,0.2); margin: 0 4px;
 }
 .filter-clear {
   background: none; border: none; cursor: pointer;
-  font-size: 12px; color: #C9A84C; font-weight: 600;
-  padding: 7px 12px; font-family: 'Inter', sans-serif;
-  white-space: nowrap;
+  font-size: 12px; color: #9CA3AF; font-weight: 500;
+  padding: 8px 10px; font-family: 'Inter', sans-serif;
+  white-space: nowrap; flex-shrink: 0;
+  border-radius: 50px;
+  transition: color 0.2s;
 }
+.filter-clear:hover { color: #DC2626; }
 
 /* ══ LAYOUT PRINCIPAL ══ */
 .search-main {
-  max-width: 1280px; margin: 0 auto;
-  padding: 24px 24px 60px;
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 24px; align-items: start;
+  max-width: 1400px; margin: 0 auto;
+  padding: 20px 32px 60px;
 }
 @media (max-width: 960px) {
-  .search-main { grid-template-columns: 1fr; }
-  .search-sidebar { display: none; }
   .search-bar { grid-template-columns: 1fr; border-radius: 16px; }
   .search-bar-field { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.12); }
 }
 
-/* ══ SIDEBAR ══ */
-.search-sidebar {
-  position: sticky; top: 68px;
-  background: white;
-  border-radius: 20px;
-  border: 1px solid rgba(201,168,76,0.12);
-  box-shadow: 0 2px 16px rgba(27,67,50,0.06);
-  overflow: hidden;
-}
-.sidebar-section {
-  padding: 16px 18px;
-  border-bottom: 1px solid rgba(201,168,76,0.08);
-}
-.sidebar-section:last-child { border-bottom: none; }
-.sidebar-title {
-  font-size: 10px; font-weight: 700;
-  color: #C9A84C; text-transform: uppercase;
-  letter-spacing: 0.1em; margin-bottom: 10px;
-}
-.dest-btn {
-  display: flex; align-items: center;
-  justify-content: space-between;
-  width: 100%; padding: 8px 10px;
-  border-radius: 10px; border: none;
-  background: transparent; cursor: pointer;
-  font-size: 13px; color: #374151;
-  font-family: 'Inter', sans-serif;
-  transition: all 0.2s; text-align: left;
-}
-.dest-btn:hover { background: rgba(201,168,76,0.08); color: #1B4332; }
-.dest-btn.active {
-  background: rgba(201,168,76,0.12);
-  color: #1B4332; font-weight: 600;
-}
-.dest-count {
-  font-size: 11px; color: #9CA3AF;
-  background: #F3F4F6; padding: 2px 6px;
-  border-radius: 50px;
-}
-.dest-btn.active .dest-count { background: rgba(201,168,76,0.2); color: #C9A84C; }
-.type-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
-}
-.type-btn {
-  padding: 8px 10px; border-radius: 10px;
-  border: 1.5px solid rgba(201,168,76,0.2);
-  background: white; cursor: pointer;
-  font-size: 12px; font-weight: 500;
-  color: #6B7280; font-family: 'Inter', sans-serif;
-  transition: all 0.2s; text-align: center;
-}
-.type-btn:hover { border-color: #C9A84C; color: #1B4332; }
-.type-btn.active { background: #C9A84C; border-color: #C9A84C; color: white; }
+
 
 /* ══ ZONE RÉSULTATS ══ */
-.results-zone { min-width: 0; }
 .results-header {
   display: flex; align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px; flex-wrap: wrap; gap: 10px;
+  margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+  padding: 0 2px;
 }
 .results-count { font-size: 14px; color: #6B7280; }
-.results-count strong { color: #1B4332; font-size: 16px; }
+.results-count strong {
+  color: #1B4332; font-size: 18px;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+}
 .results-count .city-tag {
   display: inline-block;
-  background: rgba(201,168,76,0.1);
+  background: rgba(201,168,76,0.12);
   color: #C9A84C; font-weight: 600;
-  padding: 2px 10px; border-radius: 50px;
-  font-size: 13px; margin-left: 4px;
+  padding: 3px 12px; border-radius: 50px;
+  font-size: 13px; margin-left: 6px;
+  border: 1px solid rgba(201,168,76,0.25);
 }
 .sort-view {
   display: flex; align-items: center; gap: 8px;
@@ -882,130 +786,179 @@
 
 .results-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
 }
-@media (max-width: 1100px) {
+@media (max-width: 1280px) {
+  .results-grid { grid-template-columns: repeat(3,1fr); }
+}
+@media (max-width: 900px) {
   .results-grid { grid-template-columns: repeat(2,1fr); }
 }
-@media (max-width: 640px) {
+@media (max-width: 540px) {
   .results-grid { grid-template-columns: 1fr; }
 }
 
 .result-card {
-  background: white; border-radius: 18px;
-  border: 1px solid rgba(0,0,0,0.05);
-  box-shadow: 0 2px 12px rgba(27,67,50,0.06);
+  background: white;
+  border-radius: 20px;
+  border: 1px solid rgba(201,168,76,0.08);
+  box-shadow: 0 2px 16px rgba(27,67,50,0.06);
   overflow: hidden; cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
   display: flex; flex-direction: column;
+  position: relative;
 }
 .result-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 16px 40px rgba(27,67,50,0.13);
-  border-color: rgba(201,168,76,0.2);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 48px rgba(27,67,50,0.14);
+  border-color: rgba(201,168,76,0.3);
 }
-
 .result-card.featured {
   grid-column: span 2;
 }
-.result-card.featured .card-img { height: 280px; }
-.result-card.featured .card-name { font-size: 22px; }
+.result-card.featured .card-img { height: 320px; }
+.result-card.featured .card-name { font-size: 24px; }
+.result-card.featured .card-body { padding: 20px 22px; }
 
 .card-img-wrap { position: relative; overflow: hidden; }
 .card-img {
-  width: 100%; height: 200px;
+  width: 100%; height: 210px;
   object-fit: cover; display: block;
-  transition: transform 0.5s ease;
+  transition: transform 0.55s cubic-bezier(0.4,0,0.2,1);
 }
-.result-card:hover .card-img { transform: scale(1.04); }
+.result-card:hover .card-img { transform: scale(1.06); }
+
+/* Overlay dégradé bas sur l'image */
+.card-img-wrap::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(to top,
+    rgba(15,43,32,0.35) 0%, transparent 100%);
+  pointer-events: none;
+}
 
 .card-badge-type {
   position: absolute; top: 12px; left: 12px;
-  background: rgba(27,67,50,0.88);
+  background: rgba(15,43,32,0.82);
+  backdrop-filter: blur(8px);
   color: white; font-size: 10px; font-weight: 600;
-  padding: 4px 10px; border-radius: 50px;
-  text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 4px 12px; border-radius: 50px;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  z-index: 2;
 }
 .card-badge-stars {
   position: absolute; top: 12px; right: 12px;
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(8px);
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(10px);
   color: #C9A84C; font-size: 11px; font-weight: 600;
   padding: 4px 10px; border-radius: 50px;
-  border: 1px solid rgba(201,168,76,0.2);
+  border: 1px solid rgba(201,168,76,0.25);
+  z-index: 2;
 }
 .card-badge-new {
-  position: absolute; bottom: 12px; left: 12px;
-  background: #C9A84C; color: white;
-  font-size: 10px; font-weight: 700;
-  padding: 3px 10px; border-radius: 50px;
+  position: absolute; bottom: 14px; left: 12px;
+  background: linear-gradient(135deg, #C9A84C, #A67C2E);
+  color: white; font-size: 10px; font-weight: 700;
+  padding: 4px 12px; border-radius: 50px;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(201,168,76,0.4);
 }
 
-.card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+.card-body {
+  padding: 14px 16px 16px;
+  flex: 1; display: flex; flex-direction: column; gap: 0;
+}
 .card-name {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 18px; font-weight: 600; color: #1B4332;
-  margin-bottom: 4px; line-height: 1.2;
+  font-size: 17px; font-weight: 600; color: #1B4332;
+  margin-bottom: 4px; line-height: 1.25;
+  /* Truncate longues noms */
+  overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .card-location {
-  display: flex; align-items: center; gap: 5px;
+  display: flex; align-items: center; gap: 4px;
   font-size: 12px; color: #9CA3AF; margin-bottom: 10px;
 }
-.card-location svg { width: 12px; height: 12px; color: #C9A84C; flex-shrink: 0; }
-.card-amenities { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.card-location svg {
+  width: 11px; height: 11px;
+  color: #C9A84C; flex-shrink: 0;
+}
+
+.card-amenities {
+  display: flex; flex-wrap: wrap;
+  gap: 4px; margin-bottom: 12px;
+}
 .amenity-tag {
   font-size: 10px; padding: 3px 8px; border-radius: 50px;
   background: rgba(201,168,76,0.1); color: #C9A84C;
-  font-weight: 500;
+  font-weight: 500; white-space: nowrap;
 }
+
 .card-footer {
   display: flex; align-items: center;
   justify-content: space-between;
   margin-top: auto; padding-top: 12px;
-  border-top: 1px solid rgba(0,0,0,0.05);
+  border-top: 1px solid rgba(201,168,76,0.1);
 }
-.card-price-wrap {}
-.card-price-from { font-size: 10px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.06em; }
+.card-price-from {
+  font-size: 10px; color: #9CA3AF;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
 .card-price-val {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 20px; font-weight: 700; color: #1B4332;
+  font-size: 19px; font-weight: 700; color: #1B4332;
+  line-height: 1;
 }
-.card-price-night { font-size: 10px; color: #9CA3AF; }
+.card-price-night {
+  font-size: 10px; color: #9CA3AF; margin-top: 1px;
+}
 .card-cta {
-  padding: 8px 16px; border-radius: 10px;
+  padding: 8px 15px; border-radius: 10px;
   background: linear-gradient(135deg, #C9A84C, #A67C2E);
   color: white; border: none; cursor: pointer;
   font-size: 12px; font-weight: 700;
   font-family: 'Inter', sans-serif;
-  transition: all 0.2s;
+  transition: all 0.25s;
+  box-shadow: 0 3px 10px rgba(201,168,76,0.3);
+  white-space: nowrap;
 }
-.card-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(201,168,76,0.4); }
+.card-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 16px rgba(201,168,76,0.45);
+}
 
-.result-list { display: flex; flex-direction: column; gap: 12px; }
+.result-list { display: flex; flex-direction: column; gap: 14px; }
 .result-list-card {
-  background: white; border-radius: 16px;
-  border: 1px solid rgba(0,0,0,0.05);
-  box-shadow: 0 2px 10px rgba(27,67,50,0.05);
+  background: white; border-radius: 18px;
+  border: 1px solid rgba(201,168,76,0.08);
+  box-shadow: 0 2px 12px rgba(27,67,50,0.05);
   overflow: hidden; cursor: pointer;
   display: flex; transition: all 0.3s;
 }
 .result-list-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(27,67,50,0.1);
-  border-color: rgba(201,168,76,0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(27,67,50,0.1);
+  border-color: rgba(201,168,76,0.25);
 }
-.list-img { width: 200px; min-width: 200px; height: 150px; object-fit: cover; }
+.list-img {
+  width: 220px; min-width: 220px;
+  height: 160px; object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.result-list-card:hover .list-img { transform: scale(1.04); }
 .list-body {
-  flex: 1; padding: 16px;
+  flex: 1; padding: 18px 20px;
   display: flex; align-items: center; gap: 16px;
 }
-.list-info { flex: 1; }
 .list-right {
   display: flex; flex-direction: column;
-  align-items: flex-end; gap: 8px;
-  padding: 16px; border-left: 1px solid rgba(0,0,0,0.05);
-  min-width: 150px;
+  align-items: flex-end; gap: 10px;
+  padding: 18px 20px; border-left:
+  1px solid rgba(201,168,76,0.1);
+  min-width: 170px; justify-content: center;
 }
 
 .skel {

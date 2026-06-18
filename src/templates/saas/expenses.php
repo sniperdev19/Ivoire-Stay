@@ -1,4 +1,7 @@
-<?php ?>
+<?php
+// Fournir un fallback pour $base_url si non injecté
+$base_url = $base_url ?? rtrim(APP_URL, '/');
+?>
 <!-- Template Dépenses SaaS -->
 
 <div x-data="{
@@ -10,10 +13,16 @@
 
   categories: [ { value:'maintenance', label:'Maintenance' }, { value:'salaries', label:'Salaires' }, { value:'supplies', label:'Fournitures' }, { value:'utilities', label:'Énergie / Eau' }, { value:'marketing', label:'Marketing' }, { value:'other', label:'Autre' } ],
 
-  fallbackExpenses: [ { id:1, label:'Réparation climatisation', amount:45000, category:'maintenance', date:'2026-06-05', notes:'' }, { id:2, label:'Salaire femme de ménage', amount:80000, category:'salaries', date:'2026-06-01', notes:'Mois de mai' }, { id:3, label:'Facture électricité', amount:32000, category:'utilities', date:'2026-06-08', notes:'' }, { id:4, label:'Produits ménagers', amount:15000, category:'supplies', date:'2026-06-10', notes:'' } ],
+  /* fallbackExpenses: [ { id:1, label:'Réparation climatisation', amount:45000, category:'maintenance', date:'2026-06-05', notes:'' }, { id:2, label:'Salaire femme de ménage', amount:80000, category:'salaries', date:'2026-06-01', notes:'Mois de mai' }, { id:3, label:'Facture électricité', amount:32000, category:'utilities', date:'2026-06-08', notes:'' }, { id:4, label:'Produits ménagers', amount:15000, category:'supplies', date:'2026-06-10', notes:'' } ], */
 
-  apiHeaders() { return { 'Content-Type':'application/json', 'Authorization':'Bearer '+localStorage.getItem('token') }; },
-  estId() { return localStorage.getItem('establishment_id')||'1'; },
+  apiHeaders() { const token = localStorage.getItem('token') ?? ''; return { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token }; },
+  estId() {
+    let id = localStorage.getItem('establishment_id');
+    if (id && id !== 'null' && id !== 'undefined') return id;
+    try { const list = JSON.parse(localStorage.getItem('establishments') || '[]'); if (Array.isArray(list) && list.length>0) { id = list[0].id ?? list[0].establishment_id; if (id) { localStorage.setItem('establishment_id', String(id)); return String(id); } } } catch(e) {}
+    try { const user = JSON.parse(localStorage.getItem('user') || '{}'); if (user.establishment_id) { localStorage.setItem('establishment_id', String(user.establishment_id)); return String(user.establishment_id); } } catch(e) {}
+    return '1';
+  },
 
   async init() { await this.loadExpenses(); },
 
@@ -22,9 +31,19 @@
     try {
       const res = await fetch('<?= $base_url ?>/api/expenses?establishment_id='+this.estId()+(this.categoryFilter? '&category='+this.categoryFilter:''), { headers: this.apiHeaders() });
       const data = await res.json();
-      if (data.success) this.expenses = data.data?.expenses ?? data.data ?? [];
-      if (!this.expenses.length) this.expenses = this.fallbackExpenses;
-    } catch(e) { this.expenses = this.fallbackExpenses; this.error = 'Données de démonstration.'; }
+      if (data.success) {
+        this.expenses = data.data?.expenses ?? data.data ?? [];
+        // Ne PAS activer le fallback si l'API répond avec succès
+      } else {
+        console.warn('API error:', data.message);
+        // Laisser le tableau vide — ne pas charger le fallback
+        this.expenses = [];
+      }
+    } catch(e) {
+      this.expenses = [];
+      console.error('Network error:', e);
+      this.error = 'Impossible de charger les dépenses. Veuillez réessayer.';
+    }
     finally { this.loading = false; }
   },
 

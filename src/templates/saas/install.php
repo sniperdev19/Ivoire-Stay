@@ -1,5 +1,7 @@
 <?php
 // Page autonome — installation
+// Fournir un fallback pour $base_url si non injecté
+$base_url = $base_url ?? rtrim(APP_URL, '/');
 ?>
 <!doctype html>
 <html lang="fr">

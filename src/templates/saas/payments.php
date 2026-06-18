@@ -1,4 +1,7 @@
-<?php ?>
+<?php
+// Fournir un fallback pour $base_url si non injecté
+$base_url = $base_url ?? rtrim(APP_URL, '/');
+?>
 <!-- Template Paiements SaaS -->
 
 <div x-data="{
@@ -8,14 +11,20 @@
 
   form: { booking_id:'', amount:'', method:'mobile_money', type:'full', status:'pending', reference:'', notes:'' },
 
-  fallbackPayments: [
+  /* fallbackPayments: [
     { id:1, booking_id:1, client_name:'Kouamé Adou', amount:100000, method:'mobile_money', type:'full', status:'confirmed', reference:'MM-001', created_at:'2026-06-10' },
     { id:2, booking_id:2, client_name:'Fatou Diallo', amount:25000, method:'cash', type:'deposit', status:'confirmed', reference:'CASH-002', created_at:'2026-06-12' },
     { id:3, booking_id:3, client_name:'Marc Koffi', amount:150000, method:'mobile_money', type:'full', status:'pending', reference:'MM-003', created_at:'2026-06-14' }
-  ],
+  ], */
 
-  apiHeaders() { return { 'Content-Type':'application/json', 'Authorization':'Bearer '+localStorage.getItem('token') }; },
-  estId() { return localStorage.getItem('establishment_id')||'1'; },
+  apiHeaders() { const token = localStorage.getItem('token') ?? ''; return { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token }; },
+  estId() {
+    let id = localStorage.getItem('establishment_id');
+    if (id && id !== 'null' && id !== 'undefined') return id;
+    try { const list = JSON.parse(localStorage.getItem('establishments') || '[]'); if (Array.isArray(list) && list.length>0) { id = list[0].id ?? list[0].establishment_id; if (id) { localStorage.setItem('establishment_id', String(id)); return String(id); } } } catch(e) {}
+    try { const user = JSON.parse(localStorage.getItem('user') || '{}'); if (user.establishment_id) { localStorage.setItem('establishment_id', String(user.establishment_id)); return String(user.establishment_id); } } catch(e) {}
+    return '1';
+  },
 
   async init() { await this.loadPayments(); },
 
@@ -24,9 +33,18 @@
     try {
       const res = await fetch('<?= $base_url ?>/api/payments?establishment_id='+this.estId()+(this.methodFilter? '&method='+this.methodFilter:'')+(this.statusFilter? '&status='+this.statusFilter:''), { headers: this.apiHeaders() });
       const data = await res.json();
-      if (data.success) this.payments = data.data?.payments ?? data.data ?? [];
-      if (!this.payments.length) this.payments = this.fallbackPayments;
-    } catch(e) { this.payments = this.fallbackPayments; this.error = 'Données de démonstration.'; }
+      if (data.success) {
+        this.payments = data.data?.payments ?? data.data ?? [];
+        // Ne PAS activer le fallback si l'API répond avec succès
+      } else {
+        console.warn('API error:', data.message);
+        this.payments = [];
+      }
+    } catch(e) {
+      this.payments = [];
+      console.error('Network error:', e);
+      this.error = 'Impossible de charger les paiements. Veuillez réessayer.';
+    }
     finally { this.loading = false; }
   },
 

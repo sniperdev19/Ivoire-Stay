@@ -1,4 +1,7 @@
-<?php ?>
+<?php
+// Fournir un fallback pour $base_url si non injecté
+$base_url = $base_url ?? rtrim(APP_URL, '/');
+?>
 <!-- Aide & FAQ — template injecté via $content -->
 
 <div x-data="{ openFaq:null, activeSection:'start' }">

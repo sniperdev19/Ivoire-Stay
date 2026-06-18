@@ -1,4 +1,7 @@
-<?php ?>
+<?php
+// Fournir un fallback pour $base_url si non injecté
+$base_url = $base_url ?? rtrim(APP_URL, '/');
+?>
 <!-- Template Factures SaaS -->
 <!-- Variables disponibles : $title, $page, $base_url -->
 
@@ -12,14 +15,14 @@
 
   form: { booking_id:'', room_id:'', client_name:'', client_email:'', amount_ht:'', tax_rate:18, notes:'', status:'draft' },
 
-  fallbackInvoices: [
+  /* fallbackInvoices: [
     { id:1, invoice_number:'INV-2026-001', client_name:'Kouamé Adou', client_email:'k@test.ci', amount_ht:84746, tax_rate:18, amount_ttc:100000, status:'paid', created_at:'2026-06-10', booking_id:1 },
     { id:2, invoice_number:'INV-2026-002', client_name:'Fatou Diallo', client_email:'f@test.ci', amount_ht:42373, tax_rate:18, amount_ttc:50000, status:'sent', created_at:'2026-06-12', booking_id:2 },
     { id:3, invoice_number:'INV-2026-003', client_name:'Marc Koffi', client_email:'m@test.ci', amount_ht:127119, tax_rate:18, amount_ttc:150000, status:'draft', created_at:'2026-06-14', booking_id:3 }
-  ],
+  ], */
 
-  apiHeaders() { return { 'Content-Type':'application/json', 'Authorization':'Bearer '+localStorage.getItem('token') }; },
-  estId() { return localStorage.getItem('establishment_id')||'1'; },
+  apiHeaders() { const token = localStorage.getItem('token') ?? ''; return { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token }; },
+  estId() { let id = localStorage.getItem('establishment_id'); if (id && id !== 'null' && id !== 'undefined') return id; try { const list = JSON.parse(localStorage.getItem('establishments') || '[]'); if (Array.isArray(list) && list.length>0) { id = list[0].id ?? list[0].establishment_id; if (id) { localStorage.setItem('establishment_id', String(id)); return String(id); } } } catch(e) {} try { const user = JSON.parse(localStorage.getItem('user') || '{}'); if (user.establishment_id) { localStorage.setItem('establishment_id', String(user.establishment_id)); return String(user.establishment_id); } } catch(e) {} return '1'; },
 
   async init() { await this.loadInvoices(); },
 
@@ -31,9 +34,18 @@
       if (data.success) {
         this.invoices = data.data?.invoices ?? data.data ?? [];
         this.total = data.data?.total ?? this.invoices.length;
+        // Ne PAS activer le fallback si l'API répond avec succès
+      } else {
+        console.warn('API error:', data.message);
+        this.invoices = [];
+        this.total = 0;
       }
-      if (!this.invoices.length) this.invoices = this.fallbackInvoices;
-    } catch(e) { this.invoices = this.fallbackInvoices; this.error = 'Données de démonstration affichées.'; }
+    } catch(e) {
+      this.invoices = [];
+      this.total = 0;
+      console.error('Network error:', e);
+      this.error = 'Impossible de charger les factures. Veuillez réessayer.';
+    }
     finally { this.loading = false; }
   },
 
