@@ -50,12 +50,12 @@ class PageController
 
     public function invoices(Request $req, array $params = []): void
     {
-        Response::render('saas/invoices', ['title' => 'Facturation', 'page' => 'invoices']);
+        Response::render('saas/billing', ['title' => 'Comptabilité', 'page' => 'billing', 'defaultTab' => 'invoices']);
     }
 
     public function payments(Request $req, array $params = []): void
     {
-        Response::render('saas/payments', ['title' => 'Paiements', 'page' => 'payments']);
+        Response::render('saas/billing', ['title' => 'Comptabilité', 'page' => 'billing', 'defaultTab' => 'payments']);
     }
 
     public function expenses(Request $req, array $params = []): void
