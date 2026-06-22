@@ -23,7 +23,11 @@ class Invoice extends BaseModel
                 b.check_in, b.check_out,
                 r.number as room_number,
                 COALESCE(CONCAT(pc.first_name, ' ', pc.last_name), u.name) as client_name,
-                COALESCE(pc.email, u.email) as client_email
+                COALESCE(pc.email, u.email) as client_email,
+                COALESCE((
+                    SELECT SUM(p.amount) FROM payments p
+                    WHERE p.invoice_id = i.id AND p.status = 'completed'
+                ), 0) as paid_amount
              FROM invoices i
              JOIN bookings b ON b.id = i.booking_id
              JOIN rooms r ON r.id = b.room_id

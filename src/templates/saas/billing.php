@@ -113,9 +113,9 @@ $defaultTab = $defaultTab ?? 'invoices';
                   <tr>
                     <th>N° Facture</th>
                     <th>Client</th>
-                    <th>Montant HT</th>
-                    <th>TVA</th>
                     <th>Montant TTC</th>
+                    <th>Encaissé</th>
+                    <th>Restant</th>
                     <th>Statut</th>
                     <th>Date</th>
                     <th>Actions</th>
@@ -138,9 +138,13 @@ $defaultTab = $defaultTab ?? 'invoices';
                         <div style="font-weight:600;color:#111827;" x-text="inv.client_name ?? '—'"></div>
                         <div style="font-size:11px;color:#9CA3AF;" x-text="inv.client_email ?? ''"></div>
                       </td>
-                      <td x-text="formatPrice(inv.amount_ht)"></td>
-                      <td x-text="(inv.tax_rate ?? 0) + '%'"></td>
-                      <td style="font-weight:800;color:#1B4332;" x-text="formatPrice(inv.amount_ttc)"></td>
+                      <td style="font-weight:700;color:#1B4332;" x-text="formatPrice(inv.amount_ttc)"></td>
+                      <td style="color:#16a34a;font-weight:600;" x-text="formatPrice(inv.paid_amount ?? 0)"></td>
+                      <td>
+                        <span :style="(inv.amount_ttc - (inv.paid_amount||0)) <= 0 ? 'color:#16a34a;font-weight:600;' : 'color:#D97706;font-weight:600;'"
+                              x-text="(inv.amount_ttc - (inv.paid_amount||0)) <= 0 ? '—' : formatPrice(inv.amount_ttc - (inv.paid_amount||0))">
+                        </span>
+                      </td>
                       <td>
                         <span :class="invStatusCfg(inv.status).badge" x-text="invStatusCfg(inv.status).label"></span>
                         <div x-show="inv.paid_at" style="font-size:11px;color:#16a34a;margin-top:2px;" x-text="inv.paid_at ? formatDate(inv.paid_at) : ''"></div>
@@ -358,9 +362,36 @@ $defaultTab = $defaultTab ?? 'invoices';
               </select>
             </div>
           </template>
+          <!-- Récap restant si facture sélectionnée -->
+          <template x-if="payRemaining && !editing">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+              <div style="background:#F9FAFB;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.05em;">Total facture</div>
+                <div style="font-size:13px;font-weight:700;color:#111827;" x-text="formatPrice(payRemaining.ttc)"></div>
+              </div>
+              <div style="background:#F0FDF4;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.05em;">Déjà payé</div>
+                <div style="font-size:13px;font-weight:700;color:#16a34a;" x-text="formatPrice(payRemaining.paid)"></div>
+              </div>
+              <div style="background:#FEF3C7;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.05em;">Restant</div>
+                <div style="font-size:13px;font-weight:700;color:#D97706;" x-text="formatPrice(payRemaining.remaining)"></div>
+              </div>
+            </div>
+          </template>
+
           <div>
-            <label class="saas-label">Montant</label>
+            <label class="saas-label">Montant à encaisser</label>
             <input class="saas-input" type="number" x-model.number="payForm.amount" placeholder="0" />
+            <!-- Solde après ce paiement -->
+            <template x-if="payRemaining && payRemaining.afterThis > 0">
+              <div style="font-size:12px;color:#6B7280;margin-top:4px;">
+                Solde restant après ce paiement : <strong style="color:#D97706;" x-text="formatPrice(payRemaining.afterThis)"></strong>
+              </div>
+            </template>
+            <template x-if="payRemaining && payRemaining.afterThis <= 0 && payForm.amount > 0">
+              <div style="font-size:12px;color:#16a34a;margin-top:4px;font-weight:600;">✓ Facture soldée intégralement</div>
+            </template>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div>

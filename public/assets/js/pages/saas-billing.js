@@ -183,8 +183,23 @@ function billingPage(baseUrl, defaultTab) {
     const inv = this.invoices.find(i => i.id == this.payForm.invoice_id);
     if (inv) {
       this.payForm.booking_id = inv.booking_id;
-      this.payForm.amount     = inv.amount_ttc ?? inv.amount_ht ?? '';
+      const remaining = (parseFloat(inv.amount_ttc) || 0) - (parseFloat(inv.paid_amount) || 0);
+      this.payForm.amount = Math.max(0, remaining);
     }
+  },
+
+  get payRemaining() {
+    const inv = this.invoices.find(i => i.id == this.payForm.invoice_id);
+    if (!inv) return null;
+    const ttc      = parseFloat(inv.amount_ttc)      || 0;
+    const paid     = parseFloat(inv.paid_amount)     || 0;
+    const entered  = parseFloat(this.payForm.amount) || 0;
+    return {
+      ttc,
+      paid,
+      remaining:  Math.max(0, ttc - paid),
+      afterThis:  Math.max(0, ttc - paid - entered),
+    };
   },
 
   async savePayment() {
