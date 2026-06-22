@@ -172,12 +172,26 @@
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;"><div style="font-size:22px;font-weight:800;color:#111827;" x-text="occupancyPct + '%' "></div><div style="font-size:11px;color:#9CA3AF;">Occupation</div></div>
         </div>
 
-        <?php $types = [ ['label'=>'Standard','pct'=>45,'color'=>'#C9A84C'], ['label'=>'Supérieure','pct'=>30,'color'=>'#2563EB'], ['label'=>'Suite','pct'=>15,'color'=>'#16A34A'], ['label'=>'Deluxe','pct'=>10,'color'=>'#7C3AED'] ]; ?>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <?php foreach($types as $t): ?>
-            <div style="display:flex;align-items:center;gap:10px;"><div style="width:8px;height:8px;border-radius:2px;background:<?= $t['color'] ?>;"></div><div style="font-size:13px;color:#374151;flex:1;"><?= htmlspecialchars($t['label']) ?></div><div style="font-size:13px;font-weight:600;color:#111827;min-width:32px;text-align:right;"><?= $t['pct'] ?>%</div><div style="width:80px;height:5px;background:rgba(0,0,0,0.06);border-radius:3px;overflow:hidden;"><div style="height:100%;width:<?= $t['pct'] ?>%;background:<?= $t['color'] ?>;border-radius:3px;"></div></div></div>
-          <?php endforeach; ?>
-          <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.06);font-size:12px;color:#6B7280;">Total chambres : <strong style="color:#111827;" x-text="stats?.total_rooms ?? 0"></strong></div>
+        <!-- Aucun type de chambre configuré -->
+        <div x-show="typeDistribution.length === 0" style="font-size:13px;color:#9CA3AF;text-align:center;padding:12px 0;">
+          Aucun type de chambre configuré.
+        </div>
+        <div x-show="typeDistribution.length > 0" style="display:flex;flex-direction:column;gap:12px;">
+          <template x-for="t in typeDistribution" :key="t.label">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div :style="'width:8px;height:8px;border-radius:2px;background:' + t.color + ';flex-shrink:0;'"></div>
+              <div style="font-size:13px;color:#374151;flex:1;" x-text="t.label"></div>
+              <div style="font-size:13px;font-weight:600;color:#111827;min-width:40px;text-align:right;" x-text="t.count + ' ch.'"></div>
+              <div style="font-size:12px;color:#6B7280;min-width:32px;text-align:right;" x-text="t.pct + '%'"></div>
+              <div style="width:72px;height:5px;background:rgba(0,0,0,0.06);border-radius:3px;overflow:hidden;flex-shrink:0;">
+                <div :style="'height:100%;width:' + t.pct + '%;border-radius:3px;background:' + t.color + ';transition:width 0.8s ease;'"></div>
+              </div>
+            </div>
+          </template>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.06);font-size:12px;color:#6B7280;">
+            Total chambres : <strong style="color:#111827;" x-text="stats?.total_rooms ?? 0"></strong>
+            &nbsp;·&nbsp; Occupées : <strong style="color:#1B4332;" x-text="occupiedRooms"></strong>
+          </div>
         </div>
       </div>
     </div>

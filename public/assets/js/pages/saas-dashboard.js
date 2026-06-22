@@ -80,5 +80,17 @@ function dashboardPage(baseUrl) {
     get occupancyPct() {
       return Math.min(100, Math.round(this.stats?.occupancy_rate ?? 0));
     },
+
+    get typeDistribution() {
+      const palette = ['#C9A84C','#2563EB','#16A34A','#7C3AED','#DC2626','#0891B2','#D97706'];
+      return (this.stats?.type_distribution ?? []).map((t, i) => ({
+        ...t,
+        color: palette[i % palette.length],
+      }));
+    },
+
+    get occupiedRooms() {
+      return this.stats?.occupied_rooms ?? 0;
+    },
   };
 }
