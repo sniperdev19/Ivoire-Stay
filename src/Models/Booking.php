@@ -74,6 +74,7 @@ class Booking extends BaseModel
     {
         return Database::query(
             "SELECT b.id, b.check_in, b.check_out, b.status,
+                    b.total_amount, b.booking_type, b.hours,
                     r.id as room_id, r.number as room_number, r.floor,
                     rt.name as room_type,
                     COALESCE(CONCAT(pc.first_name, ' ', pc.last_name), u.name) as client_name
