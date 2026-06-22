@@ -150,10 +150,14 @@ $defaultTab = $defaultTab ?? 'invoices';
                         <div x-show="inv.paid_at" style="font-size:11px;color:#16a34a;margin-top:2px;" x-text="inv.paid_at ? formatDate(inv.paid_at) : ''"></div>
                       </td>
                       <td x-text="formatDate(inv.issued_at)"></td>
-                      <td style="white-space:nowrap;display:flex;gap:6px;">
-                        <button class="btn-saas-secondary" @click.stop="downloadPdf(inv.id)" title="Télécharger PDF">
+                      <td style="white-space:nowrap;display:flex;gap:6px;align-items:center;">
+                        <button class="btn-saas-secondary" @click.stop="downloadPdf(inv.id)" title="Télécharger PDF" style="display:inline-flex;align-items:center;gap:4px;">
                           <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                           PDF
+                        </button>
+                        <button class="btn-saas-secondary" @click.stop="openSendEmail(inv)" title="Envoyer par email" style="display:inline-flex;align-items:center;gap:4px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                          Envoyer
                         </button>
                         <button class="btn-saas-secondary" @click.stop="openEditInvoice(inv)">Modifier</button>
                       </td>
@@ -428,6 +432,82 @@ $defaultTab = $defaultTab ?? 'invoices';
           <div x-show="submitting" style="width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);border-top-color:white;animation:spin 0.7s linear infinite;"></div>
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- MODAL : Envoyer facture par email                                  -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <div x-cloak x-show="showModal && modalType === 'send_email'" class="saas-modal-bg" @click.self="showModal=false">
+    <div class="saas-modal" style="max-width:440px;">
+      <div class="saas-modal-header">
+        <h2 class="saas-modal-title" style="display:flex;align-items:center;gap:8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          Envoyer la facture par email
+        </h2>
+        <button class="saas-modal-close" @click="showModal=false">✕</button>
+      </div>
+
+      <!-- Succès -->
+      <template x-if="sendEmailSuccess">
+        <div style="padding:32px 24px;text-align:center;">
+          <div style="width:56px;height:56px;background:#DCFCE7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px;">✓</div>
+          <p style="margin:0;font-size:15px;font-weight:600;color:#166534;">Facture envoyée !</p>
+          <p style="margin:6px 0 0;font-size:13px;color:#6B7280;" x-text="'Email envoyé à ' + sendEmailInput"></p>
+        </div>
+      </template>
+
+      <template x-if="!sendEmailSuccess">
+        <div>
+          <div class="saas-modal-body" style="display:flex;flex-direction:column;gap:16px;">
+            <!-- Récap facture -->
+            <template x-if="sendEmailTarget">
+              <div style="background:#F9FAFB;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;">
+                <div style="font-size:13px;font-weight:700;color:#111827;" x-text="sendEmailTarget.invoice_number"></div>
+                <div style="font-size:12px;color:#6B7280;">
+                  <span x-text="sendEmailTarget.client_name"></span> ·
+                  <span style="font-weight:600;color:#1B4332;" x-text="formatPrice(sendEmailTarget.amount_ttc)"></span>
+                </div>
+                <div style="font-size:11px;margin-top:2px;">
+                  <span :class="invStatusCfg(sendEmailTarget.status).badge" x-text="invStatusCfg(sendEmailTarget.status).label"></span>
+                </div>
+              </div>
+            </template>
+
+            <div>
+              <label class="saas-label">Adresse email du destinataire</label>
+              <input class="saas-input"
+                     type="email"
+                     x-model="sendEmailInput"
+                     placeholder="client@exemple.com"
+                     @keydown.enter="confirmSendEmail()" />
+              <p style="margin:4px 0 0;font-size:11px;color:#9CA3AF;">La facture PDF sera générée et envoyée en pièce jointe.</p>
+            </div>
+
+            <template x-if="sendEmailError">
+              <div style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.12);padding:10px;border-radius:8px;color:#DC2626;font-size:13px;" x-text="sendEmailError"></div>
+            </template>
+          </div>
+
+          <div class="saas-modal-footer">
+            <button class="btn-saas-secondary" @click="showModal=false">Annuler</button>
+            <button class="btn-saas-primary" @click="confirmSendEmail()" :disabled="sendEmailLoading" style="display:inline-flex;align-items:center;gap:6px;">
+              <template x-if="!sendEmailLoading">
+                <span style="display:inline-flex;align-items:center;gap:6px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                  Envoyer
+                </span>
+              </template>
+              <template x-if="sendEmailLoading">
+                <span style="display:inline-flex;align-items:center;gap:6px;">
+                  <div style="width:13px;height:13px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);border-top-color:white;animation:spin 0.7s linear infinite;"></div>
+                  Envoi en cours…
+                </span>
+              </template>
+            </button>
+          </div>
+        </div>
+      </template>
     </div>
   </div>
 

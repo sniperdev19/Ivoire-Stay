@@ -131,6 +131,47 @@ function billingPage(baseUrl, defaultTab) {
     window.open(baseUrl + '/api/invoices/' + id + '/pdf?token=' + localStorage.getItem('token'), '_blank');
   },
 
+  // ── Envoi facture par email ────────────────────────────────────────────
+  sendEmailTarget: null,   // { id, email, name }
+  sendEmailInput: '',
+  sendEmailLoading: false,
+  sendEmailError: null,
+  sendEmailSuccess: false,
+
+  openSendEmail(inv) {
+    this.sendEmailTarget  = inv;
+    this.sendEmailInput   = inv.client_email ?? '';
+    this.sendEmailError   = null;
+    this.sendEmailSuccess = false;
+    this.sendEmailLoading = false;
+    this.modalType        = 'send_email';
+    this.showModal        = true;
+  },
+
+  async confirmSendEmail() {
+    const email = (this.sendEmailInput || '').trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.sendEmailError = 'Adresse email invalide.'; return;
+    }
+    this.sendEmailLoading = true; this.sendEmailError = null;
+    try {
+      const res  = await fetch(baseUrl + '/api/invoices/' + this.sendEmailTarget.id + '/send', {
+        method: 'POST',
+        headers: this.apiHeaders(),
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        this.sendEmailSuccess = true;
+        await this.loadInvoices();
+        setTimeout(() => { this.showModal = false; }, 1800);
+      } else {
+        this.sendEmailError = data.message ?? 'Erreur envoi.';
+      }
+    } catch(e) { this.sendEmailError = 'Erreur réseau.'; }
+    finally { this.sendEmailLoading = false; }
+  },
+
   get invTotalPages() { return Math.max(1, Math.ceil(this.invTotal / this.invPerPage)); },
   async invGoToPage(p) {
     if (p < 1 || p > this.invTotalPages) return;

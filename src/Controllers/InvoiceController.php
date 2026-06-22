@@ -4,7 +4,7 @@ namespace Controllers;
 
 use Core\{Request, Response, PlanGate, Guard};
 use Models\{Invoice, Payment, Booking, Establishment};
-use Services\PdfService;
+use Services\{PdfService, MailService};
 
 class InvoiceController
 {
@@ -93,6 +93,33 @@ class InvoiceController
             Response::success(['pdf_path' => $pdfPath]);
         } catch (\Exception $e) {
             Response::error('Erreur génération PDF: ' . $e->getMessage());
+        }
+    }
+
+    public function sendByMail(Request $req, array $params = []): void
+    {
+        $this->gate();
+        $id  = (int) ($params['id'] ?? 0);
+        Guard::requireInvoice($id);
+        $inv = Invoice::findWithDetails($id);
+        if (!$inv) Response::notFound('Facture introuvable');
+
+        $email = $req->get('email') ?: ($inv['client_email'] ?? '');
+        if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            Response::error('Adresse email invalide ou introuvable');
+        }
+
+        try {
+            $pdfPath    = PdfService::generateInvoice($inv);
+            $pdfAbsPath = BASE_PATH . '/' . $pdfPath;
+            Invoice::update($id, ['pdf_path' => $pdfPath, 'status' => $inv['status'] === 'draft' ? 'sent' : $inv['status']]);
+
+            $inv['client_email'] = $email;
+            MailService::invoiceMail($inv, $pdfAbsPath);
+
+            Response::success(['sent_to' => $email], 'Facture envoyée par email');
+        } catch (\Exception $e) {
+            Response::error('Erreur envoi email : ' . $e->getMessage());
         }
     }
 

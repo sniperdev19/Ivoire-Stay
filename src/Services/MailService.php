@@ -276,4 +276,64 @@ HTML;
 
         self::send($to, $name, "Abonnement {$planLabel} activé — Ivoire Stay", self::layout($content, "Votre abonnement {$planLabel} est actif"));
     }
+
+    // =========================================================================
+    // 5. ENVOI DE FACTURE
+    // =========================================================================
+    public static function invoiceMail(array $inv, string $pdfAbsPath): void
+    {
+        $to       = $inv['client_email'] ?? '';
+        $name     = $inv['client_name']  ?? 'Client';
+        $hotel    = $inv['establishment_name'] ?? MAIL_FROM_NAME;
+        $num      = $inv['invoice_number']  ?? '';
+        $ttc      = number_format((float)($inv['amount_ttc'] ?? 0), 0, ',', ' ') . ' FCFA';
+        $paid     = (float)($inv['paid_amount'] ?? 0);
+        $remaining = max(0, (float)($inv['amount_ttc'] ?? 0) - $paid);
+        $status   = $inv['status'] ?? 'draft';
+
+        if (!$to) return;
+
+        $rows = [['Facture N°', $num], ['Établissement', $hotel]];
+        if (!empty($inv['check_in'])) {
+            $rows[] = ['Arrivée', self::fmtDate($inv['check_in'])];
+        }
+        if (!empty($inv['check_out']) && $inv['check_out'] !== $inv['check_in']) {
+            $rows[] = ['Départ', self::fmtDate($inv['check_out'])];
+        }
+        $rows[] = ['Montant TTC', $ttc];
+        if ($paid > 0) {
+            $rows[] = ['Déjà réglé', number_format($paid, 0, ',', ' ') . ' FCFA'];
+        }
+
+        $soldeBlock = '';
+        if ($status === 'paid' || $remaining <= 0) {
+            $soldeBlock = "<div style='background:#DCFCE7;border-radius:8px;padding:14px 18px;margin:16px 0;text-align:center;font-weight:700;color:#166534;font-size:15px;'>✓ Facture intégralement réglée</div>";
+        } elseif ($remaining > 0) {
+            $r = number_format($remaining, 0, ',', ' ') . ' FCFA';
+            $soldeBlock = "<div style='background:#FEF3C7;border-radius:8px;padding:14px 18px;margin:16px 0;text-align:center;color:#92400E;font-size:14px;'>Solde restant à régler : <strong style='font-size:16px;'>{$r}</strong></div>";
+        }
+
+        $content = "<h1 style='margin:0 0 6px;font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1B4332;'>"
+            . "Votre facture <em style='color:#C9A84C;font-style:italic;'>{$num}</em></h1>"
+            . "<p style='margin:0 0 20px;font-size:14px;color:#6B7280;'>Bonjour " . htmlspecialchars($name) . ", veuillez trouver ci-joint votre facture pour votre séjour à <strong>" . htmlspecialchars($hotel) . "</strong>.</p>"
+            . self::infoTable($rows)
+            . $soldeBlock
+            . "<p style='margin:16px 0 0;font-size:13px;color:#9CA3AF;'>La facture est disponible en pièce jointe au format PDF.</p>";
+
+        try {
+            $m = self::mailer();
+            $m->addAddress($to, $name);
+            $m->isHTML(true);
+            $m->Subject = "Facture {$num} — " . $hotel;
+            $m->Body    = self::layout($content, "Votre facture {$num} pour votre séjour à {$hotel}");
+            $m->AltBody = "Facture {$num} — Montant TTC : {$ttc}. Voir pièce jointe.";
+            if ($pdfAbsPath && file_exists($pdfAbsPath)) {
+                $m->addAttachment($pdfAbsPath, $num . '.pdf');
+            }
+            $m->send();
+        } catch (\Exception $e) {
+            error_log('[MailService] invoiceMail échec — ' . $e->getMessage());
+            throw $e;
+        }
+    }
 }

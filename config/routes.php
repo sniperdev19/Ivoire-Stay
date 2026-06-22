@@ -81,7 +81,8 @@ $router->get('/api/invoices',         'InvoiceController@index',    ['auth']);
 $router->post('/api/invoices',        'InvoiceController@store',    ['auth']);
 $router->get('/api/invoices/{id}',    'InvoiceController@show',     ['auth']);
 $router->put('/api/invoices/{id}',    'InvoiceController@update',   ['auth']);
-$router->get('/api/invoices/{id}/pdf', 'InvoiceController@pdf',     ['auth']);
+$router->get('/api/invoices/{id}/pdf',   'InvoiceController@pdf',        ['auth']);
+$router->post('/api/invoices/{id}/send', 'InvoiceController@sendByMail', ['auth']);
 
 // ─── API Payments ─────────────────────────────────────────────────────────────
 $router->get('/api/payments',      'InvoiceController@payments',       ['auth']);

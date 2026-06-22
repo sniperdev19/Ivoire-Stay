@@ -44,12 +44,17 @@ class Invoice extends BaseModel
         $inv = Database::query(
             "SELECT i.*,
                 b.check_in, b.check_out, b.guests_count, b.total_amount,
+                b.booking_type, b.hours,
                 r.number as room_number, rt.name as room_type,
                 e.name as establishment_name, e.address as establishment_address,
                 e.phone as establishment_phone,
                 COALESCE(CONCAT(pc.first_name, ' ', pc.last_name), u.name) as client_name,
                 COALESCE(pc.email, u.email) as client_email,
-                COALESCE(pc.phone, u.phone) as client_phone
+                COALESCE(pc.phone, u.phone) as client_phone,
+                COALESCE((
+                    SELECT SUM(p.amount) FROM payments p
+                    WHERE p.invoice_id = i.id AND p.status = 'completed'
+                ), 0) as paid_amount
              FROM invoices i
              JOIN bookings b ON b.id = i.booking_id
              JOIN rooms r ON r.id = b.room_id
