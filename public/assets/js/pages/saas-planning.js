@@ -12,7 +12,7 @@ function planningPage(baseUrl) {
   error: null,
   currentMonth: null,
   selectedBooking: null,
-  _dayMap: new Map(),
+  _dayMap: {},
 
   async init() {
     this.currentMonth = this._firstOfMonth();
@@ -24,13 +24,26 @@ function planningPage(baseUrl) {
     return new Date(t.getFullYear(), t.getMonth(), 1);
   },
 
+  _ymd(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  },
+
   async loadData() {
     this.loading = true;
     this.error   = null;
     try {
+      // Plage : 1er du mois précédent → dernier jour du mois suivant
+      const m   = this.currentMonth ?? this._firstOfMonth();
+      const from = this._ymd(new Date(m.getFullYear(), m.getMonth() - 1, 1));
+      const to   = this._ymd(new Date(m.getFullYear(), m.getMonth() + 2, 0));
+
+      const qs = `establishment_id=${this.estId()}&from=${from}&to=${to}`;
       const [roomsRes, planRes] = await Promise.all([
-        fetch(baseUrl + '/api/rooms?establishment_id='    + this.estId(), { headers: this.apiHeaders() }),
-        fetch(baseUrl + '/api/planning?establishment_id=' + this.estId(), { headers: this.apiHeaders() }),
+        fetch(baseUrl + '/api/rooms?'    + qs, { headers: this.apiHeaders() }),
+        fetch(baseUrl + '/api/planning?' + qs, { headers: this.apiHeaders() }),
       ]);
       const roomsData = await roomsRes.json();
       const planData  = await planRes.json();
@@ -55,22 +68,27 @@ function planningPage(baseUrl) {
     } catch(e) {
       this.rooms    = [];
       this.bookings = [];
-      this._dayMap  = new Map();
+      this._dayMap  = {};
       this.error = 'Erreur réseau. Vérifiez votre connexion.';
     } finally {
       this.loading = false;
     }
   },
 
-  /* Construit un index jour→[bookings] en O(n×durée), appelé une seule fois après loadData. */
+  /* Construit un index "YYYY-MM-DD" → [bookings]. Plain object pour compatibilité Alpine. */
   _buildDayMap() {
-    const map = new Map();
+    const map = {};
     for (const b of this.bookings) {
-      const ciTs = new Date(b.check_in).setHours(0, 0, 0, 0);
-      const coTs = new Date(b.check_out).setHours(0, 0, 0, 0);
-      for (let ts = ciTs; ts < coTs; ts += 86_400_000) {
-        if (!map.has(ts)) map.set(ts, []);
-        map.get(ts).push(b);
+      const ci = new Date(b.check_in.replace(' ', 'T'));
+      const co = new Date(b.check_out.replace(' ', 'T'));
+      ci.setHours(0, 0, 0, 0);
+      co.setHours(0, 0, 0, 0);
+      // Passage (check_in === check_out) : inclure ce jour
+      const end = ci.getTime() === co.getTime() ? new Date(ci.getTime() + 86_400_000) : co;
+      for (let d = new Date(ci); d < end; d.setDate(d.getDate() + 1)) {
+        const key = this._ymd(d);
+        if (!map[key]) map[key] = [];
+        map[key].push(b);
       }
     }
     this._dayMap = map;
@@ -99,7 +117,7 @@ function planningPage(baseUrl) {
     for (let i = 0; i < 42; i++) {
       const ts = new Date(d).setHours(0, 0, 0, 0);
       cells.push({
-        date:           new Date(ts),
+        ymd:            this._ymd(d),
         day:            d.getDate(),
         isCurrentMonth: d.getMonth() === month,
         isToday:        ts === todayTs,
@@ -109,25 +127,29 @@ function planningPage(baseUrl) {
     return cells;
   },
 
-  /* O(1) — lit l'index pré-construit */
-  getBookingsForDay(date) {
-    return this._dayMap.get(new Date(date).setHours(0, 0, 0, 0)) ?? [];
+  /* O(1) — lit l'index pré-construit. Accepte "YYYY-MM-DD". */
+  getBookingsForDay(ymd) {
+    return this._dayMap[ymd] ?? [];
   },
 
-  roomName(roomId) { return this.rooms.find(r => r.id == roomId)?.name ?? ''; },
+  roomName(roomId) {
+    const r = this.rooms.find(r => r.id == roomId);
+    return r ? (r.number ? 'Ch. ' + r.number : r.name ?? '') : '';
+  },
 
   chipColor(status)  { return BOOKING_STATUS[status]?.color ?? '#9CA3AF'; },
   statusLabel(s)     { return BOOKING_STATUS[s]?.label      ?? s; },
   statusBadge(s)     { return BOOKING_STATUS[s]?.badge      ?? 'badge'; },
 
-  shiftMonth(delta) {
+  async shiftMonth(delta) {
     const d = new Date(this.currentMonth);
     d.setMonth(d.getMonth() + delta);
     this.currentMonth = d;
+    await this.loadData();
   },
-  prevMonth() { this.shiftMonth(-1); },
-  nextMonth() { this.shiftMonth(+1); },
-  goToday()   { this.currentMonth = this._firstOfMonth(); },
+  async prevMonth() { await this.shiftMonth(-1); },
+  async nextMonth() { await this.shiftMonth(+1); },
+  async goToday()   { this.currentMonth = this._firstOfMonth(); await this.loadData(); },
 
   openDetail(booking)  { this.selectedBooking = booking; },
   closeDetail()        { this.selectedBooking = null; },

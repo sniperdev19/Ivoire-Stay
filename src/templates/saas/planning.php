@@ -81,7 +81,7 @@
         <div :class="'cal-month-cell' + (!cell.isCurrentMonth ? ' outside' : '') + (cell.isToday ? ' today' : '')">
           <div class="cal-cell-number" x-text="cell.day"></div>
           <div class="cal-cell-events">
-            <template x-for="b in getBookingsForDay(cell.date).slice(0, 2)" :key="b.id">
+            <template x-for="b in getBookingsForDay(cell.ymd).slice(0, 3)" :key="b.id">
               <div class="cal-chip"
                    :style="'background:' + chipColor(b.status)"
                    @click.stop="openDetail(b)"
@@ -90,9 +90,9 @@
                 <span class="cal-chip-room" x-text="roomName(b.room_id)"></span>
               </div>
             </template>
-            <div x-show="getBookingsForDay(cell.date).length > 2"
+            <div x-show="getBookingsForDay(cell.ymd).length > 3"
                  class="cal-more"
-                 x-text="'+' + (getBookingsForDay(cell.date).length - 2) + ' de plus'">
+                 x-text="'+' + (getBookingsForDay(cell.ymd).length - 3) + ' autre(s)'">
             </div>
           </div>
         </div>
