@@ -31,12 +31,17 @@ function bookingsPage(baseUrl) {
 
   form: {
     room_id: '', check_in: '', check_out: '',
-    client_name: '', client_email: '', client_phone: '',
-    booking_type: 'nuit', source: 'manual', notes: ''
+    first_name: '', last_name: '', client_email: '', client_phone: '',
+    booking_type: 'nuit', hours: 3, guests_count: 2, source: 'manual', notes: '',
   },
 
   async init() {
     await Promise.all([this.loadBookings(), this.loadRooms()]);
+  },
+
+  openCreate() {
+    this.resetForm();
+    this.showCreate = true;
   },
 
   async loadBookings() {
@@ -62,11 +67,14 @@ function bookingsPage(baseUrl) {
           client_name:  b.client_name  ?? b.public_client?.name  ?? b.user?.name  ?? 'Client #' + b.id,
           client_phone: b.client_phone ?? b.public_client?.phone ?? b.user?.phone ?? '',
           client_email: b.client_email ?? b.public_client?.email ?? b.user?.email ?? '',
-          room_name:    b.room_name    ?? (b.room_number ? 'Chambre ' + b.room_number : null) ?? b.room?.name ?? 'Chambre #' + b.room_id,
+          room_number:  b.room_number  ?? b.room?.number ?? '?',
+          room_type:    b.room_type    ?? b.room?.type_name ?? '',
           total_price:  b.total_price  ?? b.total_amount ?? 0,
-          nights: b.nights ?? (b.check_in && b.check_out
-            ? Math.round((new Date(b.check_out) - new Date(b.check_in)) / 86400000)
-            : 1),
+          hours:        b.hours ?? 0,
+          nights: b.booking_type === 'passage' ? 0
+            : (b.nights ?? (b.check_in && b.check_out
+              ? Math.round((new Date(b.check_out) - new Date(b.check_in)) / 86400000)
+              : 1)),
         }));
         this.total = data.data?.total ?? this.bookings.length;
       } else {
@@ -163,38 +171,35 @@ function bookingsPage(baseUrl) {
     this.createError = null;
     this.createLoading = true;
     try {
-      // Construire le payload : le backend attend un objet "client" avec first_name/last_name
-      const nameParts  = (this.form.client_name ?? '').trim().split(/\s+/);
-      const clientPayload = {
-        first_name:    nameParts[0] ?? this.form.client_name ?? '',
-        last_name:     nameParts.slice(1).join(' ') || '',
-        email:         this.form.client_email   || null,
-        phone:         this.form.client_phone   || null,
-      };
+      const isPassage = this.form.booking_type === 'passage';
       const payload = {
-        room_id:       this.form.room_id,
-        check_in:      this.form.check_in,
-        check_out:     this.form.check_out,
-        booking_type:  this.form.booking_type,
-        source:        this.form.source,
-        notes:         this.form.notes,
+        room_id:          this.form.room_id,
+        check_in:         this.form.check_in,
+        check_out:        isPassage ? this.form.check_in : this.form.check_out,
+        booking_type:     this.form.booking_type,
+        hours:            isPassage ? Number(this.form.hours) : undefined,
+        guests_count:     Number(this.form.guests_count) || 1,
+        source:           this.form.source,
+        notes:            this.form.notes || null,
         establishment_id: this.estId(),
-        client:        clientPayload,
+        client: {
+          first_name: this.form.first_name.trim(),
+          last_name:  this.form.last_name.trim(),
+          email:      this.form.client_email  || null,
+          phone:      this.form.client_phone  || null,
+        },
       };
       const res  = await fetch(baseUrl + '/api/bookings', {
-        method: 'POST', headers: this.apiHeaders(),
-        body: JSON.stringify(payload)
+        method: 'POST', headers: this.apiHeaders(), body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
-        const created = data.data?.booking ?? data.data;
-        if (created) this.bookings.unshift(created);
+        await this.loadBookings();
         this.showCreate = false;
         this.resetForm();
         this.showToast('Réservation créée avec succès.', 'success');
       } else {
         this.createError = data.message ?? 'Erreur lors de la création.';
-        if (data.errors) this.createError += ' ' + JSON.stringify(data.errors);
       }
     } catch(e) {
       this.createError = 'Erreur réseau. Veuillez réessayer.';
@@ -202,7 +207,11 @@ function bookingsPage(baseUrl) {
   },
 
   resetForm() {
-    this.form = { room_id:'', check_in:'', check_out:'', client_name:'', client_email:'', client_phone:'', booking_type:'nuit', source:'manual', notes:'' };
+    this.form = {
+      room_id: '', check_in: '', check_out: '',
+      first_name: '', last_name: '', client_email: '', client_phone: '',
+      booking_type: 'nuit', hours: 3, guests_count: 2, source: 'manual', notes: '',
+    };
     this.createError = null;
   },
 
@@ -217,7 +226,7 @@ function bookingsPage(baseUrl) {
     const q = this.filterSearch?.toLowerCase();
     return this.bookings.filter(b => {
       if (this.filterStatus !== 'all' && b.status !== this.filterStatus) return false;
-      if (q && !`${b.client_name} ${b.room_name} ${b.client_phone}`.toLowerCase().includes(q)) return false;
+      if (q && !`${b.client_name} ${b.room_number} ${b.room_type} ${b.client_phone}`.toLowerCase().includes(q)) return false;
       if (this.filterDateFrom && b.check_in < this.filterDateFrom) return false;
       if (this.filterDateTo   && b.check_in > this.filterDateTo)   return false;
       return true;
@@ -230,8 +239,15 @@ function bookingsPage(baseUrl) {
   },
 
   statusConfig(s) { return BOOKING_STATUS[s] ?? { label: s, badge: 'badge' }; },
-  sourceLabel(s)  { return { manual:'Manuel / Sur place', online:'En ligne', phone:'Téléphone' }[s] ?? s; },
-  typeLabel(t)    { return { nuit:'Nuit', weekend:'Week-end', passage:'Passage' }[t] ?? t; },
+  sourceLabel(s)  { return { manual:'Manuel / Sur place', online:'En ligne', phone:'Téléphone' }[s] ?? s ?? '—'; },
+  typeLabel(t)    { return { nuit:'Nuit', weekend:'Week-end', passage:'Passage' }[t] ?? t ?? '—'; },
+  typeBadgeStyle(t) {
+    return {
+      nuit:    'background:rgba(37,99,235,0.08);color:#1D4ED8;',
+      weekend: 'background:rgba(124,58,237,0.08);color:#6D28D9;',
+      passage: 'background:rgba(184,134,11,0.1);color:#92400E;',
+    }[t] ?? 'background:rgba(0,0,0,0.05);color:#6B7280;';
+  },
 
   nextActions(status) {
     const map = {

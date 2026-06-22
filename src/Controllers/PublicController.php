@@ -4,7 +4,7 @@ namespace Controllers;
 
 use Core\{Request, Response, Database};
 use Models\{Establishment, Room, Booking, PublicClient};
-use Services\CalendarService;
+use Services\{CalendarService, MailService};
 
 class PublicController
 {
@@ -137,7 +137,7 @@ class PublicController
 
         // La chambre doit exister et appartenir à un établissement actif
         $room = Database::query(
-            "SELECT r.* FROM rooms r
+            "SELECT r.*, e.name as establishment_name FROM rooms r
              JOIN establishments e ON e.id = r.establishment_id
              WHERE r.id = ? AND e.is_active = 1",
             [$roomId]
@@ -180,6 +180,21 @@ class PublicController
         ]);
 
         \Models\Invoice::createForBooking($id, $amount);
+
+        // Email de confirmation (paiement sur place)
+        MailService::bookingConfirmation([
+            'booking_id'         => $id,
+            'first_name'         => $data['first_name'],
+            'last_name'          => $data['last_name'],
+            'client_email'       => $data['email'],
+            'establishment_name' => $room['establishment_name'] ?? '',
+            'room_number'        => $room['number'] ?? $roomId,
+            'booking_type'       => $bookingType,
+            'hours'              => $hours,
+            'check_in'           => $checkIn,
+            'check_out'          => $checkOut,
+            'total_amount'       => $amount,
+        ]);
 
         Response::success([
             'booking_id'     => $id,

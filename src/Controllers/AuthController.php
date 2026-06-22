@@ -4,7 +4,7 @@ namespace Controllers;
 
 use Core\{Request, Response};
 use Models\{User, Establishment};
-use Services\AuthService;
+use Services\{AuthService, MailService};
 
 class AuthController
 {
@@ -106,6 +106,9 @@ class AuthController
         ]);
 
         $estabs = Establishment::forUser($user);
+
+        // Email de bienvenue (non bloquant)
+        MailService::welcome($user['email'], $user['name'], $estabName ?: '');
 
         Response::success([
             'token'          => $token,

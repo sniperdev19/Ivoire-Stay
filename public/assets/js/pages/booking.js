@@ -28,10 +28,12 @@ function bookingPage(apiBase, roomId) {
       hours:      3,
     },
     errors: {},
+    payMode:   'online',
     payMethod: 'orange',
     booking: null,
     submitting: false,
     bookingError: null,
+    paymentVerifying: false,
 
     get isPassage() {
       return !!(this.form.check_in && this.form.check_out && this.form.check_in === this.form.check_out);
@@ -53,8 +55,24 @@ function bookingPage(apiBase, roomId) {
 
     async init() {
       const params = new URLSearchParams(window.location.search);
-      this.form.check_in = params.get('check_in') ?? '';
+      this.form.check_in  = params.get('check_in')  ?? '';
       this.form.check_out = params.get('check_out') ?? '';
+
+      // Retour depuis GeniusPay
+      const paymentStatus = params.get('payment');
+      const payRef        = params.get('ref');
+      if (paymentStatus === 'success' && payRef) {
+        await this.loadRoom();
+        await this.verifyOnlinePayment(payRef);
+        return;
+      }
+      if (paymentStatus === 'error') {
+        await this.loadRoom();
+        this.bookingError = 'Le paiement a échoué ou a été annulé. Vous pouvez réessayer.';
+        this.step = 3;
+        return;
+      }
+
       await this.loadRoom();
     },
 
@@ -127,28 +145,72 @@ function bookingPage(apiBase, roomId) {
     async submitBooking() {
       if (this.submitting) return;
       this.bookingError = null;
-      this.submitting = true;
+      this.submitting   = true;
       try {
-        const res = await fetch(this.apiBase + '/api/public/booking', {
+        // 1. Créer la réservation
+        const payload = {
+          ...this.form,
+          booking_type: this.isPassage ? 'passage' : 'nuit',
+          hours:        this.isPassage ? Number(this.form.hours) : undefined,
+          first_name:   this.form.first_name,
+          last_name:    this.form.last_name,
+          email:        this.form.email,
+          phone:        this.form.phone,
+        };
+        const res  = await fetch(this.apiBase + '/api/public/booking', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...this.form,
-            booking_type: this.isPassage ? 'passage' : 'nuit',
-            hours:        this.isPassage ? Number(this.form.hours) : undefined,
-            pay_method:   this.payMethod,
-          }),
+          body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (data.success) {
+        if (!data.success) {
+          this.bookingError = data.message || 'Impossible de créer la réservation.';
+          return;
+        }
+
+        const bookingId = data.data?.booking_id ?? data.data?.id;
+
+        // 2a. Paiement sur place → afficher la confirmation directement
+        if (this.payMode === 'onsite') {
           this.booking = data.data ?? data;
+          return;
+        }
+
+        // 2b. Paiement en ligne → initier GeniusPay
+        const payRes  = await fetch(this.apiBase + '/api/public/booking-payment/initiate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ booking_id: bookingId, pay_method: this.payMethod }),
+        });
+        const payData = await payRes.json();
+        if (payData.success && payData.data?.payment_url) {
+          window.location.href = payData.data.payment_url;
         } else {
-          this.bookingError = data.message || 'Impossible de finaliser la réservation.';
+          this.bookingError = payData.message || 'Impossible d\'initier le paiement. Réessayez ou payez sur place.';
         }
       } catch (e) {
-        this.bookingError = 'Erreur lors de la réservation.';
+        this.bookingError = 'Erreur réseau. Vérifiez votre connexion et réessayez.';
       } finally {
         this.submitting = false;
+      }
+    },
+
+    async verifyOnlinePayment(ref) {
+      this.paymentVerifying = true;
+      try {
+        const res  = await fetch(this.apiBase + '/api/public/booking-payment/verify/' + encodeURIComponent(ref));
+        const data = await res.json();
+        if (data.success && data.data?.status === 'paid') {
+          this.booking = { reference: ref, booking_status: 'confirmed', ...data.data };
+        } else {
+          this.bookingError = 'Paiement en cours de vérification. Si vous avez été débité, contactez l\'hôtel.';
+          this.step = 3;
+        }
+      } catch (e) {
+        this.bookingError = 'Impossible de vérifier le paiement. Contactez l\'hôtel avec votre référence.';
+        this.step = 3;
+      } finally {
+        this.paymentVerifying = false;
       }
     },
   };

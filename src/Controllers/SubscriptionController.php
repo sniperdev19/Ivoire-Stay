@@ -4,7 +4,7 @@ namespace Controllers;
 
 use Core\{Request, Response, Database, PlanGate};
 use Models\Establishment;
-use Services\GeniusPayService;
+use Services\{GeniusPayService, MailService};
 
 class SubscriptionController
 {
@@ -152,6 +152,17 @@ class SubscriptionController
                 "UPDATE establishments SET plan = ?, plan_expires_at = ? WHERE id = ?",
                 [$sub['plan'], $expiresAt, $sub['establishment_id']]
             );
+
+            // Email de confirmation d'abonnement
+            $owner = Database::query(
+                "SELECT u.name, u.email FROM users u
+                 JOIN establishments e ON e.owner_id = u.id
+                 WHERE e.id = ?",
+                [$sub['establishment_id']]
+            )->fetch();
+            if ($owner) {
+                MailService::subscriptionActivated($owner['email'], $owner['name'], $sub['plan'], $expiresAt);
+            }
         } elseif ($internalStatus === 'failed') {
             Database::query(
                 "UPDATE subscriptions SET status = 'failed' WHERE id = ?",
@@ -211,6 +222,17 @@ class SubscriptionController
                     "UPDATE establishments SET plan = ?, plan_expires_at = ? WHERE id = ?",
                     [$sub['plan'], $expiresAt, $sub['establishment_id']]
                 );
+
+                // Email activation (si pas encore envoyé via webhook)
+                $owner = Database::query(
+                    "SELECT u.name, u.email FROM users u
+                     JOIN establishments e ON e.owner_id = u.id
+                     WHERE e.id = ?",
+                    [$sub['establishment_id']]
+                )->fetch();
+                if ($owner) {
+                    MailService::subscriptionActivated($owner['email'], $owner['name'], $sub['plan'], $expiresAt);
+                }
 
                 Response::success(['status' => 'active', 'plan' => $sub['plan'], 'expires_at' => $expiresAt]);
             }

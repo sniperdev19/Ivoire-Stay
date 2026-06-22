@@ -36,7 +36,7 @@
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
   </div>
   <h2 class="bk-success-title">Réservation<br><em>confirmée !</em></h2>
-  <p class="bk-success-sub">Votre séjour est bien enregistré. Un email de confirmation vous a été envoyé.</p>
+  <p class="bk-success-sub" x-text="payMode === 'online' ? 'Paiement reçu. Votre séjour est confirmé et garanti.' : 'Votre réservation est enregistrée. Vous réglerez à l\'arrivée.'"></p>
   <div class="bk-success-card">
     <div class="bk-panel-row">
       <span class="bk-panel-label">Référence</span>
@@ -44,8 +44,14 @@
     </div>
     <div class="bk-panel-divider"></div>
     <div class="bk-panel-row"><span class="bk-panel-label">Arrivée</span><span class="bk-panel-value" x-text="formatDate(form.check_in) || '—'"></span></div>
-    <div class="bk-panel-row"><span class="bk-panel-label">Départ</span><span class="bk-panel-value" x-text="formatDate(form.check_out) || '—'"></span></div>
+    <div class="bk-panel-row" x-show="!isPassage"><span class="bk-panel-label">Départ</span><span class="bk-panel-value" x-text="formatDate(form.check_out) || '—'"></span></div>
+    <div class="bk-panel-row" x-show="isPassage"><span class="bk-panel-label">Durée</span><span class="bk-panel-value" x-text="form.hours + ' heure' + (form.hours > 1 ? 's' : '')"></span></div>
     <div class="bk-panel-row"><span class="bk-panel-label">Total</span><span class="bk-panel-value" x-text="formatPrice(totalPrice)"></span></div>
+    <div class="bk-panel-divider"></div>
+    <div class="bk-panel-row">
+      <span class="bk-panel-label">Paiement</span>
+      <span x-text="payMode === 'online' ? '✓ Payé en ligne' : 'À régler sur place'" :style="payMode === 'online' ? 'color:#16A34A;font-weight:600;' : 'color:#6B7280;'"></span>
+    </div>
   </div>
   <div class="bk-success-btns">
     <a href="<?= $base ?>/search" class="bk-success-btn-p">Découvrir d'autres séjours</a>
@@ -181,37 +187,76 @@
       <div class="bk-section-title">Paiement &amp; <em>confirmation</em></div>
       <div class="bk-section-rule"></div>
 
+      <!-- Récapitulatif -->
       <div class="bk-label" style="margin-bottom:16px;">Récapitulatif</div>
       <div class="bk-recap-grid">
         <div class="bk-recap-item"><span class="bk-recap-label">Arrivée</span><span class="bk-recap-value" x-text="formatDate(form.check_in) || '—'"></span></div>
-        <div class="bk-recap-item"><span class="bk-recap-label">Départ</span><span class="bk-recap-value" x-text="formatDate(form.check_out) || '—'"></span></div>
+        <div class="bk-recap-item" x-show="!isPassage"><span class="bk-recap-label">Départ</span><span class="bk-recap-value" x-text="formatDate(form.check_out) || '—'"></span></div>
+        <div class="bk-recap-item" x-show="isPassage"><span class="bk-recap-label">Durée</span><span class="bk-recap-value" x-text="form.hours + 'h'"></span></div>
         <div class="bk-recap-item"><span class="bk-recap-label">Voyageur</span><span class="bk-recap-value" x-text="form.first_name + ' ' + form.last_name"></span></div>
         <div class="bk-recap-item"><span class="bk-recap-label">Total</span><span class="bk-recap-value" x-text="formatPrice(totalPrice)"></span></div>
       </div>
 
-      <div class="bk-label" style="margin-bottom:16px;">Mode de paiement</div>
-      <div class="bk-payment-opts">
-        <div class="bk-pay-opt" :class="payMethod==='orange'?'bk-selected':''" @click="payMethod='orange'">
-          <div class="bk-pay-radio"><div class="bk-pay-radio-dot"></div></div>
-          <div class="bk-pay-icon" style="background:#FF6B00;">OM</div>
-          <div><div class="bk-pay-name">Orange Money</div><div class="bk-pay-sub">Paiement instantané via Orange CI</div></div>
+      <!-- Choix du mode de paiement -->
+      <div class="bk-label" style="margin-bottom:16px;">Comment souhaitez-vous payer ?</div>
+      <div class="bk-payment-opts" style="margin-bottom:28px;">
+        <div class="bk-pay-opt" :class="payMode==='online'?'bk-selected':''" @click="payMode='online'">
+          <div class="bk-pay-radio"><div class="bk-pay-radio-dot" :style="payMode==='online'?'opacity:1;transform:scale(1)':''"></div></div>
+          <div class="bk-pay-icon" style="background:#1B4332;font-size:16px;">💳</div>
+          <div>
+            <div class="bk-pay-name">Payer en ligne</div>
+            <div class="bk-pay-sub">Paiement sécurisé via GeniusPay · Orange Money, Wave, MTN</div>
+          </div>
         </div>
-        <div class="bk-pay-opt" :class="payMethod==='wave'?'bk-selected':''" @click="payMethod='wave'">
-          <div class="bk-pay-radio"><div class="bk-pay-radio-dot"></div></div>
-          <div class="bk-pay-icon" style="background:#00B9F2;">WV</div>
-          <div><div class="bk-pay-name">Wave</div><div class="bk-pay-sub">Sans frais de transaction</div></div>
-        </div>
-        <div class="bk-pay-opt" :class="payMethod==='mtn'?'bk-selected':''" @click="payMethod='mtn'">
-          <div class="bk-pay-radio"><div class="bk-pay-radio-dot"></div></div>
-          <div class="bk-pay-icon" style="background:#FFCB00;color:#1B1B1B;">MTN</div>
-          <div><div class="bk-pay-name">MTN Mobile Money</div><div class="bk-pay-sub">Disponible 24h/24</div></div>
+        <div class="bk-pay-opt" :class="payMode==='onsite'?'bk-selected':''" @click="payMode='onsite'">
+          <div class="bk-pay-radio"><div class="bk-pay-radio-dot" :style="payMode==='onsite'?'opacity:1;transform:scale(1)':''"></div></div>
+          <div class="bk-pay-icon" style="background:#6B7280;font-size:16px;">🏨</div>
+          <div>
+            <div class="bk-pay-name">Payer sur place</div>
+            <div class="bk-pay-sub">Réglez à l'arrivée à l'hôtel · Réservation garantie</div>
+          </div>
         </div>
       </div>
 
+      <!-- Méthode Mobile Money (uniquement si paiement en ligne) -->
+      <div x-show="payMode==='online'" x-transition>
+        <div class="bk-label" style="margin-bottom:16px;">Choisissez votre opérateur</div>
+        <div class="bk-payment-opts" style="margin-bottom:8px;">
+          <div class="bk-pay-opt" :class="payMethod==='orange'?'bk-selected':''" @click="payMethod='orange'">
+            <div class="bk-pay-radio"><div class="bk-pay-radio-dot"></div></div>
+            <div class="bk-pay-icon" style="background:#FF6B00;">OM</div>
+            <div><div class="bk-pay-name">Orange Money</div><div class="bk-pay-sub">Paiement instantané via Orange CI</div></div>
+          </div>
+          <div class="bk-pay-opt" :class="payMethod==='wave'?'bk-selected':''" @click="payMethod='wave'">
+            <div class="bk-pay-radio"><div class="bk-pay-radio-dot"></div></div>
+            <div class="bk-pay-icon" style="background:#00B9F2;">WV</div>
+            <div><div class="bk-pay-name">Wave</div><div class="bk-pay-sub">Sans frais de transaction</div></div>
+          </div>
+          <div class="bk-pay-opt" :class="payMethod==='mtn'?'bk-selected':''" @click="payMethod='mtn'">
+            <div class="bk-pay-radio"><div class="bk-pay-radio-dot"></div></div>
+            <div class="bk-pay-icon" style="background:#FFCB00;color:#1B1B1B;">MTN</div>
+            <div><div class="bk-pay-name">MTN Mobile Money</div><div class="bk-pay-sub">Disponible 24h/24</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info sur place -->
+      <div x-show="payMode==='onsite'" x-transition class="bk-onsite-info">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px;flex-shrink:0;color:#2D6A4F;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>Votre réservation sera confirmée immédiatement. Vous réglerez le montant directement à l'hôtel le jour de votre arrivée.</span>
+      </div>
+
+      <!-- Erreur paiement -->
+      <div x-show="bookingError" class="bk-payment-error" x-text="bookingError"></div>
+
       <div class="bk-form-nav" style="margin-top:28px;">
-        <button type="button" class="bk-btn-prev" @click="step=2">← Retour</button>
-        <button type="button" class="bk-btn-next" @click="submitBooking()">
-          Confirmer et payer — <span x-text="formatPrice(totalPrice)"></span>
+        <button type="button" class="bk-btn-prev" @click="step=2" :disabled="submitting">← Retour</button>
+        <button type="button" class="bk-btn-next" @click="submitBooking()" :disabled="submitting">
+          <span x-show="!submitting" x-text="payMode==='online' ? 'Payer ' + formatPrice(totalPrice) + ' →' : 'Confirmer la réservation →'"></span>
+          <span x-show="submitting" style="display:inline-flex;align-items:center;gap:8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;animation:spin 1s linear infinite;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span x-text="payMode==='online' ? 'Redirection…' : 'Confirmation…'"></span>
+          </span>
         </button>
       </div>
       <p style="font-family:'Inter',sans-serif;font-size:12px;color:rgba(27,67,50,0.38);line-height:1.7;margin-top:20px;">En confirmant, vous acceptez nos conditions d'utilisation. Annulation gratuite 24h avant l'arrivée.</p>
