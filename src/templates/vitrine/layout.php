@@ -2,20 +2,18 @@
 /**
  * Layout principal pour la vitrine
  * Injecte : $title (string) et $content (HTML rendu de la page enfant)
- * Respecte le design system fourni (glassmorphisme, typographie, couleurs)
- *
- * Assets par page (optionnels, définis en tête du template enfant) :
- *   $pageCss : string|array  → public/assets/css/pages/<nom>.css
- *   $pageJs  : string|array  → public/assets/js/pages/<nom>.js
- *
- * @var string $title    Titre de la page, injecté par Response::render().
- * @var string $content  HTML de la page enfant, injecté par Response::render().
- * @var string $base_url URL de base de l'app, injectée par Response::render().
  */
-$content = $content ?? '';
 $base = $base_url ?? rtrim(APP_URL, '/');
-$pageCss = isset($pageCss) ? (array) $pageCss : [];
-$pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
+
+/* ── Détection de la page courante ── */
+$uri      = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$pageName = 'home';
+if     (preg_match('#/search#',   $uri)) $pageName = 'search';
+elseif (preg_match('#/property/#', $uri)) $pageName = 'property';
+elseif (preg_match('#/booking#',  $uri)) $pageName = 'booking';
+elseif (preg_match('#/apropos#',  $uri)) $pageName = 'apropos';
+elseif (preg_match('#/tarifs#',   $uri)) $pageName = 'pricing';
+elseif (preg_match('#/contact#',  $uri)) $pageName = 'contact';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -25,214 +23,316 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
   <meta name="theme-color" content="#FAF7F2">
   <title><?= htmlspecialchars($title ?? 'Ivoire Stay') ?></title>
 
-  <!-- PWA -->
-  <link rel="manifest" href="<?= $base ?>/manifest.webmanifest">
-  <link rel="apple-touch-icon" href="<?= $base ?>/assets/icons/apple-touch-icon.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Ivoire Stay">
-  <script defer src="<?= $base ?>/assets/js/pwa.js"></script>
-
-  <!-- Google Fonts : Cormorant Garamond (titres) + Inter (UI) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Tailwind (base + utilitaires) + styles composant vitrine, compilés ensemble -->
+  <!-- Styles globaux vitrine (remplace Tailwind CDN) -->
   <link rel="stylesheet" href="<?= $base ?>/assets/css/vitrine.css">
+  <!-- Styles spécifiques à la page -->
+  <?php if (file_exists(BASE_PATH . '/public/assets/css/pages/' . $pageName . '.css')): ?>
+  <link rel="stylesheet" href="<?= $base ?>/assets/css/pages/<?= $pageName ?>.css">
+  <?php endif; ?>
 
-  <!-- CSS spécifique à la page -->
-  <?php foreach ($pageCss as $css): ?>
-  <link rel="stylesheet" href="<?= $base ?>/assets/css/pages/<?= htmlspecialchars($css) ?>.css">
-  <?php endforeach; ?>
+  <!-- Alpine.js — vitrineNav() doit être déclaré avant -->
+  <?php $vitrineJsPath = BASE_PATH . '/public/assets/js/vitrine.js'; ?>
+  <script src="<?= $base ?>/assets/js/vitrine.js?v=<?= file_exists($vitrineJsPath) ? filemtime($vitrineJsPath) : 1 ?>" defer></script>
+  <?php
+  $pageJsPath = BASE_PATH . '/public/assets/js/pages/' . $pageName . '.js';
+  if (file_exists($pageJsPath)):
+  ?>
+  <script src="<?= $base ?>/assets/js/pages/<?= $pageName ?>.js?v=<?= filemtime($pageJsPath) ?>" defer></script>
+  <?php endif; ?>
+  <script defer src="<?= $base ?>/assets/js/alpine.min.js"></script>
 
-  <!-- JS global + JS de page (définis avant Alpine pour exposer les composants x-data) -->
-  <script defer src="<?= $base ?>/assets/js/vitrine.js"></script>
-  <?php foreach ($pageJs as $js): ?>
-  <script defer src="<?= $base ?>/assets/js/pages/<?= htmlspecialchars($js) ?>.js"></script>
-  <?php endforeach; ?>
+  <style>
+  /* ── Navigation vitrine ── */
+  .v-nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .v-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    justify-content: center;
+  }
+  .v-nav-link {
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 50px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.2s, color 0.2s;
+  }
+  .v-nav-link:hover  { background: rgba(201,168,76,0.13); }
+  .v-nav-link.active { background: rgba(201,168,76,0.18); font-weight: 600; }
+  .v-nav-sep {
+    width: 1px; height: 20px;
+    background: rgba(201,168,76,0.3);
+    margin: 0 6px;
+    flex-shrink: 0;
+  }
+  .v-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .v-nav-btn-cta {
+    background: linear-gradient(135deg,#C9A84C,#A67C2E);
+    color: white;
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 9px 22px;
+    border-radius: 50px;
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(201,168,76,0.35);
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .v-nav-btn-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,168,76,0.45); }
+  /* Hamburger — visible only on mobile */
+  .v-nav-hamburger {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .v-nav-hamburger:hover { background: rgba(201,168,76,0.12); }
+  /* Mobile menu drawer */
+  .v-nav-mobile {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 48;
+    flex-direction: column;
+    background: rgba(250,247,242,0.97);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    padding: 88px 28px 36px;
+    gap: 4px;
+    overflow-y: auto;
+  }
+  .v-nav-mobile.open { display: flex; }
+  .v-nav-mobile-link {
+    font-family: Inter, sans-serif;
+    font-size: 17px;
+    font-weight: 500;
+    color: #1B4332;
+    text-decoration: none;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    transition: background 0.2s;
+  }
+  .v-nav-mobile-link:hover  { background: rgba(201,168,76,0.1); }
+  .v-nav-mobile-link.active { background: rgba(201,168,76,0.15); color: #A67C2E; font-weight: 600; }
+  .v-nav-mobile-sep { height: 1px; background: rgba(201,168,76,0.15); margin: 8px 0; }
+  .v-nav-mobile-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .v-nav-mobile-btn-cta {
+    display: block;
+    text-align: center;
+    background: linear-gradient(135deg,#C9A84C,#A67C2E);
+    color: white;
+    font-family: Inter, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 14px;
+    border-radius: 50px;
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(201,168,76,0.35);
+  }
+  /* Tablette : liens + CTA réduits entre 1024px et 1280px */
+  @media (max-width: 1280px) {
+    .v-nav-link { font-size: 13px; padding: 7px 10px; }
+    .v-nav-btn-cta { font-size: 13px; padding: 8px 16px; }
+  }
+  /* Hamburger à partir de la tablette */
+  @media (max-width: 1023px) {
+    .v-nav-links,
+    .v-nav-sep,
+    .v-nav-actions { display: none !important; }
+    .v-nav-hamburger { display: flex; }
+  }
 
-  <!-- Alpine.js en dernier : s'initialise après la définition des composants -->
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  /* ── Footer responsive ── */
+  .v-footer-inner { max-width: 1200px; margin: 0 auto; padding: 64px 48px 48px; }
+  .v-footer-grid  { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 48px; }
+  .v-footer-bar   { border-top: 1px solid rgba(201,168,76,0.2); padding: 16px 48px; }
+  .v-footer-bar-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 
+  @media (max-width: 1023px) {
+    .v-footer-inner { padding: 48px 32px 40px; }
+    .v-footer-grid  { grid-template-columns: 1.4fr 1fr; gap: 32px; }
+    .v-footer-bar   { padding: 14px 32px; }
+  }
+  @media (max-width: 767px) {
+    .v-footer-inner { padding: 40px 24px 32px; }
+    .v-footer-grid  { grid-template-columns: 1fr 1fr; gap: 24px; }
+    .v-footer-bar   { padding: 14px 24px; }
+  }
+  @media (max-width: 479px) {
+    .v-footer-inner { padding: 32px 20px 24px; }
+    .v-footer-grid  { grid-template-columns: 1fr; gap: 24px; }
+    .v-footer-bar   { padding: 12px 20px; }
+  }
+  </style>
 </head>
-<body class="bg-[var(--color-cream)]">
+<body>
 
-  <!-- NAVBAR (fixe en haut) -->
-  <header>
-<?php 
-  // Détecter la page active pour le lien surligné
-  $current = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-  $base = $base_url ?? rtrim(APP_URL, '/');
-?>
+  <?php
+  /* Détection lien actif */
+  $navLinks = [
+    ['label' => 'Accueil',      'href' => $base . '/'],
+    ['label' => 'Destinations', 'href' => $base . '/search'],
+    ['label' => 'À propos',     'href' => $base . '/apropos'],
+    ['label' => 'Tarifs',       'href' => $base . '/tarifs'],
+    ['label' => 'Contact',      'href' => $base . '/contact'],
+  ];
+  $activeMap = [
+    'home'     => '/',
+    'search'   => '/search',
+    'apropos'  => '/apropos',
+    'pricing'  => '/tarifs',
+    'contact'  => '/contact',
+    'property' => '/search',
+    'booking'  => '/search',
+  ];
+  $activePath = $activeMap[$pageName] ?? '/';
+  ?>
+  <header x-data="vitrineNav()" x-init="init()" @keydown.escape.window="mobileOpen = false">
   <nav
-    x-data="vitrineNav()"
-    x-init="init()"
-    :style="scrolled ? `
-      position: fixed;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 48px);
-      max-width: 860px;
-      background: rgba(250,247,242,0.92);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(201,168,76,0.2);
-      border-radius: 60px;
-      box-shadow: 0 8px 32px rgba(27,67,50,0.12);
-      padding: 8px 28px;
-      z-index: 50;
-      transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
-    ` : `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      width: 100%;
-      background: transparent;
-      border: none;
-      border-radius: 0;
-      box-shadow: none;
-      padding: 20px 40px;
-      z-index: 50;
-      transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
-    `"
+    :style="scrolled
+      ? 'position:fixed;top:16px;left:50%;transform:translateX(-50%);width:calc(100% - 48px);max-width:1100px;background:rgba(250,247,242,0.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(201,168,76,0.2);border-radius:60px;box-shadow:0 8px 32px rgba(27,67,50,0.12);padding:8px 24px;z-index:50;transition:all 0.4s cubic-bezier(0.4,0,0.2,1);'
+      : 'position:fixed;top:0;left:0;right:0;width:100%;background:transparent;border:none;border-radius:0;box-shadow:none;padding:18px 40px;z-index:50;transition:all 0.4s cubic-bezier(0.4,0,0.2,1);'"
   >
-    <div style="display:flex; align-items:center; justify-content:space-between; max-width:1100px; margin:0 auto;">
+    <div class="v-nav-inner">
 
-      <!-- LOGO -->
-      <a href="<?= $base ?>/">
-        <img 
-          src="<?= $base ?>/assets/logo.png" 
-          alt="Ivoire Stay"
-          style="height:42px; width:auto; object-fit:contain; transition: all 0.3s ease;"
-        >
+      <!-- Logo -->
+      <a href="<?= $base ?>/" style="flex-shrink:0;line-height:0;">
+        <img src="<?= $base ?>/assets/logo.png" alt="Ivoire Stay" style="height:36px;width:auto;object-fit:contain;">
       </a>
 
-      <!-- LIENS DESKTOP -->
-      <div class="hidden md:flex items-center gap-2">
-        <?php 
-          $links = [
-            ['label'=>'Accueil',      'href'=> $base . '/'],
-            ['label'=>'Destinations', 'href'=> $base . '/search'],
-            ['label'=>'À propos',     'href'=> $base . '/apropos'],
-            ['label'=>'Tarifs',       'href'=> $base . '/tarifs'],
-            ['label'=>'Contact',      'href'=> $base . '/contact'],
-          ];
+      <!-- Links — desktop -->
+      <div class="v-nav-links">
+        <?php foreach($navLinks as $link):
+          $isActive = $link['href'] === $base . $activePath;
         ?>
-        <?php foreach($links as $link): ?>
-          <a href="<?= $link['href'] ?>" 
-            :style="scrolled ? 
-              'color:#1B4332;font-family:Inter,sans-serif;font-size:14px;font-weight:500;padding:8px 16px;border-radius:50px;text-decoration:none;transition:all 0.3s;' 
-              : 
-              'color:white;font-family:Inter,sans-serif;font-size:14px;font-weight:400;padding:8px 16px;border-radius:50px;text-decoration:none;transition:all 0.3s;'"
-            onmouseover="this.style.background='rgba(201,168,76,0.12)'"
-            onmouseout="this.style.background='transparent'"
-          >
-            <?= $link['label'] ?>
-          </a>
+          <a href="<?= $link['href'] ?>"
+            class="v-nav-link<?= $isActive ? ' active' : '' ?>"
+            :style="scrolled ? 'color:#1B4332;' : 'color:rgba(255,255,255,0.92);'"
+          ><?= $link['label'] ?></a>
         <?php endforeach; ?>
       </div>
 
-      <!-- BOUTONS DROITE -->
-      <div class="flex items-center gap-2.5">
-        <!-- Commencer : desktop uniquement -->
-        <div class="hidden md:flex items-center gap-2.5">
-          <!-- Commencer (toujours gold) -->
-          <a href="<?= $base ?>/register" style="background:linear-gradient(135deg,#C9A84C,#A67C2E); color:white;font-family:Inter,sans-serif; font-size:14px;font-weight:600; padding:8px 22px;border-radius:50px; text-decoration:none; box-shadow:0 4px 16px rgba(201,168,76,0.35); transition:all 0.3s; white-space:nowrap;">
-            Commencer
-          </a>
-        </div>
-
-        <!-- Burger mobile -->
-        <button
-          @click="mobileOpen = !mobileOpen"
-          class="md:hidden"
-          :style="scrolled ? 'color:#1B4332;background:none;border:none;cursor:pointer;padding:4px;' : 'color:white;background:none;border:none;cursor:pointer;padding:4px;'"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-          </svg>
-        </button>
+      <!-- Actions — desktop -->
+      <div class="v-nav-actions">
+        <div class="v-nav-sep"></div>
+        <a href="<?= $base ?>/register" class="v-nav-btn-cta">Commencer</a>
       </div>
+
+      <!-- Hamburger — mobile only -->
+      <button
+        class="v-nav-hamburger"
+        @click="mobileOpen = !mobileOpen"
+        aria-label="Menu"
+        :style="scrolled ? 'color:#1B4332;' : 'color:white;'"
+      >
+        <svg x-show="!mobileOpen" xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <svg x-show="mobileOpen" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
     </div>
 
-    <!-- MENU MOBILE (dropdown) -->
-    <div 
-      x-show="mobileOpen"
-      x-transition:enter="transition ease-out duration-200"
-      x-transition:enter-start="opacity-0 -translate-y-2"
-      x-transition:enter-end="opacity-100 translate-y-0"
-      x-transition:leave="transition ease-in duration-150"
-      x-transition:leave-start="opacity-100 translate-y-0"
-      x-transition:leave-end="opacity-0 -translate-y-2"
-      style="margin-top:12px; background:rgba(250,247,242,0.96); backdrop-filter:blur(24px); border:1px solid rgba(201,168,76,0.2); border-radius:24px; padding:16px;"
-      class="md:hidden"
-    >
-      <?php foreach($links as $link): ?>
-        <a href="<?= $link['href'] ?>" style="display:block; color:#1B4332; font-family:Inter,sans-serif; font-size:15px; font-weight:500; padding:12px 16px; border-radius:12px; text-decoration:none; transition:background 0.2s;" onmouseover="this.style.background='rgba(201,168,76,0.1)'" onmouseout="this.style.background='transparent'"><?= $link['label'] ?></a>
-      <?php endforeach; ?>
-      <div style="border-top:1px solid rgba(201,168,76,0.2); margin:8px 0; padding-top:8px; display:flex; flex-direction:column; gap:8px;">
-        <a href="<?= $base ?>/register" style="display:block; text-align:center; background:#C9A84C; color:white; font-family:Inter,sans-serif; font-size:14px; font-weight:600; padding:10px; border-radius:12px; text-decoration:none;">Commencer</a>
-      </div>
-    </div>
   </nav>
+
+  <!-- Drawer mobile — hors de <nav> pour éviter le stacking context du transform -->
+  <div class="v-nav-mobile" :class="{ open: mobileOpen }">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:16px;border-bottom:1px solid rgba(201,168,76,0.15);">
+      <img src="<?= $base ?>/assets/logo.png" alt="Ivoire Stay" style="height:34px;width:auto;object-fit:contain;">
+      <button @click="mobileOpen = false" style="background:none;border:none;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#1B4332;">
+        <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <?php foreach($navLinks as $link):
+      $isActive = $link['href'] === $base . $activePath;
+    ?>
+      <a href="<?= $link['href'] ?>"
+        class="v-nav-mobile-link<?= $isActive ? ' active' : '' ?>"
+        @click="mobileOpen = false"
+      ><?= $link['label'] ?></a>
+    <?php endforeach; ?>
+    <div class="v-nav-mobile-sep"></div>
+    <div class="v-nav-mobile-actions">
+      <a href="<?= $base ?>/register" class="v-nav-mobile-btn-cta">Commencer gratuitement →</a>
+    </div>
+  </div>
   </header>
 
-  <!-- POINT D'INJECTION DU CONTENU ENFANT -->
   <main>
     <?= $content ?>
   </main>
 
-  <!-- FOOTER -->
-  <footer class="site-footer mt-16 text-sm">
-    <div class="max-w-7xl mx-auto px-6 py-12">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <!-- Colonne 1 : Logo + tagline -->
-        <div class="space-y-4">
-          <a href="<?= $base ?>/" class="inline-block">
-            <img src="<?= $base ?>/assets/logo.png" alt="Ivoire Stay" class="h-12 filter brightness-0 invert" />
+  <footer class="site-footer" style="margin-top:0;font-size:14px;">
+    <div class="v-footer-inner">
+      <div class="v-footer-grid">
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <a href="<?= $base ?>/" style="display:inline-block;">
+            <img src="<?= $base ?>/assets/logo.png" alt="Ivoire Stay" style="height:48px;width:auto;object-fit:contain;filter:brightness(0) invert(1);">
           </a>
-          <p class="text-[14px] max-w-xs">Gérez votre établissement avec élégance</p>
+          <p style="font-size:14px;max-width:240px;color:rgba(246,239,230,0.65);line-height:1.75;">La plateforme hôtelière pensée pour la Côte d'Ivoire.</p>
         </div>
-
-        <!-- Colonne 2 : Navigation -->
         <div>
-          <h4 class="font-display text-lg mb-3">Navigation</h4>
-          <ul class="space-y-2">
+          <h4 class="font-display" style="font-size:20px;margin-bottom:14px;font-weight:400;">Navigation</h4>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
             <li><a href="<?= $base ?>/">Accueil</a></li>
             <li><a href="<?= $base ?>/search">Destinations</a></li>
             <li><a href="<?= $base ?>/tarifs">Tarifs</a></li>
             <li><a href="<?= $base ?>/apropos">À propos</a></li>
           </ul>
         </div>
-
-        <!-- Colonne 3 : SaaS -->
         <div>
-          <h4 class="font-display text-lg mb-3">SaaS</h4>
-          <ul class="space-y-2">
+          <h4 class="font-display" style="font-size:20px;margin-bottom:14px;font-weight:400;">Espace SaaS</h4>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
             <li><a href="<?= $base ?>/register">S'inscrire</a></li>
-            <li><a href="<?= $base ?>/">Fonctionnalités</a></li>
+            <li><a href="<?= $base ?>/tarifs">Fonctionnalités</a></li>
             <li><a href="<?= $base ?>/contact">Support</a></li>
           </ul>
         </div>
-
-        <!-- Colonne 4 : Contact -->
         <div>
-          <h4 class="font-display text-lg mb-3">Contact</h4>
-          <p>Abidjan, Côte d'Ivoire</p>
-          <p class="mt-2">support@ivoire-stay.ci</p>
-          <p class="mt-1">+225 01 23 45 67 89</p>
+          <h4 class="font-display" style="font-size:20px;margin-bottom:14px;font-weight:400;">Contact</h4>
+          <p style="color:rgba(246,239,230,0.65);">Abidjan, Côte d'Ivoire</p>
+          <p style="margin-top:8px;color:rgba(246,239,230,0.65);">support@ivoire-stay.ci</p>
+          <p style="margin-top:4px;color:rgba(246,239,230,0.65);">+225 01 23 45 67 89</p>
         </div>
       </div>
     </div>
-
-    <div style="border-top:1px solid rgba(201,168,76,0.3)" class="py-4">
-      <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-3">
-        <p class="text-[13px]">&copy; <?= date('Y') ?> Ivoire Stay — Tous droits réservés</p>
-        <div class="flex items-center gap-4">
-          <a href="<?= $base ?>/apropos" class="text-[13px]">Politique</a>
-          <a href="<?= $base ?>/contact" class="text-[13px]">Contact</a>
+    <div class="v-footer-bar">
+      <div class="v-footer-bar-inner">
+        <p style="font-size:13px;color:rgba(246,239,230,0.45);">&copy; <?= date('Y') ?> Ivoire Stay — Tous droits réservés</p>
+        <div style="display:flex;align-items:center;gap:20px;">
+          <a href="<?= $base ?>/apropos" style="font-size:13px;">Politique de confidentialité</a>
+          <a href="<?= $base ?>/contact" style="font-size:13px;">Contact</a>
         </div>
       </div>
     </div>

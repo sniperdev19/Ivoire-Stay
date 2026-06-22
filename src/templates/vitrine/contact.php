@@ -1,221 +1,216 @@
-<?php /** @var string $base_url */ if (!isset($base_url)) $base_url = rtrim(APP_URL, "/"); ?>
-<?php ?>
-<!-- SECTION 1 — HERO CONTACT -->
-<section class="pt-36 min-h-[360px] bg-gradient-to-br from-[#1B4332] to-[#2D6A4F] flex items-center">
-  <div class="max-w-6xl mx-auto px-6 text-center text-white">
-    <h1 class="font-display text-[56px]">Parlons de votre projet</h1>
-    <p class="mt-5 text-[18px] text-[rgba(255,255,255,0.8)]">Notre équipe répond sous 24h</p>
-  </div>
-</section>
+﻿<?php $base_url = $base_url ?? rtrim(APP_URL, '/'); ?>
 
-<!-- SECTION 2 — CONTENU PRINCIPAL -->
-<section class="bg-[#FAF7F2] py-[100px]">
-  <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16">
-    <!-- Colonne gauche — Formulaire -->
-    <div x-data="{ sent: false }">
-      <div class="glass-card-strong p-10 rounded-[32px]">
-        <h2 class="font-display text-[32px] text-[#1B4332]">Envoyez-nous un message</h2>
-        <form class="mt-8 space-y-6" @submit.prevent="sent = true">
-          <div class="space-y-2">
-            <label class="block text-[11px] uppercase tracking-[0.24em] text-[#C9A84C]">Nom complet</label>
-            <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#C9A84C]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 0112 15c2.192 0 4.21.788 5.879 2.105M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </span>
-              <input type="text" class="w-full bg-[#FAF7F2] border border-[#C9A84C] rounded-[12px] py-3 pl-12 pr-4" placeholder="Votre nom" />
-            </div>
-          </div>
+<div class="contact-page" x-data="contactPage()">
 
-          <div class="space-y-2">
-            <label class="block text-[11px] uppercase tracking-[0.24em] text-[#C9A84C]">Email</label>
-            <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#C9A84C]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12l-4 4m0 0l-4-4m4 4V8" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 8v8a2 2 0 01-2 2H6a2 2 0 01-2-2V8" />
-                </svg>
-              </span>
-              <input type="email" class="w-full bg-[#FAF7F2] border border-[#C9A84C] rounded-[12px] py-3 pl-12 pr-4" placeholder="votre@email.com" />
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-[11px] uppercase tracking-[0.24em] text-[#C9A84C]">Téléphone</label>
-            <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#C9A84C]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h2.5a1 1 0 01.94.658l1 2.5a1 1 0 01-.217 1.053L7.5 9.5a11.042 11.042 0 005.657 5.657l1.789-1.789a1 1 0 011.053-.217l2.5 1a1 1 0 01.658.94V19a2 2 0 01-2 2H5a2 2 0 01-2-2V5z" />
-                </svg>
-              </span>
-              <input type="tel" class="w-full bg-[#FAF7F2] border border-[#C9A84C] rounded-[12px] py-3 pl-12 pr-4" placeholder="+225 01 23 45 67 89" />
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-[11px] uppercase tracking-[0.24em] text-[#C9A84C]">Sujet</label>
-            <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#C9A84C]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V10a2 2 0 012-2h2" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8V6a5 5 0 0110 0v2" />
-                </svg>
-              </span>
-              <select class="w-full bg-[#FAF7F2] border border-[#C9A84C] rounded-[12px] py-3 pl-12 pr-4">
-                <option>Question générale</option>
-                <option>Support technique</option>
-                <option>Partenariat hôtelier</option>
-                <option>Presse & médias</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-[11px] uppercase tracking-[0.24em] text-[#C9A84C]">Message</label>
-            <div class="relative">
-              <span class="absolute left-4 top-4 text-[#C9A84C]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z" />
-                </svg>
-              </span>
-              <textarea rows="5" class="w-full bg-[#FAF7F2] border border-[#C9A84C] rounded-[12px] py-3 pl-12 pr-4" placeholder="Décrivez votre besoin..."></textarea>
-            </div>
-          </div>
-
-          <button type="submit" class="btn-gold w-full h-[52px]">Envoyer le message →</button>
-        </form>
-        <div x-show="sent" x-transition class="mt-8 glass-card p-6 rounded-[24px] border border-[#C9A84C] text-[#1B4332]">
-          <div class="flex items-center gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#16a34a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4" />
-            </svg>
-            <div>
-              <p class="font-semibold">Message envoyé !</p>
-              <p class="text-[14px] text-[#4A5568]">Nous vous répondrons sous 24h.</p>
-            </div>
-          </div>
-        </div>
+<section class="ct-hero">
+  <div class="ct-hero-bg-word">Contact</div>
+  <div class="ct-hero-grid">
+    <div class="ct-hero-left">
+      <div class="ct-hero-num">01</div>
+      <div class="ct-hero-left-bottom">
+        <span class="ct-pill">Parlons de votre projet</span>
+        <p class="ct-hero-tagline">Notre équipe<br>répond sous 24h.</p>
       </div>
     </div>
-
-    <!-- Colonne droite — Infos contact -->
-    <div class="space-y-6">
-      <div class="glass-card p-6 rounded-[20px]">
-        <div class="flex items-center gap-4">
-          <div class="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(201,168,76,0.15)]">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-[#C9A84C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-[13px] uppercase tracking-[0.24em] text-[#1B4332]">Notre bureau</p>
-            <h3 class="font-display text-[20px] text-[#1B4332] mt-2">Cocody, Abidjan</h3>
-          </div>
+    <div class="ct-hero-right">
+      <div class="ct-hero-rule-h"></div>
+      <h1 class="ct-hero-title">Parlons<br>de votre<br><em>projet.</em></h1>
+      <div class="ct-hero-meta">
+        <div class="ct-hero-meta-item">
+          <span class="ct-hero-meta-label">Bureau</span>
+          <span class="ct-hero-meta-val">Cocody, Abidjan</span>
         </div>
-        <p class="mt-4 text-[14px] text-[#4A5568]">Côte d'Ivoire</p>
-      </div>
-
-      <div class="glass-card p-6 rounded-[20px]">
-        <div class="flex items-center gap-4">
-          <div class="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(201,168,76,0.15)]">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-[#C9A84C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h2.5a1 1 0 01.94.658l1 2.5a1 1 0 01-.217 1.053L7.5 9.5a11.042 11.042 0 005.657 5.657l1.789-1.789a1 1 0 011.053-.217l2.5 1a1 1 0 01.658.94V19a2 2 0 01-2 2H5a2 2 0 01-2-2V5z" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-[13px] uppercase tracking-[0.24em] text-[#1B4332]">Appelez-nous</p>
-            <h3 class="font-display text-[20px] text-[#1B4332] mt-2">+225 01 23 45 67 89</h3>
-          </div>
+        <div class="ct-hero-meta-sep"></div>
+        <div class="ct-hero-meta-item">
+          <span class="ct-hero-meta-label">Disponibilité</span>
+          <span class="ct-hero-meta-val">Lun – Ven · 8h–18h</span>
         </div>
-        <p class="mt-4 text-[14px] text-[#4A5568]">Lun–Ven, 8h–18h</p>
-      </div>
-
-      <div class="glass-card p-6 rounded-[20px]">
-        <div class="flex items-center gap-4">
-          <div class="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(201,168,76,0.15)]">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-[#C9A84C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m-9 5V3" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-[13px] uppercase tracking-[0.24em] text-[#1B4332]">Écrivez-nous</p>
-            <h3 class="font-display text-[20px] text-[#1B4332] mt-2">support@ivoire-stay.ci</h3>
-          </div>
-        </div>
-        <p class="mt-4 text-[14px] text-[#4A5568]">Réponse sous 24h</p>
-      </div>
-
-      <div class="glass-card p-6 rounded-[20px]">
-        <p class="text-[14px] font-semibold text-[#1B4332]">Réseaux sociaux</p>
-        <div class="mt-4 space-y-3">
-          <a href="<?= $base_url ?? rtrim(APP_URL, '/') ?>" class="btn-outline-gold block text-center">LinkedIn</a>
-          <a href="<?= $base_url ?? rtrim(APP_URL, '/') ?>" class="btn-outline-gold block text-center">Twitter / X</a>
-          <a href="<?= $base_url ?? rtrim(APP_URL, '/') ?>" class="btn-outline-gold block text-center">Instagram</a>
+        <div class="ct-hero-meta-sep"></div>
+        <div class="ct-hero-meta-item">
+          <span class="ct-hero-meta-label">Réponse</span>
+          <span class="ct-hero-meta-val">Sous 24h</span>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- SECTION 3 — FAQ -->
-<section class="bg-[#F0EBE1] py-[80px]">
-  <div class="max-w-7xl mx-auto px-6 text-center mb-12">
-    <h2 class="font-display text-[48px] text-[#1B4332]">Foire aux questions</h2>
-    <p class="mt-4 text-[16px] text-[#4A5568] max-w-2xl mx-auto">Retrouvez les réponses aux questions les plus fréquentes sur Ivoire Stay.</p>
+<section class="ct-main">
+  <div class="ct-info-panel">
+    <div class="ct-info-header">
+      <div class="ct-info-rule"></div>
+      <span class="ct-info-tag">Nous trouver</span>
+    </div>
+    <div class="ct-info-list">
+      <div class="ct-info-item">
+        <div class="ct-info-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12S3 16 3 10a9 9 0 1118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div>
+          <span class="ct-info-label">Notre bureau</span>
+          <strong class="ct-info-value">Cocody, Abidjan</strong>
+          <span class="ct-info-sub">Côte d'Ivoire</span>
+        </div>
+      </div>
+      <div class="ct-info-divider"></div>
+      <div class="ct-info-item">
+        <div class="ct-info-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5a2 2 0 012-2h2.5a1 1 0 01.94.658l1 2.5a1 1 0 01-.217 1.053L7.5 9.5a11.042 11.042 0 005.657 5.657l1.789-1.789a1 1 0 011.053-.217l2.5 1a1 1 0 01.658.94V19a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/></svg>
+        </div>
+        <div>
+          <span class="ct-info-label">Appelez-nous</span>
+          <strong class="ct-info-value">+225 01 23 45 67 89</strong>
+          <span class="ct-info-sub">Lun – Ven · 8h–18h</span>
+        </div>
+      </div>
+      <div class="ct-info-divider"></div>
+      <div class="ct-info-item">
+        <div class="ct-info-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div>
+          <span class="ct-info-label">Écrivez-nous</span>
+          <strong class="ct-info-value">support@ivoire-stay.ci</strong>
+          <span class="ct-info-sub">Réponse sous 24h</span>
+        </div>
+      </div>
+    </div>
+    <div class="ct-social-block">
+      <span class="ct-social-label">Réseaux sociaux</span>
+      <div class="ct-social-links">
+        <a href="<?= $base_url ?>" class="ct-social-link">
+          <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+          LinkedIn
+        </a>
+        <a href="<?= $base_url ?>" class="ct-social-link">
+          <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          Twitter / X
+        </a>
+        <a href="<?= $base_url ?>" class="ct-social-link">
+          <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+          Instagram
+        </a>
+      </div>
+    </div>
   </div>
-  <div x-data="{ open: null }" class="max-w-7xl mx-auto px-6 space-y-3">
-    <div class="glass-card rounded-[16px] p-5">
-      <button type="button" class="w-full flex items-center justify-between" @click="open = open===1 ? null : 1">
-        <span class="font-display text-[18px] text-[#1B4332] text-left">Ivoire Stay est-il gratuit ?</span>
-        <svg xmlns="http://www.w3.org/2000/svg" :class="{'rotate-180': open===1}" class="h-5 w-5 text-[#1B4332] transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      <div x-show="open===1" x-transition class="mt-4 text-[15px] text-[#4A5568] leading-[1.8]">Oui ! Notre plan Starter est 100% gratuit et vous permet de gérer jusqu'à 10 chambres sans limitation de durée.</div>
-    </div>
 
-    <div class="glass-card rounded-[16px] p-5">
-      <button type="button" class="w-full flex items-center justify-between" @click="open = open===2 ? null : 2">
-        <span class="font-display text-[18px] text-[#1B4332] text-left">Quels modes de paiement acceptez-vous ?</span>
-        <svg xmlns="http://www.w3.org/2000/svg" :class="{'rotate-180': open===2}" class="h-5 w-5 text-[#1B4332] transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      <div x-show="open===2" x-transition class="mt-4 text-[15px] text-[#4A5568] leading-[1.8]">Nous acceptons Orange Money, MTN Money, Wave et les virements bancaires pour les abonnements Pro et Business.</div>
+  <div class="ct-form-panel">
+    <div class="ct-form-header">
+      <div class="ct-form-num">02</div>
+      <h2 class="ct-form-title">Envoyez-nous<br>un <em>message</em></h2>
+      <div class="ct-form-rule"></div>
     </div>
-
-    <div class="glass-card rounded-[16px] p-5">
-      <button type="button" class="w-full flex items-center justify-between" @click="open = open===3 ? null : 3">
-        <span class="font-display text-[18px] text-[#1B4332] text-left">Puis-je gérer plusieurs établissements ?</span>
-        <svg xmlns="http://www.w3.org/2000/svg" :class="{'rotate-180': open===3}" class="h-5 w-5 text-[#1B4332] transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
+    <form class="ct-form" @submit.prevent="sent = true" x-show="!sent">
+      <div class="ct-field">
+        <label class="ct-label">Nom complet</label>
+        <input type="text" class="ct-input" placeholder="Votre nom complet">
+      </div>
+      <div class="ct-field-row">
+        <div class="ct-field">
+          <label class="ct-label">Email</label>
+          <input type="email" class="ct-input" placeholder="votre@email.com">
+        </div>
+        <div class="ct-field">
+          <label class="ct-label">Téléphone</label>
+          <input type="tel" class="ct-input" placeholder="+225 01 23 45 67 89">
+        </div>
+      </div>
+      <div class="ct-field">
+        <label class="ct-label">Sujet</label>
+        <select class="ct-input ct-select">
+          <option>Question générale</option>
+          <option>Support technique</option>
+          <option>Partenariat hôtelier</option>
+          <option>Presse &amp; médias</option>
+        </select>
+      </div>
+      <div class="ct-field">
+        <label class="ct-label">Message</label>
+        <textarea class="ct-input ct-textarea" rows="5" placeholder="Décrivez votre besoin en détail..."></textarea>
+      </div>
+      <button type="submit" class="ct-submit">
+        Envoyer le message →
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
       </button>
-      <div x-show="open===3" x-transition class="mt-4 text-[15px] text-[#4A5568] leading-[1.8]">Oui, avec notre plan Business vous pouvez gérer un nombre illimité d'établissements depuis un seul dashboard.</div>
+    </form>
+    <div class="ct-success" x-show="sent" x-transition>
+      <div class="ct-success-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h3 class="ct-success-title">Message envoyé !</h3>
+      <p class="ct-success-sub">Nous avons bien reçu votre message et vous répondrons sous 24h ouvrées.</p>
+      <button type="button" class="ct-success-btn" @click="sent = false">Envoyer un autre message</button>
     </div>
+  </div>
 
-    <div class="glass-card rounded-[16px] p-5">
-      <button type="button" class="w-full flex items-center justify-between" @click="open = open===4 ? null : 4">
-        <span class="font-display text-[18px] text-[#1B4332] text-left">Y a-t-il une application mobile ?</span>
-        <svg xmlns="http://www.w3.org/2000/svg" :class="{'rotate-180': open===4}" class="h-5 w-5 text-[#1B4332] transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      <div x-show="open===4" x-transition class="mt-4 text-[15px] text-[#4A5568] leading-[1.8]">Notre dashboard SaaS est une PWA (Progressive Web App) optimisée mobile. Une app native est en développement.</div>
+  <div class="ct-side-panel">
+    <div class="ct-side-header">
+      <div class="ct-side-rule"></div>
+      <span class="ct-side-tag">Disponibilités</span>
     </div>
-
-    <div class="glass-card rounded-[16px] p-5">
-      <button type="button" class="w-full flex items-center justify-between" @click="open = open===5 ? null : 5">
-        <span class="font-display text-[18px] text-[#1B4332] text-left">Comment fonctionne le support ?</span>
-        <svg xmlns="http://www.w3.org/2000/svg" :class="{'rotate-180': open===5}" class="h-5 w-5 text-[#1B4332] transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      <div x-show="open===5" x-transition class="mt-4 text-[15px] text-[#4A5568] leading-[1.8]">Le support est disponible par email et chat 24h/24. Les clients Pro et Business bénéficient d'un support prioritaire.</div>
+    <div class="ct-hours">
+      <div class="ct-hours-row"><span>Lundi – Vendredi</span><span>8h00 – 18h00</span></div>
+      <div class="ct-hours-row"><span>Samedi</span><span>9h00 - 13h00</span></div>
+      <div class="ct-hours-row ct-hours-closed"><span>Dimanche</span><span>Fermé</span></div>
+    </div>
+    <div class="ct-side-note">
+      <div class="ct-side-note-dot"></div>
+      <p>Pour les urgences techniques, notre support est disponible 24h/24 par email.</p>
+    </div>
+    <div class="ct-side-cta">
+      <a href="<?= $base_url ?>/register" class="ct-side-btn-p">Créer un compte →</a>
+      <a href="<?= $base_url ?>/tarifs" class="ct-side-btn-o">Voir les tarifs</a>
     </div>
   </div>
 </section>
+
+<section class="ct-faq">
+  <div class="ct-faq-left">
+    <div class="ct-faq-ghost">FAQ</div>
+    <div class="ct-faq-left-content">
+      <div class="ct-faq-rule"></div>
+      <span class="ct-faq-tag">Questions fréquentes</span>
+      <h2 class="ct-faq-title">Toutes<br>vos <em>réponses.</em></h2>
+      <p class="ct-faq-sub">Retrouvez les réponses aux questions les plus fréquentes sur Ivoire Stay.</p>
+    </div>
+  </div>
+  <div class="ct-faq-right">
+    <div class="ct-faq-item" :class="{ 'ct-faq-open': open === 1 }">
+      <button class="ct-faq-q" type="button" @click="open = open === 1 ? null : 1">
+        <span>Ivoire Stay est-il gratuit ?</span>
+        <span class="ct-faq-icon">+</span>
+      </button>
+      <div class="ct-faq-a" x-show="open === 1" x-transition>Oui ! Notre plan Starter est 100% gratuit et vous permet de gérer jusqu'à 10 chambres sans limitation de durée.</div>
+    </div>
+    <div class="ct-faq-item" :class="{ 'ct-faq-open': open === 2 }">
+      <button class="ct-faq-q" type="button" @click="open = open === 2 ? null : 2">
+        <span>Quels modes de paiement acceptez-vous ?</span>
+        <span class="ct-faq-icon">+</span>
+      </button>
+      <div class="ct-faq-a" x-show="open === 2" x-transition>Orange Money, MTN Money, Wave et virements bancaires pour les abonnements Pro et Business.</div>
+    </div>
+    <div class="ct-faq-item" :class="{ 'ct-faq-open': open === 3 }">
+      <button class="ct-faq-q" type="button" @click="open = open === 3 ? null : 3">
+        <span>Puis-je gérer plusieurs établissements ?</span>
+        <span class="ct-faq-icon">+</span>
+      </button>
+      <div class="ct-faq-a" x-show="open === 3" x-transition>Oui, avec notre plan Business vous gérez un nombre illimité d'établissements depuis un seul dashboard.</div>
+    </div>
+    <div class="ct-faq-item" :class="{ 'ct-faq-open': open === 4 }">
+      <button class="ct-faq-q" type="button" @click="open = open === 4 ? null : 4">
+        <span>Y a-t-il une application mobile ?</span>
+        <span class="ct-faq-icon">+</span>
+      </button>
+      <div class="ct-faq-a" x-show="open === 4" x-transition>Notre dashboard SaaS est une PWA optimisée mobile. Une app native est en développement.</div>
+    </div>
+    <div class="ct-faq-item" :class="{ 'ct-faq-open': open === 5 }">
+      <button class="ct-faq-q" type="button" @click="open = open === 5 ? null : 5">
+        <span>Comment fonctionne le support ?</span>
+        <span class="ct-faq-icon">+</span>
+      </button>
+      <div class="ct-faq-a" x-show="open === 5" x-transition>Email et chat 24h/24. Les clients Pro et Business bénéficient d'un support prioritaire avec SLA garanti.</div>
+    </div>
+  </div>
+</section>
+
+</div>

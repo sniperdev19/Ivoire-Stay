@@ -4,7 +4,7 @@
    Stratégie : network-first (toujours frais si en ligne), repli cache hors-ligne.
    N'intercepte que les GET same-origin ; les API/POST passent direct au réseau.
    ============================================================ */
-const CACHE = 'ivoire-stay-v1';
+const CACHE = 'ivoire-stay-v5';
 
 // URLs relatives au scope du SW (= racine de l'app)
 const SHELL = [

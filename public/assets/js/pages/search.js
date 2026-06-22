@@ -19,6 +19,13 @@ function searchPage(base) {
     error: null,
     totalCount: 0,
     viewMode: 'grid',
+    typeOptions: [
+      { value: '',           label: 'Tous' },
+      { value: 'hotel',      label: 'Hôtel' },
+      { value: 'residence',  label: 'Résidence' },
+      { value: 'villa',      label: 'Villa' },
+      { value: 'appartement', label: 'Appartement' },
+    ],
 
     async publicFetch(path) {
       const url = path.startsWith('http') ? path : this.base + path;
@@ -36,7 +43,7 @@ function searchPage(base) {
       if (p.get('check_in'))  this.filters.check_in  = p.get('check_in');
       if (p.get('check_out')) this.filters.check_out = p.get('check_out');
       await this.loadDestinations();
-      if ([...p.keys()].length > 0) await this.search();
+      await this.search();
     },
 
     async loadDestinations() {
@@ -94,6 +101,11 @@ function searchPage(base) {
       }
     },
 
+    applyType(value) {
+      this.filters.type = value;
+      this.search();
+    },
+
     clearFilters() {
       this.filters = { city: '', type: '', check_in: '', check_out: '' };
       window.history.replaceState({}, '', window.location.pathname);
@@ -101,23 +113,26 @@ function searchPage(base) {
     },
 
     photoUrl(r) {
-      const fb = 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600';
-      const u = r?.photos?.[0]?.url ?? r?.photo ?? r?.cover_photo ?? null;
-      if (!u) return fb;
+      const u = r?.cover_photo ?? null;
+      if (!u) return null;
       if (u.startsWith('http')) return u;
       return this.base + '/' + u.replace(/^\/+/, '');
     },
+
     formatPrice(p) {
       if (p == null || p === '') return '—';
       return new Intl.NumberFormat('fr-FR').format(p) + ' FCFA';
     },
-    getStars(n = 4) {
-      n = Math.round(n);
-      return '★'.repeat(n) + '☆'.repeat(5 - n);
+
+    typeLabel(t) {
+      return { hotel: 'Hôtel', residence: 'Résidence', villa: 'Villa', appartement: 'Appartement' }[t] ?? (t ?? '');
     },
+
     goProperty(id) {
       window.location.href = this.base + '/property/' + id;
     },
+
     isFeatured(idx) { return idx === 0; },
   };
 }
+

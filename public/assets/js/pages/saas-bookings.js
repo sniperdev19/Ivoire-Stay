@@ -4,6 +4,8 @@
 
 function bookingsPage(baseUrl) {
   return {
+  ...saasHelpers,
+
   bookings: [],
   loading: true,
   error: null,
@@ -28,33 +30,14 @@ function bookingsPage(baseUrl) {
   rooms: [],
 
   form: {
-    room_id:'', check_in:'', check_out:'',
-    client_name:'', client_email:'', client_phone:'',
-    booking_type:'nuit', source:'manual', notes:''
+    room_id: '', check_in: '', check_out: '',
+    client_name: '', client_email: '', client_phone: '',
+    booking_type: 'nuit', source: 'manual', notes: ''
   },
-
-  fallbackBookings: [
-    { id:1, client_name:'Kouamé Adou', client_phone:'+225 07 11 22 33', client_email:'kouame@email.ci', room_name:'Suite Présidentielle', room_id:9, check_in:'2026-06-14', check_out:'2026-06-16', nights:2, total_price:640000, status:'confirmed', source:'online', booking_type:'nuit', notes:'' },
-    { id:2, client_name:'Fatou Diallo', client_phone:'+225 05 44 55 66', client_email:'fatou@email.ci', room_name:'Chambre Deluxe', room_id:3, check_in:'2026-06-14', check_out:'2026-06-15', nights:1, total_price:95000, status:'pending', source:'phone', booking_type:'nuit', notes:'Client VIP' },
-    { id:3, client_name:'Marc Koffi', client_phone:'+225 01 77 88 99', client_email:'marc@email.ci', room_name:'Studio Standard', room_id:1, check_in:'2026-06-12', check_out:'2026-06-13', nights:1, total_price:55000, status:'checked_out', source:'manual', booking_type:'nuit', notes:'' },
-    { id:4, client_name:'Awa Traoré', client_phone:'+225 07 22 33 44', client_email:'awa@email.ci', room_name:'Chambre Deluxe', room_id:3, check_in:'2026-06-15', check_out:'2026-06-17', nights:2, total_price:190000, status:'confirmed', source:'online', booking_type:'nuit', notes:'' },
-    { id:5, client_name:'Yao Brou', client_phone:'+225 05 55 66 77', client_email:'yao@email.ci', room_name:'Suite Junior', room_id:5, check_in:'2026-06-14', check_out:'2026-06-15', nights:1, total_price:145000, status:'checked_in', source:'manual', booking_type:'nuit', notes:'' },
-    { id:6, client_name:'Amina Coulibaly', client_phone:'+225 01 33 44 55', client_email:'amina@email.ci', room_name:'Studio Standard', room_id:2, check_in:'2026-06-10', check_out:'2026-06-11', nights:1, total_price:55000, status:'cancelled', source:'online', booking_type:'nuit', notes:'Annulé par client' },
-    { id:7, client_name:'Jean Ouattara', client_phone:'+225 07 88 99 00', client_email:'jean@email.ci', room_name:'Suite Présidentielle', room_id:9, check_in:'2026-06-18', check_out:'2026-06-20', nights:2, total_price:640000, status:'pending', source:'phone', booking_type:'nuit', notes:'' }
-  ],
 
   async init() {
     await Promise.all([this.loadBookings(), this.loadRooms()]);
   },
-
-  apiHeaders() {
-    const token = localStorage.getItem('token');
-    return {
-      'Content-Type':'application/json',
-      'Authorization':'Bearer ' + (token ?? '')
-    };
-  },
-  estId() { return localStorage.getItem('establishment_id') || '1'; },
 
   async loadBookings() {
     this.loading = true;
@@ -65,54 +48,36 @@ function bookingsPage(baseUrl) {
         + '&page=' + this.page
         + '&per_page=' + this.perPage;
       if (this.filterStatus !== 'all') url += '&status=' + this.filterStatus;
-      if (this.filterSearch) url += '&search=' + encodeURIComponent(this.filterSearch);
+      if (this.filterSearch)  url += '&search=' + encodeURIComponent(this.filterSearch);
       if (this.filterDateFrom) url += '&from=' + this.filterDateFrom;
-      if (this.filterDateTo)   url += '&to=' + this.filterDateTo;
+      if (this.filterDateTo)   url += '&to='   + this.filterDateTo;
 
-      const res = await fetch(url, { headers:this.apiHeaders() });
+      const res  = await fetch(url, { headers: this.apiHeaders() });
       const data = await res.json();
 
       if (data.success) {
-        const raw = data.data?.bookings 
-          ?? data.data?.data 
-          ?? data.data 
-          ?? [];
-
+        const raw = data.data?.bookings ?? data.data?.data ?? data.data ?? [];
         this.bookings = raw.map(b => ({
           ...b,
-          client_name: b.client_name 
-            ?? b.public_client?.name 
-            ?? b.user?.name 
-            ?? 'Client #' + b.id,
-          client_phone: b.client_phone 
-            ?? b.public_client?.phone 
-            ?? b.user?.phone 
-            ?? '',
-          client_email: b.client_email 
-            ?? b.public_client?.email 
-            ?? b.user?.email 
-            ?? '',
-          room_name: b.room_name 
-            ?? b.room?.name 
-            ?? 'Chambre #' + b.room_id,
-          total_price: b.total_price 
-            ?? b.total_amount 
-            ?? 0,
-          nights: b.nights 
-            ?? (b.check_in && b.check_out 
-              ? Math.round((new Date(b.check_out) - new Date(b.check_in)) / 86400000)
-              : 1),
+          client_name:  b.client_name  ?? b.public_client?.name  ?? b.user?.name  ?? 'Client #' + b.id,
+          client_phone: b.client_phone ?? b.public_client?.phone ?? b.user?.phone ?? '',
+          client_email: b.client_email ?? b.public_client?.email ?? b.user?.email ?? '',
+          room_name:    b.room_name    ?? (b.room_number ? 'Chambre ' + b.room_number : null) ?? b.room?.name ?? 'Chambre #' + b.room_id,
+          total_price:  b.total_price  ?? b.total_amount ?? 0,
+          nights: b.nights ?? (b.check_in && b.check_out
+            ? Math.round((new Date(b.check_out) - new Date(b.check_in)) / 86400000)
+            : 1),
         }));
-
         this.total = data.data?.total ?? this.bookings.length;
       } else {
-        this.bookings = this.fallbackBookings;
-        this.total = this.fallbackBookings.length;
+        this.bookings = [];
+        this.total = 0;
+        this.error = data.message ?? 'Impossible de charger les réservations.';
       }
     } catch(e) {
-      this.bookings = this.fallbackBookings;
-      this.total = this.fallbackBookings.length;
-      this.error = 'Impossible de charger les réservations. Données de secours affichées.';
+      this.bookings = [];
+      this.total = 0;
+      this.error = 'Erreur réseau. Vérifiez votre connexion.';
     } finally {
       this.loading = false;
     }
@@ -120,17 +85,9 @@ function bookingsPage(baseUrl) {
 
   async loadRooms() {
     try {
-      const res = await fetch(baseUrl + '/api/rooms?establishment_id=' + this.estId(), { headers:this.apiHeaders() });
+      const res  = await fetch(baseUrl + '/api/rooms?establishment_id=' + this.estId(), { headers: this.apiHeaders() });
       const data = await res.json();
       this.rooms = data.success ? (data.data?.rooms ?? data.data ?? []) : [];
-      if (!this.rooms.length) {
-        this.rooms = [
-          { id:1, name:'101', room_type:{ name:'Standard', base_price:55000 } },
-          { id:3, name:'103', room_type:{ name:'Deluxe', base_price:95000 } },
-          { id:5, name:'201', room_type:{ name:'Suite Junior', base_price:145000 } },
-          { id:9, name:'301', room_type:{ name:'Suite Présidentielle', base_price:320000 } }
-        ];
-      }
     } catch(e) {
       this.rooms = [];
     }
@@ -154,7 +111,7 @@ function bookingsPage(baseUrl) {
     this.showDetail = true;
     this.detailLoading = true;
     try {
-      const res = await fetch(baseUrl + '/api/bookings/' + booking.id, { headers:this.apiHeaders() });
+      const res  = await fetch(baseUrl + '/api/bookings/' + booking.id, { headers: this.apiHeaders() });
       const data = await res.json();
       if (data.success) this.selectedBooking = data.data?.booking ?? data.data ?? booking;
     } catch(e) {}
@@ -166,10 +123,10 @@ function bookingsPage(baseUrl) {
     try {
       let endpoint = baseUrl + '/api/bookings/' + bookingId;
       let method = 'PUT';
-      let body = JSON.stringify({ status:newStatus });
-      if (newStatus === 'checked_in') { endpoint = baseUrl + '/api/bookings/' + bookingId + '/checkin'; method='POST'; body = null; }
-      if (newStatus === 'checked_out') { endpoint = baseUrl + '/api/bookings/' + bookingId + '/checkout'; method='POST'; body = null; }
-      const res = await fetch(endpoint, { method, headers:this.apiHeaders(), body });
+      let body = JSON.stringify({ status: newStatus });
+      if (newStatus === 'checked_in')  { endpoint = baseUrl + '/api/bookings/' + bookingId + '/checkin';  method = 'POST'; body = null; }
+      if (newStatus === 'checked_out') { endpoint = baseUrl + '/api/bookings/' + bookingId + '/checkout'; method = 'POST'; body = null; }
+      const res  = await fetch(endpoint, { method, headers: this.apiHeaders(), body });
       const data = await res.json();
       if (data.success) {
         const idx = this.bookings.findIndex(b => b.id === bookingId);
@@ -187,7 +144,7 @@ function bookingsPage(baseUrl) {
   async deleteBooking(id) {
     if (!confirm('Supprimer cette réservation ?')) return;
     try {
-      const res = await fetch(baseUrl + '/api/bookings/' + id, { method:'DELETE', headers:this.apiHeaders() });
+      const res  = await fetch(baseUrl + '/api/bookings/' + id, { method: 'DELETE', headers: this.apiHeaders() });
       const data = await res.json();
       if (data.success) {
         this.bookings = this.bookings.filter(b => b.id !== id);
@@ -206,9 +163,27 @@ function bookingsPage(baseUrl) {
     this.createError = null;
     this.createLoading = true;
     try {
-      const res = await fetch(baseUrl + '/api/bookings', {
-        method:'POST', headers:this.apiHeaders(),
-        body: JSON.stringify({ ...this.form, establishment_id:this.estId() })
+      // Construire le payload : le backend attend un objet "client" avec first_name/last_name
+      const nameParts  = (this.form.client_name ?? '').trim().split(/\s+/);
+      const clientPayload = {
+        first_name:    nameParts[0] ?? this.form.client_name ?? '',
+        last_name:     nameParts.slice(1).join(' ') || '',
+        email:         this.form.client_email   || null,
+        phone:         this.form.client_phone   || null,
+      };
+      const payload = {
+        room_id:       this.form.room_id,
+        check_in:      this.form.check_in,
+        check_out:     this.form.check_out,
+        booking_type:  this.form.booking_type,
+        source:        this.form.source,
+        notes:         this.form.notes,
+        establishment_id: this.estId(),
+        client:        clientPayload,
+      };
+      const res  = await fetch(baseUrl + '/api/bookings', {
+        method: 'POST', headers: this.apiHeaders(),
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (data.success) {
@@ -239,15 +214,14 @@ function bookingsPage(baseUrl) {
   },
 
   get filteredBookings() {
-    let list = [...this.bookings];
-    if (this.filterStatus !== 'all') list = list.filter(b => b.status === this.filterStatus);
-    if (this.filterSearch) {
-      const q = this.filterSearch.toLowerCase();
-      list = list.filter(b => (b.client_name||'').toLowerCase().includes(q) || (b.room_name||'').toLowerCase().includes(q) || (b.client_phone||'').includes(q));
-    }
-    if (this.filterDateFrom) list = list.filter(b => b.check_in >= this.filterDateFrom);
-    if (this.filterDateTo)   list = list.filter(b => b.check_in <= this.filterDateTo);
-    return list;
+    const q = this.filterSearch?.toLowerCase();
+    return this.bookings.filter(b => {
+      if (this.filterStatus !== 'all' && b.status !== this.filterStatus) return false;
+      if (q && !`${b.client_name} ${b.room_name} ${b.client_phone}`.toLowerCase().includes(q)) return false;
+      if (this.filterDateFrom && b.check_in < this.filterDateFrom) return false;
+      if (this.filterDateTo   && b.check_in > this.filterDateTo)   return false;
+      return true;
+    });
   },
 
   countByStatus(s) {
@@ -255,43 +229,18 @@ function bookingsPage(baseUrl) {
     return this.bookings.filter(b => b.status === s).length;
   },
 
-  formatPrice(p) { return new Intl.NumberFormat('fr-FR').format(p ?? 0) + ' FCFA'; },
-  formatDate(d) {
-    if (!d) return '-';
-    return new Date(d).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' });
-  },
-  statusConfig(s) {
-    return {
-      confirmed:{ label:'Confirmée', badge:'badge badge-success' },
-      pending:{ label:'En attente', badge:'badge badge-warning' },
-      checked_in:{ label:'Arrivée', badge:'badge badge-info' },
-      checked_out:{ label:'Départ', badge:'badge badge-gold' },
-      cancelled:{ label:'Annulée', badge:'badge badge-danger' }
-    }[s] ?? { label:s, badge:'badge' };
-  },
-  sourceLabel(s) {
-    return { manual:'Manuel', online:'En ligne', phone:'Téléphone', walk_in:'Sur place' }[s] ?? s;
-  },
-  typeLabel(t) {
-    return { nuit:'Nuit', weekend:'Week-end', passage:'Passage' }[t] ?? t;
-  },
-
-  toast:null,
-  toastTimer:null,
-  showToast(msg,type='success') {
-    this.toast = { msg,type };
-    clearTimeout(this.toastTimer);
-    this.toastTimer = setTimeout(() => { this.toast = null; }, 3500);
-  },
+  statusConfig(s) { return BOOKING_STATUS[s] ?? { label: s, badge: 'badge' }; },
+  sourceLabel(s)  { return { manual:'Manuel / Sur place', online:'En ligne', phone:'Téléphone' }[s] ?? s; },
+  typeLabel(t)    { return { nuit:'Nuit', weekend:'Week-end', passage:'Passage' }[t] ?? t; },
 
   nextActions(status) {
     const map = {
-      pending:[{ label:'Confirmer', value:'confirmed', color:'success' },{ label:'Annuler', value:'cancelled', color:'danger' }],
-      confirmed:[{ label:'Check-in', value:'checked_in', color:'info' },{ label:'Annuler', value:'cancelled', color:'danger' }],
-      checked_in:[{ label:'Check-out', value:'checked_out', color:'gold' }],
-      checked_out:[], cancelled:[]
+      pending:     [{ label:'Confirmer', value:'confirmed',   color:'success' }, { label:'Annuler', value:'cancelled', color:'danger' }],
+      confirmed:   [{ label:'Check-in',  value:'checked_in',  color:'info'    }, { label:'Annuler', value:'cancelled', color:'danger' }],
+      checked_in:  [{ label:'Check-out', value:'checked_out', color:'gold'    }],
+      checked_out: [], cancelled: [],
     };
     return map[status] ?? [];
-  }
+  },
   };
 }

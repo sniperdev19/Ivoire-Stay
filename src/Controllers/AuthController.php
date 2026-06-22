@@ -68,10 +68,7 @@ class AuthController
             Response::error('Mot de passe trop court (min. 8 caractères)');
         }
 
-        // L'inscription publique crée uniquement des comptes "owner" sans
-        // établissement pré-assigné. La création de réceptionnistes et le
-        // rattachement à un établissement passent par un owner authentifié.
-        $id = User::createUser([
+        $userId = User::createUser([
             'role'             => 'owner',
             'name'             => $data['name'],
             'email'            => $data['email'],
@@ -80,7 +77,26 @@ class AuthController
             'establishment_id' => null,
         ]);
 
-        $user  = User::find($id);
+        // Créer l'établissement si le nom est fourni (étape 2 du formulaire)
+        $estabName = trim($data['establishment_name'] ?? '');
+        $estabType = in_array($data['establishment_type'] ?? '', ['hotel', 'residence'])
+                     ? $data['establishment_type']
+                     : 'hotel';
+
+        $estabId = null;
+        if ($estabName !== '') {
+            $estabId = Establishment::create([
+                'owner_id' => $userId,
+                'name'     => $estabName,
+                'type'     => $estabType,
+                'plan'     => 'starter',
+            ]);
+
+            // Relier l'utilisateur à son établissement
+            User::update($userId, ['establishment_id' => $estabId]);
+        }
+
+        $user  = User::find($userId);
         $token = AuthService::encode([
             'id'               => $user['id'],
             'role'             => $user['role'],
@@ -89,7 +105,13 @@ class AuthController
             'establishment_id' => $user['establishment_id'],
         ]);
 
-        Response::success(['token' => $token, 'user' => User::safe($user)], 'Compte créé', 201);
+        $estabs = Establishment::forUser($user);
+
+        Response::success([
+            'token'          => $token,
+            'user'           => User::safe($user),
+            'establishments' => $estabs,
+        ], 'Compte créé', 201);
     }
 
     public function me(Request $req, array $params = []): void

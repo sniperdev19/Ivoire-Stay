@@ -18,3 +18,9 @@
 @media(max-width:1200px){ .kpi-grid  { grid-template-columns:repeat(2,1fr)!important; } }
 @media(max-width:900px) { .main-grid { grid-template-columns:1fr!important; } }
 @media(max-width:640px) { .kpi-grid  { grid-template-columns:1fr!important; } .bottom-grid{ grid-template-columns:1fr!important; } }
+
+/* KPI card — variantes de couleur (bandeau supérieur via ::before) */
+.kpi-gold:before   { background: linear-gradient(90deg, #C9A84C, #E8D5A3); }
+.kpi-blue:before   { background: linear-gradient(90deg, #2563EB, #93C5FD); }
+.kpi-green:before  { background: linear-gradient(90deg, #16A34A, #86EFAC); }
+.kpi-purple:before { background: linear-gradient(90deg, #7C3AED, #C4B5FD); }

@@ -19,6 +19,3 @@
 .client-stat { background: #FAFAFA; border-radius: 12px; padding: 14px; text-align:center; }
 .client-stat-value { font-size:20px; font-weight:800; color:#111827; line-height:1; margin-bottom:4px; }
 .client-stat-label { font-size:11px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.05em; }
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes shimmer { 0% { background-position:200% 0 } 100% { background-position:-200% 0 } }
-.cl-shimmer { background: linear-gradient(90deg,#f8f6f2 25%,#f0ebe1 50%,#f8f6f2 75%); background-size:400% 100%; animation: shimmer 1.4s linear infinite; border-radius:8px; }

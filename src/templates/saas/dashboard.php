@@ -41,6 +41,16 @@
     </div>
   </div>
 
+  <!-- Erreur / pas d'établissement -->
+  <div x-show="!loading && error"
+    style="padding:20px 24px;background:rgba(220,38,38,0.04);border:1px solid rgba(220,38,38,0.12);border-radius:14px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+    <div style="color:#B91C1C;font-size:14px;" x-text="error"></div>
+    <a href="<?= $base_url ?>/saas/settings"
+      style="display:inline-block;padding:8px 16px;background:#1B4332;color:white;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;">
+      Configurer l'établissement →
+    </a>
+  </div>
+
   <!-- Contenu principal -->
   <div x-show="!loading">
 
@@ -119,32 +129,33 @@
         <div x-show="(planning||[]).length === 0" style="padding:32px;text-align:center;color:#9CA3AF;">
             <svg xmlns="http://www.w3.org/2000/svg" style="width:32px;height:32px;margin:0 auto 8px;display:block;color:#E5E7EB;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
             Aucune réservation récente
-          </div>
         </div>
 
         <div x-show="(planning||[]).length > 0" style="overflow-x:auto;">
-            <table style="width:100%;border-collapse:collapse;">
-              <thead style="text-align:left;color:rgba(0,0,0,0.65);font-size:13px;">
-                <tr>
-                  <th style="padding:10px 20px;border-bottom:1px solid rgba(0,0,0,0.05);">Client</th>
-                  <th style="padding:10px 16px;border-bottom:1px solid rgba(0,0,0,0.05);">Chambre</th>
-                  <th style="padding:10px 16px;border-bottom:1px solid rgba(0,0,0,0.05);">Check-in</th>
-                  <th style="padding:10px 20px;text-align:right;border-bottom:1px solid rgba(0,0,0,0.05);">Montant</th>
-                  <th style="padding:10px 16px;border-bottom:1px solid rgba(0,0,0,0.05);">Statut</th>
+          <table style="width:100%;border-collapse:collapse;">
+            <thead style="text-align:left;color:rgba(0,0,0,0.65);font-size:13px;">
+              <tr>
+                <th style="padding:10px 20px;border-bottom:1px solid rgba(0,0,0,0.05);">Client</th>
+                <th style="padding:10px 16px;border-bottom:1px solid rgba(0,0,0,0.05);">Chambre</th>
+                <th style="padding:10px 16px;border-bottom:1px solid rgba(0,0,0,0.05);">Check-in</th>
+                <th style="padding:10px 20px;text-align:right;border-bottom:1px solid rgba(0,0,0,0.05);">Montant</th>
+                <th style="padding:10px 16px;border-bottom:1px solid rgba(0,0,0,0.05);">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="b in planning" :key="b.id">
+                <tr style="border-top:1px solid rgba(0,0,0,0.06);">
+                  <td style="padding:13px 20px;"><div style="display:flex;align-items:center;gap:10px;"><div style="width:30px;height:30px;border-radius:8px;background:rgba(201,168,76,0.12);display:grid;place-items:center;font-size:12px;font-weight:700;color:#C9A84C;" x-text="(b.client_name||'?').charAt(0).toUpperCase()"></div><span style="font-size:14px;font-weight:500;color:#111827;" x-text="b.client_name ?? '-'"></span></div></td>
+                  <td style="padding:13px 16px;font-size:13px;color:#4B5563;" x-text="b.room_name ?? '-'"></td>
+                  <td style="padding:13px 16px;font-size:13px;color:#4B5563;" x-text="formatDate(b.checkin ?? b.check_in)"></td>
+                  <td style="padding:13px 20px;font-size:13px;font-weight:600;color:#111827;text-align:right;" x-text="formatPrice(b.amount ?? b.total_price)"></td>
+                  <td style="padding:13px 16px;"><span :style="statusStyle(b.status)" x-text="statusLabel(b.status)"></span></td>
                 </tr>
-              </thead>
-              <tbody>
-                <tr x-for="b in planning" :key="b.id" style="border-top:1px solid rgba(0,0,0,0.06);">
-                    <td style="padding:13px 20px;"><div style="display:flex;align-items:center;gap:10px;"><div style="width:30px;height:30px;border-radius:8px;background:rgba(201,168,76,0.12);display:grid;place-items:center;font-size:12px;font-weight:700;color:#C9A84C;" x-text="(b.client_name||'?').charAt(0).toUpperCase()"></div><span style="font-size:14px;font-weight:500;color:#111827;" x-text="b.client_name ?? '-'"></span></div></td>
-                    <td style="padding:13px 16px;font-size:13px;color:#4B5563;" x-text="b.room_name ?? '-'"></td>
-                    <td style="padding:13px 16px;font-size:13px;color:#4B5563;" x-text="formatDate(b.checkin ?? b.check_in)"></td>
-                    <td style="padding:13px 20px;font-size:13px;font-weight:600;color:#111827;text-align:right;" x-text="formatPrice(b.amount ?? b.total_price)"></td>
-                    <td style="padding:13px 16px;"><span :style="statusStyle(b.status)" x-text="statusLabel(b.status)"></span></td>
-                  </tr>
-              </tbody>
-            </table>
-          </div>
+              </template>
+            </tbody>
+          </table>
         </div>
+
       </div>
 
       <div class="saas-card">

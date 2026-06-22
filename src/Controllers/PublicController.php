@@ -195,7 +195,7 @@ class PublicController
         $room = Database::query(
             "SELECT r.*, rt.name as type_name, rt.base_price, rt.weekend_price, rt.passage_price, rt.capacity,
                     rt.description as type_description,
-                    e.name as establishment_name, e.type as establishment_type,
+                    e.name as establishment_name, e.type as establishment_type, e.city,
                     (SELECT file_path FROM room_photos WHERE room_id = r.id AND is_cover = 1 LIMIT 1) as cover_photo
              FROM rooms r
              JOIN room_types rt ON rt.id = r.room_type_id

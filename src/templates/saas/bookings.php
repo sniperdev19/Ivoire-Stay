@@ -135,7 +135,7 @@
     </div>
   </div>
 
-  <div x-show="showDetail" class="saas-modal-bg" @click.self="showDetail=false">
+  <div x-cloak x-show="showDetail" class="saas-modal-bg" @click.self="showDetail=false">
     <div class="saas-modal" role="dialog" aria-modal="true">
       <div class="saas-modal-header">
         <div>
@@ -201,7 +201,7 @@
     </div>
   </div>
 
-  <div x-show="showCreate" class="saas-modal-bg" @click.self="showCreate=false">
+  <div x-cloak x-show="showCreate" class="saas-modal-bg" @click.self="showCreate=false">
     <div class="saas-modal" role="dialog" aria-modal="true">
       <div class="saas-modal-header">
         <div>
@@ -217,7 +217,7 @@
             <select class="saas-input" x-model="form.room_id" required>
               <option value="">Sélectionner une chambre</option>
               <template x-for="room in rooms" :key="room.id">
-                <option :value="room.id" x-text="room.name + ' — ' + (room.room_type?.name || '')"></option>
+                <option :value="room.id" x-text="'Chambre ' + room.number + ' — ' + (room.room_type?.name || room.type_name || '')"></option>
               </template>
             </select>
           </div>
@@ -258,9 +258,8 @@
           <div>
             <label class="saas-label">Source</label>
             <select class="saas-input" x-model="form.source">
-              <option value="manual">Manuel</option>
+              <option value="manual">Manuel / Sur place</option>
               <option value="phone">Téléphone</option>
-              <option value="walk_in">Sur place</option>
               <option value="online">En ligne</option>
             </select>
           </div>
@@ -285,8 +284,8 @@
   </div>
 
   <div x-show="toast" style="position:fixed;bottom:24px;right:24px;z-index:110;">
-    <div :style="toast.type === 'success' ? 'background:#DCFCE7;color:#166534;' : 'background:#FEE2E2;color:#991B1B;'" style="padding:14px 18px;border-radius:14px;box-shadow:0 18px 50px rgba(15,23,42,0.15);min-width:260px;">
-      <p style="margin:0;font-size:14px;font-weight:600;" x-text="toast.msg"></p>
+    <div :style="toast?.type === 'success' ? 'background:#DCFCE7;color:#166534;' : 'background:#FEE2E2;color:#991B1B;'" style="padding:14px 18px;border-radius:14px;box-shadow:0 18px 50px rgba(15,23,42,0.15);min-width:260px;">
+      <p style="margin:0;font-size:14px;font-weight:600;" x-text="toast?.msg"></p>
     </div>
   </div>
 </div>

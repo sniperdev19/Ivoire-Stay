@@ -73,8 +73,6 @@
 }
 .type-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
 
-@keyframes spin { to { transform: rotate(360deg); } }
-
 .room-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0,1fr));

@@ -1,180 +1,126 @@
-<?php
-// Contenu injecté dans le layout : sections statiques de la page d'accueil
-// Sections : HERO, avantages, carrousel, CTA final
-$pageCss = 'home';
-$pageJs  = 'home';
+﻿<?php $base = $base_url ?? rtrim(APP_URL, '/'); ?>
 
-$base_url = $base_url ?? rtrim(APP_URL, '/');
+<div class="home-page">
 
-// Données du carrousel "Destinations phares" (injectées en JS via json_encode)
-$destinations = [
-  ['name' => 'Abidjan',      'region' => 'District Autonome', 'count' => 142, 'tag' => 'Ville & Affaires',    'desc' => "Capitale économique entre lagune, gratte-ciels et vie nocturne trépidante. Hub incontournable de l'Afrique de l'Ouest.", 'img' => $base_url . '/assets/carrouss1.jpg'],
-  ['name' => 'Yamoussoukro', 'region' => 'Centre',           'count' => 38,  'tag' => 'Culture & Histoire',   'desc' => "Capitale politique, terre de la Basilique Notre-Dame de la Paix et de sérénité ivoirienne.",                       'img' => $base_url . '/assets/carrouss2.jpg'],
-  ['name' => 'Grand-Bassam', 'region' => 'Sud-Comoé',        'count' => 27,  'tag' => 'Plage & Patrimoine',   'desc' => "Ancienne capitale coloniale classée UNESCO, plages dorées, galeries d'art et fruits de mer.",                      'img' => $base_url . '/assets/carrouss3.jpg'],
-  ['name' => 'San-Pédro',    'region' => 'Bas-Sassandra',    'count' => 19,  'tag' => 'Nature & Évasion',     'desc' => "Port moderne, forêt tropicale et eaux turquoise du Sud-Ouest ivoirien.",                                          'img' => $base_url . '/assets/carrouss4.jpg'],
-  ['name' => 'Assinie',      'region' => 'Sud-Comoé',        'count' => 31,  'tag' => 'Plage & Détente',      'desc' => "Station balnéaire prisée entre océan Atlantique et lagune Aby. Cocotiers et sable blanc.",                        'img' => 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800'],
-];
-?>
-
-<section class="relative min-h-screen overflow-hidden" style="background-image:url('<?= $base_url ?? rtrim(APP_URL, '/') ?>/assets/bg_home.jpg'); background-size:cover; background-position:center; background-attachment:fixed;">
-  <div class="absolute inset-0" style="background: linear-gradient(135deg, rgba(15,67,39,0.82) 0%, rgba(15,67,39,0.58) 45%, rgba(15,43,32,0.35) 100%);"></div>
-  <div class="relative z-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-screen flex items-center pt-28 pb-20">
-      <div class="w-full grid grid-cols-1 lg:grid-cols-[58%_42%] gap-10 items-center">
-        <div class="text-white">
-          <div class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 mb-6 backdrop-blur-md">
-            <span class="text-[13px] uppercase tracking-[0.25em] text-white/80">Nouveauté partagée</span>
-          </div>
-          <h1 class="font-display text-[2.9rem] md:text-[4.5rem] leading-tight tracking-[-0.03em] mb-6">
-            Réservez des séjours<br>
-            mémorables en Côte d'Ivoire
-          </h1>
-          <p class="max-w-2xl text-base md:text-lg text-white/80 leading-8 mb-10">
-            Ivoire Stay connecte les voyageurs aux meilleurs établissements locaux, avec paiement Mobile Money et réservation instantanée.
-          </p>
-          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <a href="<?= $base_url ?? rtrim(APP_URL, '/') ?>/search" class="btn-gold inline-flex items-center justify-center px-8 py-4">
-              Explorer les destinations
-            </a>
-            <a href="<?= $base_url ?? rtrim(APP_URL, '/') ?>/tarifs" class="btn-outline-gold inline-flex items-center justify-center px-8 py-4">
-              Voir les tarifs SaaS
-            </a>
-          </div>
-          <div class="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="rounded-[24px] bg-white/10 border border-white/15 p-5 backdrop-blur-md">
-              <div class="text-[2rem] font-semibold text-white">500+</div>
-              <div class="mt-3 text-sm text-white/70 uppercase tracking-[0.2em]">Établissements</div>
-            </div>
-            <div class="rounded-[24px] bg-white/10 border border-white/15 p-5 backdrop-blur-md">
-              <div class="text-[2rem] font-semibold text-white">12 000+</div>
-              <div class="mt-3 text-sm text-white/70 uppercase tracking-[0.2em]">Réservations</div>
-            </div>
-            <div class="rounded-[24px] bg-white/10 border border-white/15 p-5 backdrop-blur-md">
-              <div class="text-[2rem] font-semibold text-white">4.9</div>
-              <div class="mt-3 text-sm text-white/70 uppercase tracking-[0.2em]">Note moyenne</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="relative">
-          <div class="glass-card-strong border border-white/15 p-8 rounded-[32px] shadow-2xl">
-            <div class="mb-6">
-              <div class="font-display text-2xl text-[#1B4332] mb-2">Trouvez votre séjour en un instant</div>
-              <p class="text-sm text-[#1B4332]/80 leading-6">Recherchez par destination, type d'hébergement et dates.</p>
-            </div>
-            <form class="space-y-4">
-              <div>
-                <label class="block text-xs uppercase tracking-[0.24em] text-[#C9A84C] mb-2">Destination</label>
-                <input type="text" placeholder="Abidjan, Yamoussoukro..." class="w-full rounded-[20px] border border-[#C9A84C]/20 bg-white/90 py-4 px-4 text-sm text-[#1B4332]" />
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs uppercase tracking-[0.24em] text-[#C9A84C] mb-2">Arrivée</label>
-                  <input type="date" class="w-full rounded-[20px] border border-[#C9A84C]/20 bg-white/90 py-4 px-4 text-sm text-[#1B4332]" />
-                </div>
-                <div>
-                  <label class="block text-xs uppercase tracking-[0.24em] text-[#C9A84C] mb-2">Départ</label>
-                  <input type="date" class="w-full rounded-[20px] border border-[#C9A84C]/20 bg-white/90 py-4 px-4 text-sm text-[#1B4332]" />
-                </div>
-              </div>
-              <div>
-                <label class="block text-xs uppercase tracking-[0.24em] text-[#C9A84C] mb-2">Type</label>
-                <select class="w-full rounded-[20px] border border-[#C9A84C]/20 bg-white/90 py-4 px-4 text-sm text-[#1B4332]">
-                  <option>Tous les types</option>
-                  <option>Hôtel</option>
-                  <option>Résidence</option>
-                  <option>Villa</option>
-                </select>
-              </div>
-              <button type="button" onclick="window.location.href='<?= $base_url ?? rtrim(APP_URL, '/') ?>/search'" class="btn-gold w-full py-4 rounded-[20px]">
-                Rechercher un hébergement
-              </button>
-            </form>
-          </div>
-          <div class="absolute -right-6 bottom-6 hidden xl:block">
-            <div class="rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 w-24 h-24"></div>
-          </div>
-        </div>
+<!-- SECTION 1 - HERO -->
+<section class="hm-hero" style="background-image:url('<?= $base ?>/assets/bg_home.jpg')">
+  <div class="hm-hero-overlay"></div>
+  <div class="hm-hero-grid">
+    <div class="hm-hero-left">
+      <div class="hm-hero-ghost">IS</div>
+      <div class="hm-hero-eyebrow"><span class="hm-pill">Nouveauté partagée</span></div>
+      <h1 class="hm-hero-title">Réservez des séjours<br><em>mémorables</em><br>en Côte d'Ivoire</h1>
+      <div class="hm-hero-rule"></div>
+      <p class="hm-hero-sub">Ivoire Stay connecte les voyageurs aux meilleurs établissements locaux, avec paiement Mobile Money et réservation instantanée.</p>
+      <div class="hm-hero-btns">
+        <a href="<?= $base ?>/search" class="hm-btn-p">Explorer les destinations →</a>
+        <a href="<?= $base ?>/tarifs" class="hm-btn-g">Voir les tarifs SaaS</a>
       </div>
+    </div>
+
+    <div class="hm-hero-right">
+      <div class="hm-search-card">
+        <div class="hm-search-header">
+          <div class="hm-search-title">Trouvez votre séjour</div>
+          <p class="hm-search-sub">Destination, type d'hébergement et dates.</p>
+          <div class="hm-search-rule"></div>
+        </div>
+        <form class="hm-search-form">
+          <div class="hm-field">
+            <label class="hm-label">Destination</label>
+            <input type="text" class="hm-input" placeholder="Abidjan, Yamoussoukro…">
+          </div>
+          <div class="hm-field-row">
+            <div class="hm-field">
+              <label class="hm-label">Arrivée</label>
+              <input type="date" class="hm-input">
+            </div>
+            <div class="hm-field">
+              <label class="hm-label">Départ</label>
+              <input type="date" class="hm-input">
+            </div>
+          </div>
+          <div class="hm-field">
+            <label class="hm-label">Type</label>
+            <select class="hm-input hm-select">
+              <option>Tous les types</option>
+              <option>Hôtel</option>
+              <option>Résidence</option>
+              <option>Villa</option>
+            </select>
+          </div>
+          <button type="button" onclick="window.location.href='<?= $base ?>/search'" class="hm-search-btn">
+            Rechercher un hébergement
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="hm-hero-strip">
+    <div class="hm-hero-stat"><strong>500<span>+</span></strong><span>Établissements</span></div>
+    <div class="hm-hero-stat"><strong>12 000<span>+</span></strong><span>Réservations</span></div>
+    <div class="hm-hero-stat"><strong>4.9<span>/5</span></strong><span>Note moyenne</span></div>
+    <div class="hm-hero-stat"><strong>3<span> villes</span></strong><span>Couverture nationale</span></div>
+  </div>
+</section>
+
+<!-- SECTION 2 - AVANTAGES -->
+<section class="hm-avantages">
+  <div class="hm-av-header">
+    <div class="hm-av-rule"></div>
+    <span class="hm-av-tag">Nos atouts</span>
+    <div class="hm-av-rule"></div>
+  </div>
+  <div class="hm-av-intro">
+    <h2 class="hm-av-title">Une expérience pensée<br><em>pour l'Afrique</em></h2>
+    <p class="hm-av-sub">Ivoire Stay offre une plateforme simple, rapide et sécurisée pour les établissements et les voyageurs.</p>
+  </div>
+  <div class="hm-av-grid">
+    <div class="hm-av-item">
+      <div class="hm-av-num">01</div>
+      <div class="hm-av-content"><div class="hm-av-bar"></div><h3 class="hm-av-name">Réservation instantanée</h3><p class="hm-av-desc">Confirmez un séjour en quelques secondes, même avec Mobile Money.</p></div>
+    </div>
+    <div class="hm-av-item">
+      <div class="hm-av-num">02</div>
+      <div class="hm-av-content"><div class="hm-av-bar"></div><h3 class="hm-av-name">Paiement sécurisé</h3><p class="hm-av-desc">Toutes les données sont protégées, pour les voyageurs et les établissements.</p></div>
+    </div>
+    <div class="hm-av-item">
+      <div class="hm-av-num">03</div>
+      <div class="hm-av-content"><div class="hm-av-bar"></div><h3 class="hm-av-name">Gestion centralisée</h3><p class="hm-av-desc">Gérez chambres, réservations et facturation depuis un même tableau de bord.</p></div>
+    </div>
+    <div class="hm-av-item">
+      <div class="hm-av-num">04</div>
+      <div class="hm-av-content"><div class="hm-av-bar"></div><h3 class="hm-av-name">Établissements vérifiés</h3><p class="hm-av-desc">Chaque établissement est validé avant d'être publié sur la plateforme.</p></div>
     </div>
   </div>
 </section>
 
-<section aria-hidden="true" class="w-full overflow-hidden">
-  <svg viewBox="0 0 1440 120" class="w-full block" preserveAspectRatio="none">
-    <path d="M0 80C180 120 360 40 540 60C720 80 900 120 1080 80C1260 40 1440 80 1440 80V120H0V80Z" fill="#F0EBE1" />
-  </svg>
-</section>
-
-<section class="relative bg-[#F0EBE1] py-[90px]">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-14">
-      <div class="inline-flex rounded-full border border-[#C9A84C]/20 bg-white/80 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#1B4332]/80">Nos atouts</div>
-      <h2 class="font-display text-3xl md:text-5xl text-[#1B4332] mt-6">Une expérience pensée pour l'Afrique</h2>
-      <p class="mt-4 max-w-2xl mx-auto text-base text-[#4A5568]">Ivoire Stay offre une plateforme simple, rapide et sécurisée pour les établissements et les voyageurs.</p>
+<!-- SECTION 3 - DESTINATIONS -->
+<section class="hm-dest" style="background-image:url('<?= $base ?>/assets/back_destination.jpg')">
+  <div class="hm-dest-header">
+    <div class="hm-dest-header-top">
+      <div class="hm-dest-rule"></div>
+      <span class="hm-dest-tag">Destinations phares</span>
+      <div class="hm-dest-rule"></div>
     </div>
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <div class="glass-card p-8 rounded-[28px] border border-[#1B4332]/10">
-        <div class="text-[#C9A84C] mb-4">
-          <span class="text-3xl font-semibold">1</span>
-        </div>
-        <h3 class="font-display text-xl text-[#1B4332] mb-3">Réservation instantanée</h3>
-        <p class="text-sm text-[#4A5568] leading-6">Confirmez un séjour en quelques secondes, même avec Mobile Money.</p>
-      </div>
-      <div class="glass-card p-8 rounded-[28px] border border-[#1B4332]/10">
-        <div class="text-[#C9A84C] mb-4">
-          <span class="text-3xl font-semibold">2</span>
-        </div>
-        <h3 class="font-display text-xl text-[#1B4332] mb-3">Paiement sécurisé</h3>
-        <p class="text-sm text-[#4A5568] leading-6">Toutes les données sont protégées, pour les voyageurs et les établissements.</p>
-      </div>
-      <div class="glass-card p-8 rounded-[28px] border border-[#1B4332]/10">
-        <div class="text-[#C9A84C] mb-4">
-          <span class="text-3xl font-semibold">3</span>
-        </div>
-        <h3 class="font-display text-xl text-[#1B4332] mb-3">Gestion centralisée</h3>
-        <p class="text-sm text-[#4A5568] leading-6">Gérez chambres, réservations et facturation depuis un même tableau de bord.</p>
-      </div>
-      <div class="glass-card p-8 rounded-[28px] border border-[#1B4332]/10">
-        <div class="text-[#C9A84C] mb-4">
-          <span class="text-3xl font-semibold">4</span>
-        </div>
-        <h3 class="font-display text-xl text-[#1B4332] mb-3">Établissements vérifiés</h3>
-        <p class="text-sm text-[#4A5568] leading-6">Chaque établissement est validé avant d’être publié sur la plateforme.</p>
-      </div>
-    </div>
+    <h2 class="hm-dest-title">Explorez la <em>Côte d'Ivoire</em></h2>
+    <p class="hm-dest-sub">De la lagune d'Abidjan aux plages de Sassandra, découvrez plus de <strong>13 destinations</strong> soigneusement référencées sur notre plateforme.</p>
   </div>
-</section>
-
-<section class="relative overflow-hidden py-[90px]" style="background-image:url('<?= $base_url ?>/assets/back_destination.jpg'); background-size:cover; background-position:center;">
-  <div style="position:relative;z-index:3;margin-bottom:-2px;">
-    <svg viewBox="0 0 1440 80" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;" preserveAspectRatio="none">
-      <path d="M0,60 C360,0 1080,80 1440,20 L1440,0 L0,0 Z" fill="#FAF7F2"/>
-    </svg>
-  </div>
-
-  <div style="position:absolute; inset:0; z-index:0; background-image:url('<?= $base_url ?>/assets/back_destination.jpg'); background-size:cover; background-position:center; background-attachment:fixed;"></div>
-  <div style="position:absolute; inset:0; z-index:1; background:linear-gradient(160deg, rgba(10,30,20,0.88) 0%, rgba(15,43,32,0.80) 50%, rgba(10,30,20,0.90) 100%);"></div>
 
   <div style="position:relative;z-index:2; padding:60px 0 100px 0;">
-    <div style="text-align:center;margin-bottom:60px;padding:0 24px;">
-      <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:#C9A84C;border-radius:50px;padding:7px 20px;font-family:Inter,sans-serif;font-size:13px;letter-spacing:0.06em;margin-bottom:20px;">
-        <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        Destinations phares
-      </div>
-      <h2 style="font-family:'Cormorant Garamond',serif;font-size:clamp(38px,5vw,60px);color:white;font-weight:600;margin:0 0 14px 0;line-height:1.1;">Explorez la <span style="color:#C9A84C;font-style:italic;">Côte d'Ivoire</span></h2>
-      <p style="font-family:Inter,sans-serif;font-size:17px;color:rgba(255,255,255,0.65);max-width:560px;margin:0 auto;line-height:1.7;">De la lagune d'Abidjan aux plages de Sassandra, découvrez plus de <strong style="color:#C9A84C;">13 destinations</strong> soigneusement référencées sur notre plateforme.</p>
-    </div>
+    <div x-data="homeCarousel([
+        { name:'Abidjan', region:'District Autonome', count:142, tag:'Ville & Affaires', desc:'Capitale économique entre lagune, gratte-ciels et vie nocturne trépidante. Hub incontournable de l\'Afrique de l\'Ouest.', img:'<?= $base ?>/assets/carrouss1.jpg' },
+        { name:'Yamoussoukro', region:'Centre', count:38, tag:'Culture & Histoire', desc:'Capitale politique, terre de la Basilique Notre-Dame de la Paix et de sérénité ivoirienne.', img:'<?= $base ?>/assets/carrouss2.jpg' },
+        { name:'Grand-Bassam', region:'Sud-Comoé', count:27, tag:'Plage & Patrimoine', desc:'Ancienne capitale coloniale classée UNESCO, plages dorées, galeries d\'art et fruits de mer.', img:'<?= $base ?>/assets/carrouss3.jpg' },
+        { name:'San-Pédro', region:'Bas-Sassandra', count:19, tag:'Nature & Évasion', desc:'Port moderne, forêt tropicale et eaux turquoise du Sud-Ouest ivoirien.', img:'<?= $base ?>/assets/carrouss4.jpg' },
+        { name:'Assinie', region:'Sud-Comoé', count:31, tag:'Plage & Détente', desc:'Station balnéaire prisée entre océan Atlantique et lagune Aby. Cocotiers et sable blanc.', img:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800' }
+    ])" x-init="startAuto()">
 
-    <div x-data="homeCarousel(<?= htmlspecialchars(json_encode($destinations, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') ?>)"
-    x-init="startAuto()"
-  >
       <div class="dest-carousel-track">
         <template x-for="(dest, i) in items" :key="dest.name">
-          <div class="dest-slide-item relative" 
+          <div class="dest-slide-item relative"
             @mouseenter="stopAuto()" @mouseleave="resumeAuto()"
             @click="goTo(i)"
             :style="styleFor(i===current?'center':i===idx(1)?'r1':i===idx(-1)?'l1':i===idx(2)?'r2':i===idx(-2)?'l2':'hidden') + radiusFor(i===current?'center':i===idx(1)?'r1':i===idx(-1)?'l1':i===idx(2)?'r2':i===idx(-2)?'l2':'hidden') + shadowFor(i===current?'center':i===idx(1)?'r1':i===idx(-1)?'l1':i===idx(2)?'r2':i===idx(-2)?'l2':'hidden') + 'overflow:visible;position:relative;'"
@@ -186,7 +132,7 @@ $destinations = [
                 <div style="font-family:'Cormorant Garamond',serif;font-size:42px;color:white;font-weight:700;line-height:1;margin-bottom:6px;" x-text="dest.name"></div>
                 <div style="font-family:Inter,sans-serif;font-size:13px;color:#C9A84C;font-weight:600;margin-bottom:12px;" x-text="dest.count+' établissements disponibles'"></div>
                 <div style="font-family:Inter,sans-serif;font-size:14px;color:rgba(255,255,255,0.82);line-height:1.65;margin-bottom:20px;" x-text="dest.desc"></div>
-                <a :href="'<?= $base_url ?>/search?city=' + encodeURIComponent(dest.name)" style="display:inline-flex;align-items:center;gap:8px;background:#C9A84C;color:white;font-family:Inter,sans-serif;font-size:14px;font-weight:600;padding:11px 26px;border-radius:50px;text-decoration:none;box-shadow:0 4px 16px rgba(201,168,76,0.45);transition:all 0.3s;" >
+                <a :href="'<?= $base ?>/search?city=' + encodeURIComponent(dest.name)" style="display:inline-flex;align-items:center;gap:8px;background:#C9A84C;color:white;font-family:Inter,sans-serif;font-size:14px;font-weight:600;padding:11px 26px;border-radius:50px;text-decoration:none;box-shadow:0 4px 16px rgba(201,168,76,0.45);transition:all 0.3s;">
                   Explorer
                   <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
@@ -225,32 +171,80 @@ $destinations = [
           <span @click="goTo(i)" :style="i===current ? 'font-family:Cormorant Garamond,serif;font-size:17px;color:#C9A84C;font-weight:700;cursor:pointer;padding-bottom:3px;border-bottom:2px solid #C9A84C;transition:all 0.3s;' : 'font-family:Cormorant Garamond,serif;font-size:17px;color:rgba(255,255,255,0.4);font-weight:400;cursor:pointer;transition:all 0.3s;'" x-text="d.name"></span>
         </template>
       </div>
-    </div>
 
-    
-  </div>
-
-  <div style="position:relative;z-index:3;margin-top:-2px;">
-    <svg viewBox="0 0 1440 80" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;" preserveAspectRatio="none">
-      <path d="M0,20 C480,80 960,0 1440,60 L1440,80 L0,80 Z" fill="#FAF7F2"/>
-    </svg>
-  </div>
-</section>
-<section aria-hidden="true" class="w-full overflow-hidden">
-  <svg viewBox="0 0 1440 120" class="w-full block" preserveAspectRatio="none">
-    <path d="M0 80C180 120 360 40 540 60C720 80 900 120 1080 80C1260 40 1440 80 1440 80V120H0V80Z" fill="#1B4332" />
-  </svg>
-</section>
-
-<section class="relative bg-[#1B4332] py-[90px]">
-  <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(201,168,76,0.15),_transparent_40%)] pointer-events-none"></div>
-  <div class="relative max-w-5xl mx-auto px-4 text-center">
-    <h2 class="font-display text-4xl md:text-5xl text-white">Transformez votre établissement avec Ivoire Stay</h2>
-    <p class="mt-4 text-base text-white/75 max-w-2xl mx-auto">Gérez vos réservations, vos clients et vos paiements depuis une interface conçue pour le marché ivoirien.</p>
-    <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-      <a href="<?= $base_url ?? rtrim(APP_URL, '/') ?>/register" class="btn-gold px-8 py-4">Démarrer gratuitement</a>
-      <a href="<?= $base_url ?? rtrim(APP_URL, '/') ?>/tarifs" class="btn-outline-gold px-8 py-4">Voir les tarifs</a>
     </div>
   </div>
 </section>
 
+<!-- SECTION 4 - HOW IT WORKS -->
+<section class="hm-how">
+  <div class="hm-how-left">
+    <div class="hm-how-ghost">03</div>
+    <div class="hm-how-content">
+      <div class="hm-how-rule"></div>
+      <span class="hm-how-tag">Mode d'emploi</span>
+      <h2 class="hm-how-title">Comment<br>ça <em>marche ?</em></h2>
+      <p class="hm-how-sub">Réservez un hébergement en moins de 2 minutes, depuis n'importe quel appareil.</p>
+      <a href="<?= $base ?>/search" class="hm-how-btn">Commencer maintenant →</a>
+    </div>
+  </div>
+  <div class="hm-how-right">
+    <div class="hm-how-step">
+      <div class="hm-how-step-num">01</div>
+      <div class="hm-how-step-body"><h3 class="hm-how-step-title">Choisissez votre destination</h3><p class="hm-how-step-desc">Parcourez nos destinations ivoiriennes et filtrez par type d'hébergement, dates et budget.</p></div>
+    </div>
+    <div class="hm-how-divider"></div>
+    <div class="hm-how-step">
+      <div class="hm-how-step-num">02</div>
+      <div class="hm-how-step-body"><h3 class="hm-how-step-title">Réservez en quelques clics</h3><p class="hm-how-step-desc">Sélectionnez votre chambre, renseignez vos dates et confirmez votre réservation instantanément.</p></div>
+    </div>
+    <div class="hm-how-divider"></div>
+    <div class="hm-how-step">
+      <div class="hm-how-step-num">03</div>
+      <div class="hm-how-step-body"><h3 class="hm-how-step-title">Payez avec Mobile Money</h3><p class="hm-how-step-desc">Orange Money, MTN Money ou Wave — réglez votre séjour en toute sécurité, sans carte bancaire.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 5 - TESTIMONIALS -->
+<section class="hm-testi">
+  <div class="hm-testi-header">
+    <div class="hm-testi-rule"></div>
+    <span class="hm-testi-tag">Ils nous font confiance</span>
+    <div class="hm-testi-rule"></div>
+  </div>
+  <div class="hm-testi-grid">
+    <div class="hm-testi-item">
+      <div class="hm-testi-mark">"</div>
+      <blockquote class="hm-testi-quote">Une plateforme qui a transformé la gestion de mon hôtel. Les réservations ont augmenté de 40% en 3 mois.</blockquote>
+      <div class="hm-testi-author"><div class="hm-testi-avatar">KK</div><div><strong class="hm-testi-name">Kouamé Kobenan</strong><span class="hm-testi-role">Directeur, Hôtel Lagune · Abidjan</span></div></div>
+    </div>
+    <div class="hm-testi-item hm-testi-featured">
+      <div class="hm-testi-mark">"</div>
+      <blockquote class="hm-testi-quote">Réservation en 2 minutes, paiement Wave sans friction. Exactement ce qu'il fallait pour le marché ivoirien.</blockquote>
+      <div class="hm-testi-author"><div class="hm-testi-avatar">AY</div><div><strong class="hm-testi-name">Aya Yao</strong><span class="hm-testi-role">Voyageuse fréquente · Yamoussoukro</span></div></div>
+    </div>
+    <div class="hm-testi-item">
+      <div class="hm-testi-mark">"</div>
+      <blockquote class="hm-testi-quote">Le support est réactif et la plateforme intuitive. Je gère mes 3 résidences depuis un seul tableau de bord.</blockquote>
+      <div class="hm-testi-author"><div class="hm-testi-avatar">MB</div><div><strong class="hm-testi-name">Marcel Bamba</strong><span class="hm-testi-role">Propriétaire, Résidences Bamba · Bassam</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 6 - CTA FINAL -->
+<section class="hm-cta">
+  <div class="hm-cta-bar"></div>
+  <div class="hm-cta-body">
+    <div class="hm-cta-deco">IS</div>
+    <div class="hm-cta-eyebrow"><div class="hm-cta-dot"></div><span>Rejoignez Ivoire Stay</span></div>
+    <h2 class="hm-cta-title">Transformez votre<br>établissement <em>dès aujourd'hui.</em></h2>
+    <p class="hm-cta-sub">Gérez réservations, clients et paiements depuis une interface conçue pour le marché ivoirien. Gratuit pour commencer.</p>
+    <div class="hm-cta-btns">
+      <a href="<?= $base ?>/register" class="hm-cta-btn-p">Démarrer gratuitement →</a>
+      <a href="<?= $base ?>/tarifs" class="hm-cta-btn-o">Voir les tarifs</a>
+    </div>
+  </div>
+</section>
+
+</div>

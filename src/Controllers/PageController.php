@@ -78,6 +78,11 @@ class PageController
         Response::render('saas/help', ['title' => 'Centre d\'aide', 'page' => 'help']);
     }
 
+    public function checkout(Request $req, array $params = []): void
+    {
+        Response::render('saas/checkout', ['title' => 'Paiement abonnement – Ivoire Stay']);
+    }
+
     // ─── Vitrine Pages ────────────────────────────────────────────────────────
 
     public function home(Request $req, array $params = []): void

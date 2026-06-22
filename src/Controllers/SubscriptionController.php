@@ -73,8 +73,9 @@ class SubscriptionController
                 'amount'         => $amount,
                 'description'    => 'Abonnement SYNC ' . $plans[$plan]['name'],
                 'reference'      => $reference,
-                'callback_url'   => APP_URL . '/api/subscriptions/callback',
-                'return_url'     => APP_URL . '/saas/settings?sub=ok&plan=' . $plan,
+                'pay_method'     => $data['pay_method'] ?? '',
+                'success_url'    => APP_URL . '/saas/settings?sub=ok&plan=' . $plan . '&ref=' . $reference,
+                'error_url'      => APP_URL . '/saas/checkout?plan=' . $plan . '&error=1',
                 'customer_name'  => $user['name']  ?? 'Client',
                 'customer_email' => $user['email'] ?? '',
             ]);
@@ -101,7 +102,7 @@ class SubscriptionController
     }
 
     // ─── POST /api/subscriptions/callback (webhook Genius Pay, no auth) ──────
-    public function callback(Request $req, array $params = []): void
+    public function callback(Request $_req, array $_params = []): void
     {
         $rawBody  = file_get_contents('php://input');
         $sig      = $_SERVER['HTTP_X_GENIUSPAY_SIGNATURE'] ?? '';
@@ -111,22 +112,33 @@ class SubscriptionController
             exit('Invalid signature');
         }
 
-        $data      = json_decode($rawBody, true) ?? $req->all();
-        $reference = $data['reference'] ?? $data['merchant_reference'] ?? '';
-        $gpStatus  = $data['status']    ?? '';
+        $data        = json_decode($rawBody, true) ?? [];
+        $tx          = $data['data']['transaction'] ?? [];
+        $gpEvent     = $data['event']           ?? '';
+        $gpReference = $tx['reference']         ?? '';
+        $internalRef = $tx['metadata']['internal_reference'] ?? '';
 
-        if (!$reference) { http_response_code(400); exit('Missing reference'); }
+        if (!$internalRef && !$gpReference) { http_response_code(400); exit('Missing reference'); }
 
-        $sub = Database::query(
-            "SELECT * FROM subscriptions WHERE gp_reference = ?", [$reference]
-        )->fetch();
+        // Lookup by our internal reference first, then by GP reference stored in gp_token
+        $sub = null;
+        if ($internalRef) {
+            $sub = Database::query(
+                "SELECT * FROM subscriptions WHERE gp_reference = ?", [$internalRef]
+            )->fetch();
+        }
+        if (!$sub && $gpReference) {
+            $sub = Database::query(
+                "SELECT * FROM subscriptions WHERE gp_token = ?", [$gpReference]
+            )->fetch();
+        }
 
         if (!$sub) { http_response_code(404); exit('Subscription not found'); }
 
-        $internalStatus = GeniusPayService::mapStatus($gpStatus);
+        $txStatus       = $tx['status'] ?? '';
+        $internalStatus = GeniusPayService::mapStatus($txStatus ?: $gpEvent);
 
         if ($internalStatus === 'active') {
-            $plans    = require BASE_PATH . '/config/plans.php';
             $months   = $sub['billing'] === 'yearly' ? 12 : 1;
             $startedAt = date('Y-m-d H:i:s');
             $expiresAt = date('Y-m-d H:i:s', strtotime("+$months months"));
@@ -153,7 +165,7 @@ class SubscriptionController
     }
 
     // ─── GET /api/subscriptions/verify/{ref} ─────────────────────────────────
-    public function verify(Request $req, array $params = []): void
+    public function verify(Request $_req, array $params = []): void
     {
         $reference = $params['ref'] ?? $_GET['_route_id'] ?? '';
         if (!$reference) Response::error('Référence manquante');
@@ -170,8 +182,21 @@ class SubscriptionController
         }
 
         try {
-            $result         = GeniusPayService::verify($reference);
+            // gp_token contient la référence MTX-... de GeniusPay, nécessaire pour l'API verify
+            $gpRef = $sub['gp_token'] ?? '';
+            if (!$gpRef) {
+                Response::success(['status' => $sub['status'], 'gp_status' => 'unknown']);
+            }
+
+            $result         = GeniusPayService::verify($gpRef);
             $internalStatus = GeniusPayService::mapStatus($result['status']);
+
+            // En sandbox, l'API verify retourne TRANSACTION_NOT_FOUND — on fait confiance au redirect
+            if ($internalStatus === 'pending' && APP_ENV === 'development'
+                && isset($result['raw']['error']['code'])
+                && $result['raw']['error']['code'] === 'TRANSACTION_NOT_FOUND') {
+                $internalStatus = 'active';
+            }
 
             if ($internalStatus === 'active') {
                 $months    = $sub['billing'] === 'yearly' ? 12 : 1;
@@ -187,8 +212,6 @@ class SubscriptionController
                     [$sub['plan'], $expiresAt, $sub['establishment_id']]
                 );
 
-                // Refresh cached estab
-                $estab = Establishment::find($sub['establishment_id']);
                 Response::success(['status' => 'active', 'plan' => $sub['plan'], 'expires_at' => $expiresAt]);
             }
 

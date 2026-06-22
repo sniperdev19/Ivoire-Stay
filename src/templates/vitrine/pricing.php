@@ -1,358 +1,186 @@
-<?php /** @var string $base_url */ if (!isset($base_url)) $base_url = rtrim(APP_URL, "/"); ?>
-<?php ?>
-<!-- Hero + cartes partagent l'état "annual" (toggle mensuel/annuel) -->
-<div x-data="{ annual: false }">
+﻿<?php $base = $base_url ?? rtrim(APP_URL, '/'); ?>
 
-<!-- SECTION 1 — HERO PRICING -->
-<section
-  class="pt-36 min-h-[400px] bg-gradient-to-br from-[#1B4332] to-[#2D6A4F] flex items-center">
-  <div class="max-w-6xl mx-auto px-6 text-center text-white">
-    <span
-      class="inline-block px-5 py-2 text-[13px] tracking-[0.24em] text-[#C9A84C] rounded-full border border-[#C9A84C] bg-[rgba(201,168,76,0.2)]">Tarifs
-      transparents</span>
-    <h1 class="font-display text-[64px] mt-8">Choisissez votre plan</h1>
-    <p class="mt-5 text-[18px] text-[rgba(255,255,255,0.8)] max-w-2xl mx-auto leading-[1.8]">Démarrez gratuitement,
-      évoluez selon vos besoins</p>
-    <div class="mt-10 inline-flex items-center rounded-full bg-[rgba(255,255,255,0.12)] p-1">
-      <button @click="annual = false" :class="annual ? 'text-white' : 'text-[#1B4332] bg-white rounded-full'"
-        class="px-6 py-3 text-sm font-semibold">Mensuel</button>
-      <button @click="annual = true" :class="annual ? 'text-[#1B4332] bg-white rounded-full' : 'text-white'"
-        class="px-6 py-3 text-sm font-semibold relative">
-        Annuel
-        <span
-          class="ml-3 inline-flex items-center rounded-full bg-[#C9A84C] px-3 py-1 text-[12px] text-[#1B4332] font-semibold">-20%</span>
-      </button>
-    </div>
+<div class="pricing-page" x-data="pricingPage()">
+
+<section class="pr-hero">
+  <div class="pr-hero-overlay"></div>
+  <div class="pr-hero-ghost">Tarifs</div>
+  <div class="pr-hero-content">
+    <div class="pr-hero-rule"></div>
+    <span class="pr-hero-tag">Plans &amp; tarifs</span>
+    <h1 class="pr-hero-title">Des tarifs<br>clairs &amp; <em>flexibles.</em></h1>
+    <p class="pr-hero-sub">Commencez gratuitement et évoluez selon vos besoins. Aucun engagement, annulation à tout moment.</p>
   </div>
 </section>
 
-<!-- SECTION 2 — CARDS PLANS -->
-<section class="bg-[#FAF7F2] py-[80px]">
-  <div class="max-w-6xl mx-auto px-6 grid gap-6 lg:grid-cols-3">
-    <div class="glass-card p-8 rounded-[28px]">
-      <span
-        class="inline-flex rounded-full bg-[#D9E8D6] px-4 py-2 text-[13px] font-semibold text-[#1B4332]">Gratuit</span>
-      <h2 class="font-display text-[36px] text-[#1B4332] mt-6">Starter</h2>
-      <div class="mt-6 flex items-end gap-2">
-        <span class="font-display text-[52px] font-bold text-[#C9A84C]">0 FCFA</span>
-        <span class="text-[16px] text-[#4A5568]">/mois</span>
-      </div>
-      <p class="mt-4 text-[15px] text-[#4A5568]">Pour démarrer sans risque</p>
-      <div class="my-6 h-px bg-[rgba(201,168,76,0.18)]"></div>
-      <ul class="space-y-3 text-[14px] text-[#4A5568]">
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#16a34a]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>Jusqu'à 10 chambres</li>
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#16a34a]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>Gestion des réservations</li>
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#16a34a]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>1 établissement</li>
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#16a34a]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>Support email</li>
-        <li class="flex items-center gap-3 text-[#9CA3AF]"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12" />
-          </svg>Facturation PDF</li>
-        <li class="flex items-center gap-3 text-[#9CA3AF]"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12" />
-          </svg>Rapports financiers</li>
-        <li class="flex items-center gap-3 text-[#9CA3AF]"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12" />
-          </svg>Multi-établissements</li>
-      </ul>
-      <a href="<?= $base_url ?? rtrim(APP_URL, '/') ?>/register"
-        class="btn-outline-gold mt-8 block text-center">Démarrer gratuitement</a>
-    </div>
-
-    <div class="glass-card-strong relative p-8 rounded-[28px] border-2 border-[#C9A84C]">
-      <div
-        class="absolute -top-5 left-1/2 -translate-x-1/2 bg-[#C9A84C] text-white px-4 py-2 rounded-full inline-flex items-center gap-2 shadow-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.169c.969 0 1.371 1.24.588 1.81l-3.375 2.455a1 1 0 00-.364 1.118l1.287 3.96c.3.921-.755 1.688-1.54 1.118l-3.375-2.455a1 1 0 00-1.176 0l-3.375 2.455c-.784.57-1.838-.197-1.539-1.118l1.286-3.96a1 1 0 00-.364-1.118L2.172 9.387c-.783-.57-.38-1.81.588-1.81h4.169a1 1 0 00.95-.69l1.286-3.96z" />
-        </svg>
-        <span class="text-[13px] font-semibold">Le plus populaire</span>
-      </div>
-      <span
-        class="inline-flex rounded-full bg-[rgba(201,168,76,0.12)] px-4 py-2 text-[13px] font-semibold text-[#1B4332]">Pro</span>
-      <h2 class="font-display text-[36px] text-[#1B4332] mt-6">Pro</h2>
-      <div class="mt-6 flex items-end gap-2">
-        <span x-text="annual ? '7 200 FCFA' : '9 000 FCFA'"
-          class="font-display text-[52px] font-bold text-[#C9A84C]"></span>
-        <span class="text-[16px] text-[#4A5568]">/mois</span>
-      </div>
-      <p class="mt-4 text-[15px] text-[#4A5568]">Le plan idéal pour développer votre établissement</p>
-      <div class="my-6 h-px bg-[rgba(201,168,76,0.18)]"></div>
-      <ul class="space-y-3 text-[14px] text-[#4A5568]">
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#16a34a]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>Chambres illimitées</li>
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#16a34a]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>Réservations illimitées</li>
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#16a34a]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>1 établissement</li>
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#16a34a]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>Facturation & PDF</li>
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#16a34a]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>Paiements & dépenses</li>
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#16a34a]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>Rapports financiers</li>
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#16a34a]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>Support prioritaire</li>
-        <li class="flex items-center gap-3 text-[#9CA3AF]"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12" />
-          </svg>Multi-établissements</li>
-        <li class="flex items-center gap-3 text-[#9CA3AF]"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12" />
-          </svg>Boost vitrine</li>
-      </ul>
-      <a href="<?= $base_url ?? rtrim(APP_URL, '/') ?>/register" class="btn-gold mt-8 block text-center">Choisir Pro</a>
-    </div>
-
-    <div class="relative p-8 rounded-[28px] bg-[#1B4332] text-white border border-[rgba(201,168,76,0.25)] shadow-[0_8px_32px_rgba(27,67,50,0.25)]">
-      <span
-        class="inline-flex rounded-full bg-[#C9A84C] px-4 py-2 text-[13px] font-semibold text-[#1B4332]">Entreprise</span>
-      <h2 class="font-display text-[36px] mt-6">Business</h2>
-      <div class="mt-6 flex items-end gap-2">
-        <span class="font-display text-[52px] font-bold text-[#C9A84C]">20 000 FCFA</span>
-        <span class="text-[16px] text-white/80">/mois</span>
-      </div>
-      <p class="mt-4 text-[15px] text-white/80">Le plan le plus complet pour les groupes et les chaînes</p>
-      <div class="my-6 h-px bg-[rgba(255,255,255,0.12)]"></div>
-      <ul class="space-y-3 text-[14px] text-white/80">
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#C9A84C]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>Tout le plan Pro</li>
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#C9A84C]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>Établissements illimités</li>
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#C9A84C]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>Boost vitrine prioritaire</li>
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#C9A84C]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>API access</li>
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#C9A84C]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>Manager dédié</li>
-        <li class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#C9A84C]"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>SLA 99.9% uptime</li>
-      </ul>
-      <a href="<?= $base_url ?? rtrim(APP_URL, '/') ?>/contact"
-        class="btn-gold mt-8 block text-center text-[#1B4332]">Contacter l'équipe</a>
-    </div>
+<div class="pr-toggle-wrap">
+  <div class="pr-toggle">
+    <span :class="!annual ? 'active' : ''">Mensuel</span>
+    <button class="pr-switch" :class="annual ? 'pr-switch-active' : ''" @click="annual = !annual" type="button">
+      <div class="pr-switch-thumb"></div>
+    </button>
+    <span :class="annual ? 'active' : ''">Annuel</span>
+    <span class="pr-save-badge">–20%</span>
   </div>
-</section>
 </div>
-<!-- /portée annual -->
 
-<!-- SECTION 3 — TABLEAU COMPARATIF -->
-<section class="bg-[#F0EBE1] py-[80px]">
-  <div class="max-w-5xl mx-auto px-6 text-center mb-12">
-    <h2 class="font-display text-[48px] text-[#1B4332]">Comparaison détaillée</h2>
+<section class="pr-plans">
+  <!-- STARTER -->
+  <div class="pr-card">
+    <div class="pr-card-top"></div>
+    <div class="pr-card-body">
+      <div class="pr-plan-name">Starter</div>
+      <p class="pr-plan-tagline">Pour tester et démarrer sans engagement.</p>
+      <div class="pr-price-block">
+        <div class="pr-price">0 <small>FCFA</small></div>
+        <div class="pr-price-period">Toujours gratuit</div>
+      </div>
+      <div class="pr-divider"></div>
+      <ul class="pr-feature-list">
+        <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Jusqu'à <strong>10 chambres</strong></span></li>
+        <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Tableau de bord de base</span></li>
+        <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Support par email</span></li>
+        <li class="pr-feature pr-feature-disabled"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1B4332" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Paiements Mobile Money</span></li>
+        <li class="pr-feature pr-feature-disabled"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1B4332" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Analytics avancées</span></li>
+        <li class="pr-feature pr-feature-disabled"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1B4332" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Multi-établissements</span></li>
+      </ul>
+      <a href="<?= $base ?>/register?plan=starter" class="pr-card-btn pr-btn-outline">Démarrer gratuitement</a>
+    </div>
   </div>
-  <div class="max-w-6xl mx-auto px-6 overflow-hidden glass-card rounded-[24px]">
-    <table class="w-full border-collapse text-left">
-      <thead class="bg-[#1B4332] text-white">
-        <tr>
-          <th class="px-6 py-5 font-display text-[18px]">&nbsp;</th>
-          <th class="px-6 py-5">Starter</th>
-          <th class="px-6 py-5 bg-[rgba(201,168,76,0.08)]">Pro</th>
-          <th class="px-6 py-5">Business</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="bg-[rgba(201,168,76,0.04)]">
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">Chambres</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">10 max</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.08)]">∞</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">∞</td>
-        </tr>
-        <tr>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">Établissements</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">1</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.08)]">1</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">∞</td>
-        </tr>
-        <tr class="bg-[rgba(201,168,76,0.04)]">
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">Réservations</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">∞</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.08)]">∞</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">∞</td>
-        </tr>
-        <tr>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">Facturation PDF</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]"><svg xmlns="http://www.w3.org/2000/svg"
-              class="inline h-5 w-5 text-[#9CA3AF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12" />
-            </svg></td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.08)]"><svg
-              xmlns="http://www.w3.org/2000/svg" class="inline h-5 w-5 text-[#16a34a]" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg></td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]"><svg xmlns="http://www.w3.org/2000/svg"
-              class="inline h-5 w-5 text-[#16a34a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg></td>
-        </tr>
-        <tr class="bg-[rgba(201,168,76,0.04)]">
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">Rapports</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]"><svg xmlns="http://www.w3.org/2000/svg"
-              class="inline h-5 w-5 text-[#9CA3AF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12" />
-            </svg></td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.08)]"><svg
-              xmlns="http://www.w3.org/2000/svg" class="inline h-5 w-5 text-[#16a34a]" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg></td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]"><svg xmlns="http://www.w3.org/2000/svg"
-              class="inline h-5 w-5 text-[#16a34a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg></td>
-        </tr>
-        <tr>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">Multi-établissement</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]"><svg xmlns="http://www.w3.org/2000/svg"
-              class="inline h-5 w-5 text-[#9CA3AF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12" />
-            </svg></td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.08)]"><svg
-              xmlns="http://www.w3.org/2000/svg" class="inline h-5 w-5 text-[#16a34a]" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg></td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]"><svg xmlns="http://www.w3.org/2000/svg"
-              class="inline h-5 w-5 text-[#16a34a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg></td>
-        </tr>
-        <tr class="bg-[rgba(201,168,76,0.04)]">
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">Boost vitrine</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]"><svg xmlns="http://www.w3.org/2000/svg"
-              class="inline h-5 w-5 text-[#9CA3AF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12" />
-            </svg></td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.08)]"><svg
-              xmlns="http://www.w3.org/2000/svg" class="inline h-5 w-5 text-[#16a34a]" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg></td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]"><svg xmlns="http://www.w3.org/2000/svg"
-              class="inline h-5 w-5 text-[#16a34a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg></td>
-        </tr>
-        <tr>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">Support</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">Email</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.08)]">Prioritaire</td>
-          <td class="px-6 py-5 border border-[rgba(201,168,76,0.15)]">Dédié</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</section>
 
-<!-- SECTION 4 — FAQ PRICING -->
-<section class="bg-[#FAF7F2] py-[80px]">
-  <div class="max-w-7xl mx-auto px-6 text-center mb-12">
-    <h2 class="font-display text-[48px] text-[#1B4332]">Questions fréquentes</h2>
-    <p class="mt-4 text-[16px] text-[#4A5568] max-w-2xl mx-auto">Trouvez la réponse à vos interrogations sur les plans
-      Ivoire Stay.</p>
+  <!-- PRO -->
+  <div class="pr-card pr-card-popular">
+    <div class="pr-card-top pr-card-top-gold"></div>
+    <span class="pr-popular-badge">Le plus populaire</span>
+    <div class="pr-card-body">
+      <div class="pr-plan-name">Pro</div>
+      <p class="pr-plan-tagline">Pour les établissements qui veulent accélérer.</p>
+      <div class="pr-price-block">
+        <div class="pr-price"><span x-text="annual ? '7 200' : '9 000'">9 000</span> <small>FCFA</small></div>
+        <div class="pr-price-period">/mois, HT</div>
+        <div class="pr-old-price" x-show="annual">9 000 FCFA/mois sans engagement annuel</div>
+      </div>
+      <div class="pr-divider"></div>
+      <ul class="pr-feature-list">
+        <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Chambres <strong>illimitées</strong></span></li>
+        <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Paiements Orange Money, Wave, MTN</span></li>
+        <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Analytics avancées</span></li>
+        <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Rapports &amp; exports PDF</span></li>
+        <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Support prioritaire 24h/24</span></li>
+        <li class="pr-feature pr-feature-disabled"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1B4332" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Multi-établissements</span></li>
+      </ul>
+      <a :href="'<?= $base ?>/register?plan=pro&billing=' + (annual ? 'yearly' : 'monthly')" class="pr-card-btn pr-btn-gold">Choisir Pro →</a>
+    </div>
   </div>
-  <div x-data="{ open: null }" class="max-w-7xl mx-auto px-6 space-y-3">
-    <div class="glass-card rounded-[16px] p-5">
-      <button type="button" class="w-full flex items-center justify-between" @click="open = open===1 ? null : 1">
-        <span class="font-display text-[18px] text-[#1B4332] text-left">Puis-je changer de plan à tout moment ?</span>
-        <svg xmlns="http://www.w3.org/2000/svg" :class="{'rotate-180': open===1}"
-          class="h-5 w-5 text-[#1B4332] transition-transform duration-300" fill="none" viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      <div x-show="open===1" x-transition class="mt-4 text-[15px] text-[#4A5568] leading-[1.8]">Oui, vous pouvez
-        upgrader ou downgrader votre plan à tout moment. Le changement prend effet immédiatement.</div>
-    </div>
-    <div class="glass-card rounded-[16px] p-5">
-      <button type="button" class="w-full flex items-center justify-between" @click="open = open===2 ? null : 2">
-        <span class="font-display text-[18px] text-[#1B4332] text-left">Y a-t-il des frais cachés ?</span>
-        <svg xmlns="http://www.w3.org/2000/svg" :class="{'rotate-180': open===2}"
-          class="h-5 w-5 text-[#1B4332] transition-transform duration-300" fill="none" viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      <div x-show="open===2" x-transition class="mt-4 text-[15px] text-[#4A5568] leading-[1.8]">Non. Les prix affichés
-        sont tout inclus. Seuls les SMS de confirmation sont facturés à l'usage.</div>
-    </div>
-    <div class="glass-card rounded-[16px] p-5">
-      <button type="button" class="w-full flex items-center justify-between" @click="open = open===3 ? null : 3">
-        <span class="font-display text-[18px] text-[#1B4332] text-left">Comment fonctionne la période d'essai ?</span>
-        <svg xmlns="http://www.w3.org/2000/svg" :class="{'rotate-180': open===3}"
-          class="h-5 w-5 text-[#1B4332] transition-transform duration-300" fill="none" viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      <div x-show="open===3" x-transition class="mt-4 text-[15px] text-[#4A5568] leading-[1.8]">Le plan Starter est
-        gratuit à vie. Les plans payants n'ont pas de période d'essai mais vous pouvez annuler à tout moment.</div>
-    </div>
-    <div class="glass-card rounded-[16px] p-5">
-      <button type="button" class="w-full flex items-center justify-between" @click="open = open===4 ? null : 4">
-        <span class="font-display text-[18px] text-[#1B4332] text-left">Acceptez-vous le paiement Mobile Money ?</span>
-        <svg xmlns="http://www.w3.org/2000/svg" :class="{'rotate-180': open===4}"
-          class="h-5 w-5 text-[#1B4332] transition-transform duration-300" fill="none" viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      <div x-show="open===4" x-transition class="mt-4 text-[15px] text-[#4A5568] leading-[1.8]">Oui ! Orange Money, MTN
-        Money et Wave sont acceptés pour tous les abonnements payants.</div>
+
+  <!-- BUSINESS -->
+  <div class="pr-card">
+    <div class="pr-card-top" style="background:var(--forest);"></div>
+    <div class="pr-card-body">
+      <div class="pr-plan-name">Business</div>
+      <p class="pr-plan-tagline">Pour les groupes hôteliers et gestionnaires multi-sites.</p>
+      <div class="pr-price-block">
+        <div class="pr-price"><span x-text="annual ? '16 000' : '20 000'">20 000</span> <small>FCFA</small></div>
+        <div class="pr-price-period">/mois, HT</div>
+        <div class="pr-old-price" x-show="annual">20 000 FCFA/mois sans engagement annuel</div>
+      </div>
+      <div class="pr-divider"></div>
+      <ul class="pr-feature-list">
+        <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Tout le plan Pro inclus</span></li>
+        <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span><strong>Multi-établissements</strong> illimités</span></li>
+        <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Gestion multi-utilisateurs &amp; rôles</span></li>
+        <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>API &amp; intégrations personnalisées</span></li>
+        <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Onboarding &amp; formation dédiés</span></li>
+        <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span>Gestionnaire de compte dédié</span></li>
+      </ul>
+      <a :href="'<?= $base ?>/register?plan=business&billing=' + (annual ? 'yearly' : 'monthly')" class="pr-card-btn pr-btn-outline">Choisir Business →</a>
     </div>
   </div>
 </section>
 
-<!-- SECTION 5 — CTA FINAL -->
-<section class="bg-[#1B4332] py-[80px]">
-  <div class="max-w-6xl mx-auto px-6 text-center text-white">
-    <h2 class="font-display text-[52px]">Prêt à moderniser votre établissement ?</h2>
-    <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-      <a href="<?= $base_url ?? rtrim(APP_URL, '/') ?>/register" class="btn-gold px-8 py-4">Démarrer gratuitement →</a>
-      <a href="<?= $base_url ?? rtrim(APP_URL, '/') ?>/contact"
-        class="btn-outline-gold px-8 py-4 text-white border-white">Parler à un expert</a>
+<!-- COMPARISON TABLE -->
+<section class="pr-compare">
+  <div class="pr-compare-header">
+    <span class="pr-compare-tag">Comparatif détaillé</span>
+    <h2 class="pr-compare-title">Comparez les plans</h2>
+  </div>
+  <table class="pr-table">
+    <thead>
+      <tr>
+        <th>Fonctionnalité</th>
+        <th>Starter</th>
+        <th>Pro</th>
+        <th>Business</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="pr-cat-row"><td colspan="4">Gestion des chambres</td></tr>
+      <tr><td>Nombre de chambres</td><td>10</td><td>Illimité</td><td>Illimité</td></tr>
+      <tr><td>Calendrier de disponibilité</td><td><span class="pr-check">✓</span></td><td><span class="pr-check">✓</span></td><td><span class="pr-check">✓</span></td></tr>
+      <tr><td>Gestion des tarifs saisonniers</td><td><span class="pr-dash">—</span></td><td><span class="pr-check">✓</span></td><td><span class="pr-check">✓</span></td></tr>
+      <tr class="pr-cat-row"><td colspan="4">Réservations &amp; paiements</td></tr>
+      <tr><td>Réservations en ligne</td><td><span class="pr-check">✓</span></td><td><span class="pr-check">✓</span></td><td><span class="pr-check">✓</span></td></tr>
+      <tr><td>Orange Money / Wave / MTN</td><td><span class="pr-dash">—</span></td><td><span class="pr-check">✓</span></td><td><span class="pr-check">✓</span></td></tr>
+      <tr><td>Facturation automatique PDF</td><td><span class="pr-dash">—</span></td><td><span class="pr-check">✓</span></td><td><span class="pr-check">✓</span></td></tr>
+      <tr class="pr-cat-row"><td colspan="4">Analytics &amp; rapports</td></tr>
+      <tr><td>Tableau de bord de base</td><td><span class="pr-check">✓</span></td><td><span class="pr-check">✓</span></td><td><span class="pr-check">✓</span></td></tr>
+      <tr><td>Analytics avancées</td><td><span class="pr-dash">—</span></td><td><span class="pr-check">✓</span></td><td><span class="pr-check">✓</span></td></tr>
+      <tr><td>Exports &amp; rapports personnalisés</td><td><span class="pr-dash">—</span></td><td><span class="pr-dash">—</span></td><td><span class="pr-check">✓</span></td></tr>
+      <tr class="pr-cat-row"><td colspan="4">Support &amp; accompagnement</td></tr>
+      <tr><td>Support par email</td><td><span class="pr-check">✓</span></td><td><span class="pr-check">✓</span></td><td><span class="pr-check">✓</span></td></tr>
+      <tr><td>Support prioritaire 24h/24</td><td><span class="pr-dash">—</span></td><td><span class="pr-check">✓</span></td><td><span class="pr-check">✓</span></td></tr>
+      <tr><td>Gestionnaire de compte dédié</td><td><span class="pr-dash">—</span></td><td><span class="pr-dash">—</span></td><td><span class="pr-check">✓</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- FAQ -->
+<section class="pr-faq">
+  <div class="pr-faq-left">
+    <div class="pr-faq-ghost">FAQ</div>
+    <div class="pr-faq-content">
+      <div class="pr-faq-rule"></div>
+      <span class="pr-faq-tag">Questions fréquentes</span>
+      <h2 class="pr-faq-title">Tout ce<br>que vous <em>voulez<br>savoir.</em></h2>
+    </div>
+  </div>
+  <div class="pr-faq-right">
+    <div class="pr-faq-item" :class="open===1?'pr-faq-open':''">
+      <button class="pr-faq-q" @click="open=open===1?null:1" type="button"><span>Puis-je changer de plan à tout moment ?</span><span class="pr-faq-icon">+</span></button>
+      <div class="pr-faq-a" x-show="open===1" x-transition>Oui, vous pouvez changer de plan à tout moment depuis votre tableau de bord. La mise à niveau est immédiate, le rétrogradage prend effet à la prochaine période.</div>
+    </div>
+    <div class="pr-faq-item" :class="open===2?'pr-faq-open':''">
+      <button class="pr-faq-q" @click="open=open===2?null:2" type="button"><span>Y a-t-il une période d'essai ?</span><span class="pr-faq-icon">+</span></button>
+      <div class="pr-faq-a" x-show="open===2" x-transition>Le plan Starter est gratuit et sans limite de temps. Vous pouvez tester les fonctionnalités Pro pendant 14 jours sans carte bancaire.</div>
+    </div>
+    <div class="pr-faq-item" :class="open===3?'pr-faq-open':''">
+      <button class="pr-faq-q" @click="open=open===3?null:3" type="button"><span>Comment fonctionnent les paiements SaaS ?</span><span class="pr-faq-icon">+</span></button>
+      <div class="pr-faq-a" x-show="open===3" x-transition>Vos abonnements sont facturés mensuellement ou annuellement par Orange Money, MTN Money, Wave ou virement bancaire. Une facture PDF est émise automatiquement.</div>
+    </div>
+    <div class="pr-faq-item" :class="open===4?'pr-faq-open':''">
+      <button class="pr-faq-q" @click="open=open===4?null:4" type="button"><span>Mes données sont-elles sécurisées ?</span><span class="pr-faq-icon">+</span></button>
+      <div class="pr-faq-a" x-show="open===4" x-transition>Oui. Toutes les données sont chiffrées (TLS 1.3), hébergées en Afrique de l'Ouest et sauvegardées quotidiennement. Vous restez propriétaire de vos données.</div>
+    </div>
+    <div class="pr-faq-item" :class="open===5?'pr-faq-open':''">
+      <button class="pr-faq-q" @click="open=open===5?null:5" type="button"><span>Puis-je gérer plusieurs hôtels ?</span><span class="pr-faq-icon">+</span></button>
+      <div class="pr-faq-a" x-show="open===5" x-transition>La gestion multi-établissements est disponible exclusivement sur le plan Business, sans limite de nombre d'établissements.</div>
     </div>
   </div>
 </section>
+
+<!-- CTA -->
+<section class="pr-cta">
+  <div class="pr-cta-bar"></div>
+  <div class="pr-cta-body">
+    <div>
+      <h2 class="pr-cta-title">Prêt à rejoindre<br><em>Ivoire Stay ?</em></h2>
+      <p class="pr-cta-sub">Commencez gratuitement, sans carte bancaire. Upgrade quand vous voulez.</p>
+    </div>
+    <div class="pr-cta-btns">
+      <a href="<?= $base ?>/register?plan=starter" class="pr-cta-btn-p">Démarrer gratuitement →</a>
+      <a href="<?= $base ?>/contact" class="pr-cta-btn-o">Contacter l'équipe</a>
+    </div>
+  </div>
+</section>
+
+</div>

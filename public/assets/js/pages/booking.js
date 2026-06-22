@@ -17,26 +17,37 @@ function bookingPage(apiBase, roomId) {
     error: null,
     step: 1,
     form: {
-      room_id: roomId,
-      check_in: '',
-      check_out: '',
-      client_name: '',
-      client_email: '',
-      client_phone: '',
+      room_id:    roomId,
+      check_in:   '',
+      check_out:  '',
+      first_name: '',
+      last_name:  '',
+      email:      '',
+      phone:      '',
+      notes:      '',
+      hours:      3,
     },
     errors: {},
+    payMethod: 'orange',
     booking: null,
     submitting: false,
     bookingError: null,
 
+    get isPassage() {
+      return !!(this.form.check_in && this.form.check_out && this.form.check_in === this.form.check_out);
+    },
+
     get nights() {
-      if (!this.form.check_in || !this.form.check_out) return 0;
+      if (!this.form.check_in || !this.form.check_out || this.isPassage) return 0;
       const d1 = new Date(this.form.check_in);
       const d2 = new Date(this.form.check_out);
       return Math.max(0, Math.round((d2 - d1) / 86400000));
     },
 
     get totalPrice() {
+      if (this.isPassage) {
+        return (this.room?.passage_price ?? 0) * (this.form.hours || 0);
+      }
       return (this.room?.base_price ?? 0) * this.nights;
     },
 
@@ -67,31 +78,24 @@ function bookingPage(apiBase, roomId) {
 
     validateStep1() {
       this.errors = {};
-      if (!this.form.check_in) {
-        this.errors.check_in = "Date d'arrivée requise";
-      }
-      if (!this.form.check_out) {
-        this.errors.check_out = 'Date de départ requise';
-      }
-      if (this.form.check_in && this.form.check_out && this.nights <= 0) {
-        this.errors.check_out = "La date de départ doit être après l'arrivée";
+      if (!this.form.check_in)  this.errors.check_in  = "Date d'arrivée requise";
+      if (!this.form.check_out) this.errors.check_out = 'Date de départ requise';
+      if (this.isPassage) {
+        const h = Number(this.form.hours);
+        if (!h || h < 1 || h > 23) this.errors.hours = 'Veuillez choisir un nombre d\'heures valide (1 – 23)';
+      } else if (this.form.check_in && this.form.check_out && this.nights <= 0) {
+        this.errors.check_out = "La date de départ doit être après la date d'arrivée";
       }
       return Object.keys(this.errors).length === 0;
     },
 
     validateStep2() {
       this.errors = {};
-      if (!this.form.client_name) {
-        this.errors.client_name = 'Nom complet requis';
-      }
-      if (!this.form.client_email) {
-        this.errors.client_email = 'Email requis';
-      } else if (!/^\S+@\S+\.\S+$/.test(this.form.client_email)) {
-        this.errors.client_email = 'Email invalide';
-      }
-      if (!this.form.client_phone) {
-        this.errors.client_phone = 'Téléphone requis';
-      }
+      if (!this.form.first_name.trim()) this.errors.first_name = 'Prénom requis';
+      if (!this.form.last_name.trim())  this.errors.last_name  = 'Nom requis';
+      if (!this.form.email)             this.errors.email       = 'Email requis';
+      else if (!/^\S+@\S+\.\S+$/.test(this.form.email)) this.errors.email = 'Email invalide';
+      if (!this.form.phone)             this.errors.phone       = 'Téléphone requis';
       return Object.keys(this.errors).length === 0;
     },
 
@@ -128,7 +132,12 @@ function bookingPage(apiBase, roomId) {
         const res = await fetch(this.apiBase + '/api/public/booking', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.form),
+          body: JSON.stringify({
+            ...this.form,
+            booking_type: this.isPassage ? 'passage' : 'nuit',
+            hours:        this.isPassage ? Number(this.form.hours) : undefined,
+            pay_method:   this.payMethod,
+          }),
         });
         const data = await res.json();
         if (data.success) {
@@ -144,3 +153,4 @@ function bookingPage(apiBase, roomId) {
     },
   };
 }
+

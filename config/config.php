@@ -34,8 +34,9 @@ define('JWT_EXPIRY', (int) env('JWT_EXPIRY', 86400));
 
 define('UPLOAD_MAX_SIZE', (int) env('UPLOAD_MAX_SIZE', 5242880));
 
-define('GENIUS_PAY_KEY',            env('GENIUS_PAY_KEY', ''));
-define('GENIUS_PAY_URL',            env('GENIUS_PAY_URL', 'https://api.geniuspay.ci/v1'));
+define('GENIUS_PAY_KEY',            env('GENIUS_PAY_KEY',    ''));
+define('GENIUS_PAY_SECRET',         env('GENIUS_PAY_SECRET', ''));
+define('GENIUS_PAY_URL',            env('GENIUS_PAY_URL',    'http://pay.genius.ci/api/v1/merchant'));
 define('GENIUS_PAY_WEBHOOK_SECRET', env('GENIUS_PAY_WEBHOOK_SECRET', ''));
 
 // Error reporting

@@ -132,7 +132,7 @@
   </div>
 
   <!-- Modal détail client -->
-  <div x-show="showDetail" class="saas-modal-bg" @keydown.escape.window="showDetail = false" @click.self="showDetail = false">
+  <div x-cloak x-show="showDetail" class="saas-modal-bg" @keydown.escape.window="showDetail = false" @click.self="showDetail = false">
     <div class="saas-modal" style="max-width:620px;" @click.stop>
       <div class="saas-modal-header">
         <div style="display:flex;align-items:center;gap:12px;">
@@ -196,15 +196,17 @@
   </div>
 
   <!-- Modal édition client -->
-  <div x-show="showEdit" class="saas-modal-bg" @keydown.escape.window="showEdit = false" @click.self="showEdit = false">
+  <div x-cloak x-show="showEdit" class="saas-modal-bg" @keydown.escape.window="showEdit = false" @click.self="showEdit = false">
     <div class="saas-modal" style="max-width:440px;" @click.stop>
       <div class="saas-modal-header"><h2 style="font-size:17px;font-weight:700;color:#111827;margin:0;">Modifier le client</h2><button @click="showEdit = false" style="width:32px;height:32px;border-radius:8px;background:rgba(0,0,0,0.05);border:none;cursor:pointer;display:grid;place-items:center;"><svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;color:#6B7280;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
       <div class="saas-modal-body">
         <div x-show="editError" style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.2);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#DC2626;" x-text="editError"></div>
         <div style="display:grid;gap:14px;">
-          <div><label class="saas-label">Nom complet *</label><input type="text" class="saas-input" placeholder="Prénom Nom" x-model="editForm.name"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div><label class="saas-label">Prénom *</label><input type="text" class="saas-input" placeholder="Prénom" x-model="editForm.first_name"></div>
+            <div><label class="saas-label">Nom</label><input type="text" class="saas-input" placeholder="Nom de famille" x-model="editForm.last_name"></div>
+          </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div><label class="saas-label">Téléphone</label><input type="tel" class="saas-input" placeholder="+225 07..." x-model="editForm.phone"></div><div><label class="saas-label">Email</label><input type="email" class="saas-input" placeholder="email@..." x-model="editForm.email"></div></div>
-          <div><label class="saas-label">Adresse</label><input type="text" class="saas-input" placeholder="Quartier, Ville..." x-model="editForm.address"></div>
         </div>
       </div>
       <div class="saas-modal-footer"><button @click="showEdit = false" class="btn-saas-secondary">Annuler</button><button @click="saveEdit()" class="btn-saas-primary" :disabled="editSaving"><div x-show="editSaving" style="width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);border-top-color:white;animation:spin 0.7s linear infinite;"></div><span x-show="!editSaving">Enregistrer</span><span x-show="editSaving">Sauvegarde...</span></button></div>

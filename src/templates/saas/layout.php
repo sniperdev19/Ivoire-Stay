@@ -25,9 +25,10 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
   <meta name="theme-color" content="#1B4332">
   <link rel="manifest" href="<?= $base ?>/manifest.webmanifest">
   <link rel="apple-touch-icon" href="<?= $base ?>/assets/icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Ivoire Stay">
-  <script defer src="<?= $base ?>/assets/js/pwa.js"></script>
+  <script src="<?= $base ?>/assets/js/pwa.js"></script>
 
   <!-- Google Fonts : Inter uniquement -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -35,19 +36,28 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
   <!-- Tailwind (base + utilitaires) + styles composant SaaS, compilés ensemble -->
   <link rel="stylesheet" href="<?= $base ?>/assets/css/saas.css">
 
+  <style>
+    /* Sidebar : hauteur fixe pour que le <nav> interne puisse scroller */
+    .saas-sidebar { height: 100vh; overflow: hidden; }
+    /* Empêche le flash des modals avant qu'Alpine s'initialise */
+    [x-cloak] { display: none !important; }
+  </style>
+
   <!-- CSS spécifique à la page -->
   <?php foreach ($pageCss as $css): ?>
   <link rel="stylesheet" href="<?= $base ?>/assets/css/pages/<?= htmlspecialchars($css) ?>.css">
   <?php endforeach; ?>
 
   <!-- JS global + JS de page (définis avant Alpine pour exposer les composants x-data) -->
-  <script defer src="<?= $base ?>/assets/js/saas.js"></script>
-  <?php foreach ($pageJs as $js): ?>
-  <script defer src="<?= $base ?>/assets/js/pages/<?= htmlspecialchars($js) ?>.js"></script>
+  <?php $saasJsPath = BASE_PATH . '/public/assets/js/saas.js'; ?>
+  <script defer src="<?= $base ?>/assets/js/saas.js?v=<?= file_exists($saasJsPath) ? filemtime($saasJsPath) : 1 ?>"></script>
+  <?php foreach ((array)($pageJs ?? []) as $js): ?>
+  <?php $jsPath = BASE_PATH . '/public/assets/js/pages/' . $js . '.js'; ?>
+  <script defer src="<?= $base ?>/assets/js/pages/<?= htmlspecialchars($js) ?>.js?v=<?= file_exists($jsPath) ? filemtime($jsPath) : 1 ?>"></script>
   <?php endforeach; ?>
 
   <!-- Alpine.js en dernier : s'initialise après la définition des composants -->
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="<?= $base ?>/assets/js/alpine.min.js"></script>
 </head>
 
 <body>
@@ -151,6 +161,7 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           Facturation
+          <span x-show="!canFeature('invoices')" style="margin-left:auto;font-size:10px;font-weight:700;color:#C9A84C;background:rgba(201,168,76,0.15);padding:1px 5px;border-radius:4px;flex-shrink:0;">PRO</span>
         </a>
 
         <a href="<?= $base_url ?? '' ?>/saas/payments" class="saas-nav-item <?= ($page ?? '') === 'payments' ? 'active' : '' ?>">
@@ -158,6 +169,7 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
           </svg>
           Paiements
+          <span x-show="!canFeature('payments')" style="margin-left:auto;font-size:10px;font-weight:700;color:#C9A84C;background:rgba(201,168,76,0.15);padding:1px 5px;border-radius:4px;flex-shrink:0;">PRO</span>
         </a>
 
         <a href="<?= $base_url ?? '' ?>/saas/expenses" class="saas-nav-item <?= ($page ?? '') === 'expenses' ? 'active' : '' ?>">
@@ -165,6 +177,7 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
           Dépenses
+          <span x-show="!canFeature('expenses')" style="margin-left:auto;font-size:10px;font-weight:700;color:#C9A84C;background:rgba(201,168,76,0.15);padding:1px 5px;border-radius:4px;flex-shrink:0;">PRO</span>
         </a>
 
         <a href="<?= $base_url ?? '' ?>/saas/reports" class="saas-nav-item <?= ($page ?? '') === 'reports' ? 'active' : '' ?>">
@@ -172,6 +185,7 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
           Rapports
+          <span x-show="!canFeature('reports')" style="margin-left:auto;font-size:10px;font-weight:700;color:#C9A84C;background:rgba(201,168,76,0.15);padding:1px 5px;border-radius:4px;flex-shrink:0;">PRO</span>
         </a>
       </div>
 

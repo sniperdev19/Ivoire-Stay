@@ -1,0 +1,127 @@
+/* ============================================================
+   Ivoire Stay — Page tarification (vitrine/pricing.php)
+   ============================================================ */
+
+.pricing-page { overflow-x: hidden; font-family: 'Inter', sans-serif; }
+
+/* ── HERO ── */
+.pr-hero { background: var(--color-forest, #1B4332); position: relative; overflow: hidden; padding: 80px 80px 72px; padding-top: 160px; min-height: 460px; display: flex; flex-direction: column; justify-content: flex-end; }
+.pr-hero-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(10,30,20,0.97) 0%, rgba(15,43,32,0.92) 100%); }
+.pr-hero-ghost { position: absolute; right: -40px; bottom: -40px; font-family: 'Cormorant Garamond', serif; font-size: 280px; font-weight: 700; color: rgba(201,168,76,0.04); line-height: 1; pointer-events: none; user-select: none; }
+.pr-hero-content { position: relative; z-index: 2; max-width: 680px; display: flex; flex-direction: column; gap: 16px; }
+.pr-hero-rule { width: 48px; height: 1px; background: #C9A84C; }
+.pr-hero-tag { font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.35em; text-transform: uppercase; color: rgba(201,168,76,0.65); }
+.pr-hero-title { font-family: 'Cormorant Garamond', serif; font-size: 100px; font-weight: 300; color: white; line-height: 0.88; }
+.pr-hero-title em { color: #C9A84C; font-style: italic; }
+.pr-hero-sub { font-family: 'Inter', sans-serif; font-size: 15px; color: rgba(255,255,255,0.55); line-height: 1.85; max-width: 500px; }
+
+/* ── TOGGLE MENSUEL / ANNUEL ── */
+.pr-toggle-wrap { background: #FAF7F2; padding: 48px 80px 0; display: flex; justify-content: center; }
+.pr-toggle { display: flex; align-items: center; gap: 16px; background: white; border: 1px solid rgba(27,67,50,0.1); border-radius: 999px; padding: 8px 20px; }
+.pr-toggle span { font-family: 'Inter', sans-serif; font-size: 14px; color: rgba(27,67,50,0.6); }
+.pr-toggle span.active { color: #1B4332; font-weight: 600; }
+.pr-switch { position: relative; width: 52px; height: 28px; background: #1B4332; border-radius: 14px; cursor: pointer; transition: background 0.2s; border: none; }
+.pr-switch-thumb { position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: #C9A84C; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+.pr-switch-active .pr-switch-thumb { transform: translateX(24px); }
+.pr-save-badge { background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.3); color: #C9A84C; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 999px; }
+
+/* ── CARTES PLANS ── */
+.pr-plans { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; background: #FAF7F2; padding: 48px 80px 64px; }
+.pr-card { background: white; border: 1px solid rgba(27,67,50,0.08); border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; position: relative; transition: transform 0.25s, box-shadow 0.25s; }
+.pr-card:hover { transform: translateY(-6px); box-shadow: 0 24px 60px rgba(27,67,50,0.1); }
+.pr-card-popular { border-color: #C9A84C; box-shadow: 0 20px 60px rgba(201,168,76,0.15); }
+.pr-card-top { height: 6px; background: rgba(27,67,50,0.04); }
+.pr-card-top-gold { background: linear-gradient(90deg, #C9A84C, #E8D5A3, #C9A84C); }
+.pr-popular-badge { position: absolute; top: 24px; right: 24px; background: #C9A84C; color: white; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; padding: 6px 14px; border-radius: 999px; }
+.pr-card-body { padding: 36px 36px 32px; flex: 1; display: flex; flex-direction: column; }
+.pr-plan-name { font-family: 'Cormorant Garamond', serif; font-size: 36px; color: #1B4332; font-weight: 400; margin-bottom: 6px; }
+.pr-plan-tagline { font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(27,67,50,0.5); line-height: 1.6; margin-bottom: 28px; }
+.pr-price-block { margin-bottom: 28px; }
+.pr-price { font-family: 'Cormorant Garamond', serif; font-size: 64px; font-weight: 700; color: #1B4332; line-height: 1; }
+.pr-price small { font-size: 20px; font-weight: 400; color: rgba(27,67,50,0.45); }
+.pr-price-period { font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(27,67,50,0.4); margin-top: 4px; }
+.pr-old-price { font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(27,67,50,0.35); text-decoration: line-through; margin-top: 4px; }
+.pr-divider { height: 0.5px; background: rgba(27,67,50,0.08); margin-bottom: 20px; }
+.pr-feature-list { display: flex; flex-direction: column; gap: 10px; flex: 1; margin-bottom: 28px; }
+.pr-feature { display: flex; align-items: flex-start; gap: 12px; font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(27,67,50,0.75); line-height: 1.5; }
+.pr-feature-check { width: 18px; height: 18px; border-radius: 50%; background: rgba(201,168,76,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.pr-feature-check svg { width: 10px; height: 10px; }
+.pr-feature-disabled { opacity: 0.35; }
+.pr-feature-disabled .pr-feature-check { background: rgba(27,67,50,0.06); }
+.pr-card-btn { display: block; text-align: center; padding: 14px 24px; border-radius: 999px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; text-decoration: none; transition: all 0.2s; }
+.pr-btn-outline { border: 1.5px solid rgba(27,67,50,0.2); color: #1B4332; background: transparent; }
+.pr-btn-outline:hover { border-color: #1B4332; background: rgba(27,67,50,0.04); }
+.pr-btn-gold { background: #1B4332; color: white; }
+.pr-btn-gold:hover { background: #0d2118; }
+
+/* ── TABLE COMPARAISON ── */
+.pr-compare { background: white; border-top: 0.5px solid rgba(27,67,50,0.08); padding: 80px 80px; }
+.pr-compare-header { text-align: center; margin-bottom: 52px; }
+.pr-compare-tag { font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.35em; text-transform: uppercase; color: #C9A84C; display: block; margin-bottom: 8px; }
+.pr-compare-title { font-family: 'Cormorant Garamond', serif; font-size: 56px; font-weight: 300; color: #1B4332; }
+.pr-table { width: 100%; border-collapse: collapse; }
+.pr-table th { padding: 16px 20px; text-align: center; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: #1B4332; border-bottom: 2px solid rgba(27,67,50,0.08); }
+.pr-table th:first-child { text-align: left; }
+.pr-table td { padding: 14px 20px; text-align: center; font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(27,67,50,0.7); border-bottom: 0.5px solid rgba(27,67,50,0.06); }
+.pr-table td:first-child { text-align: left; color: #1B4332; }
+.pr-table tr:last-child td { border-bottom: none; }
+.pr-table .pr-cat-row td { padding: 20px 20px 8px; font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #1B4332; font-weight: 400; background: rgba(250,247,242,0.7); }
+.pr-check { color: #C9A84C; }
+.pr-dash { color: rgba(27,67,50,0.2); }
+
+/* ── FAQ ── */
+.pr-faq { background: #1B4332; display: grid; grid-template-columns: 380px 1fr; min-height: 480px; }
+.pr-faq-left { padding: 64px 48px; border-right: 0.5px solid rgba(201,168,76,0.1); display: flex; flex-direction: column; justify-content: flex-end; position: relative; overflow: hidden; }
+.pr-faq-ghost { position: absolute; top: -20px; left: -10px; font-family: 'Cormorant Garamond', serif; font-size: 180px; font-weight: 700; color: rgba(201,168,76,0.05); pointer-events: none; user-select: none; }
+.pr-faq-content { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 16px; }
+.pr-faq-rule { width: 32px; height: 1px; background: #C9A84C; }
+.pr-faq-tag { font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: rgba(201,168,76,0.6); }
+.pr-faq-title { font-family: 'Cormorant Garamond', serif; font-size: 60px; font-weight: 300; color: white; line-height: 1.0; }
+.pr-faq-title em { color: #C9A84C; font-style: italic; }
+.pr-faq-right { padding: 48px 64px; display: flex; flex-direction: column; justify-content: center; }
+.pr-faq-item { border-bottom: 0.5px solid rgba(255,255,255,0.06); padding: 20px 0; }
+.pr-faq-q { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 20px; font-family: 'Cormorant Garamond', serif; font-size: 22px; color: white; background: transparent; border: none; cursor: pointer; text-align: left; padding: 0; }
+.pr-faq-icon { width: 30px; height: 30px; border-radius: 50%; border: 0.5px solid rgba(201,168,76,0.2); display: flex; align-items: center; justify-content: center; color: #C9A84C; font-size: 20px; font-weight: 300; flex-shrink: 0; transition: transform 0.25s; }
+.pr-faq-open .pr-faq-icon { transform: rotate(45deg); }
+.pr-faq-a { font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.8; margin-top: 12px; max-width: 520px; }
+
+/* ── CTA FINAL ── */
+.pr-cta { background: #FAF7F2; padding: 80px 80px; display: grid; grid-template-columns: 6px 1fr; border-top: 0.5px solid rgba(27,67,50,0.08); }
+.pr-cta-bar { background: #C9A84C; }
+.pr-cta-body { padding: 0 0 0 48px; display: flex; align-items: center; justify-content: space-between; gap: 48px; flex-wrap: wrap; }
+.pr-cta-title { font-family: 'Cormorant Garamond', serif; font-size: 56px; font-weight: 300; color: #1B4332; line-height: 1.1; }
+.pr-cta-title em { color: #C9A84C; font-style: italic; }
+.pr-cta-sub { font-family: 'Inter', sans-serif; font-size: 14px; color: rgba(27,67,50,0.55); line-height: 1.75; max-width: 400px; margin-top: 10px; }
+.pr-cta-btns { display: flex; gap: 14px; flex-shrink: 0; flex-wrap: wrap; }
+.pr-cta-btn-p { padding: 14px 36px; background: #1B4332; color: white; border-radius: 999px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; text-decoration: none; }
+.pr-cta-btn-o { padding: 14px 36px; border: 1px solid rgba(27,67,50,0.2); color: #1B4332; border-radius: 999px; font-family: 'Inter', sans-serif; font-size: 14px; text-decoration: none; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1200px) {
+  .pr-hero { padding: 64px 48px 56px; padding-top: 140px; }
+  .pr-toggle-wrap { padding: 40px 48px 0; }
+  .pr-plans { padding: 40px 48px 56px; }
+  .pr-compare { padding: 64px 48px; }
+  .pr-cta { padding: 64px 48px; }
+  .pr-faq-right { padding: 40px 48px; }
+}
+@media (max-width: 1024px) {
+  .pr-hero-title { font-size: 72px; }
+  .pr-plans { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
+  .pr-faq { grid-template-columns: 1fr; }
+  .pr-faq-left { border-right: none; border-bottom: 0.5px solid rgba(201,168,76,0.1); min-height: auto; }
+  .pr-cta-body { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 768px) {
+  .pr-hero { padding: 60px 24px 48px; padding-top: 120px; }
+  .pr-hero-title { font-size: 56px; }
+  .pr-toggle-wrap { padding: 32px 24px 0; }
+  .pr-plans { padding: 32px 24px 48px; }
+  .pr-compare { padding: 48px 24px; }
+  .pr-faq-left { padding: 40px 24px; }
+  .pr-faq-title { font-size: 44px; }
+  .pr-faq-right { padding: 32px 24px; }
+  .pr-cta { padding: 48px 24px; }
+  .pr-cta-body { padding: 0 0 0 24px; }
+  .pr-cta-title { font-size: 40px; }
+}

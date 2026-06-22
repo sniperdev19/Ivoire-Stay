@@ -65,27 +65,31 @@ function propertyPage(apiBase, propertyId) {
       }
     },
 
+    get minPrice() {
+      const prices = this.rooms.map(r => r.base_price).filter(p => p != null && p > 0);
+      return prices.length ? Math.min(...prices) : null;
+    },
+
     formatPrice(p) {
-      return p == null ? '' : new Intl.NumberFormat('fr-FR').format(p) + ' FCFA';
+      return p == null ? '—' : new Intl.NumberFormat('fr-FR').format(p) + ' FCFA';
     },
 
-    getStars(n) {
-      const count = Number.isInteger(n) ? n : 4;
-      return '★'.repeat(count) + '☆'.repeat(5 - count);
+    typeLabel(t) {
+      return { hotel: 'Hôtel', residence: 'Résidence', villa: 'Villa', appartement: 'Appartement' }[t] ?? (t ?? '');
     },
 
-    nextPhoto() {
-      this.activePhoto = (this.activePhoto + 1) % (this.property?.photos?.length || 1);
-    },
-
-    prevPhoto() {
-      this.activePhoto = (this.activePhoto - 1 + (this.property?.photos?.length || 1)) % (this.property?.photos?.length || 1);
+    photoUrl(path) {
+      if (!path) return null;
+      if (path.startsWith('http')) return path;
+      return this.apiBase + '/' + path.replace(/^\/+/, '');
     },
 
     bookRoom(room) {
-      if (!this.checkIn || !this.checkOut) return;
-      const params = new URLSearchParams({ check_in: this.checkIn, check_out: this.checkOut });
-      window.location.href = this.apiBase + '/booking/' + room.id + '?' + params;
+      const params = new URLSearchParams();
+      if (this.checkIn)  params.set('check_in',  this.checkIn);
+      if (this.checkOut) params.set('check_out', this.checkOut);
+      const qs = params.toString();
+      window.location.href = this.apiBase + '/booking/' + room.id + (qs ? '?' + qs : '');
     },
   };
 }

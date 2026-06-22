@@ -1,304 +1,211 @@
-<?php /** @var string $base_url */ if (!isset($base_url)) $base_url = rtrim(APP_URL, "/"); ?>
 <?php
-// Template page propriété injecté dans le layout vitrine.
-// Variables disponibles : $title, $property_id
-/** @var int|string|null $property_id Identifiant de l'établissement, injecté par Response::render(). */
-$property_id = $property_id ?? null;
-$pageCss = 'property';
-$pageJs  = 'property';
+$base = $base_url ?? rtrim(APP_URL, '/');
+$pid  = (int) ($property_id ?? 0);
 ?>
 
-<div x-data="propertyPage('<?= rtrim($base_url, '/') ?>', <?= json_encode($property_id) ?>)"
- x-init="init()"
- class="w-full">
+<div class="prop-page" x-data="propertyPage('<?= $base ?>', <?= $pid ?>)" x-init="init()">
 
-  <!-- ÉTAT LOADING -->
-  <div x-show="loading" class="space-y-6 px-4 py-10">
-    <div class="glass-card h-[560px] overflow-hidden">
-      <div class="h-full shimmer-bg"></div>
-    </div>
-    <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
-      <div class="space-y-4">
-        <div class="glass-card h-24 shimmer-bg"></div>
-        <div class="glass-card h-40 shimmer-bg"></div>
-        <div class="glass-card h-64 shimmer-bg"></div>
-      </div>
-      <div class="glass-card h-[340px] shimmer-bg"></div>
+<!-- SKELETON / LOADING -->
+<template x-if="loading">
+  <div>
+    <div style="height:480px;background:linear-gradient(135deg,#1B4332,#2D6A4F);"></div>
+    <div style="max-width:1100px;margin:0 auto;padding:40px 24px;">
+      <div style="height:24px;width:40%;background:#E5E7EB;border-radius:8px;margin-bottom:12px;"></div>
+      <div style="height:16px;width:60%;background:#F3F4F6;border-radius:8px;"></div>
     </div>
   </div>
+</template>
 
-  <!-- ÉTAT ERREUR -->
-  <div x-show="error && !loading" class="px-4 py-16">
-    <div class="glass-card p-8 text-[var(--color-forest)]">
-      <h2 class="font-display text-[28px] mb-3">Oups, impossible de charger l'établissement</h2>
-      <p class="text-[#4A5568] mb-6">Vérifiez votre connexion ou réessayez ultérieurement.</p>
-      <button @click="init()" class="btn-gold">Réessayer</button>
-    </div>
+<!-- ERREUR -->
+<template x-if="!loading && error">
+  <div style="padding:100px 20px;text-align:center;">
+    <div style="font-size:56px;margin-bottom:20px;">😕</div>
+    <h2 style="font-size:22px;font-weight:700;color:#111827;margin-bottom:8px;" x-text="error"></h2>
+    <a href="<?= $base ?>/search"
+       style="display:inline-block;margin-top:20px;padding:12px 28px;background:#1B4332;color:white;border-radius:999px;text-decoration:none;font-family:Inter,sans-serif;font-size:14px;">
+      ← Retour aux résultats
+    </a>
   </div>
+</template>
 
-  <!-- SECTION 1 — GALERIE PHOTOS -->
-  <template x-if="property && !loading">
-  <section class="pt-36 relative h-[560px] bg-[var(--color-forest)] overflow-hidden">
-    <img x-bind:src="property.photos?.[activePhoto]?.url || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200'"
-         alt="Photo principale de l'établissement"
-         class="w-full h-full object-cover" />
-    <div class="absolute inset-0" style="background:linear-gradient(to top, rgba(15,43,32,0.7) 0%, transparent 50%);"></div>
+<!-- CONTENU DYNAMIQUE -->
+<template x-if="!loading && !error && property">
+  <div>
 
-    <div class="absolute bottom-8 left-8 text-white max-w-3xl">
-      <span class="inline-flex items-center rounded-full bg-white/90 text-[var(--color-gold)] px-4 py-2 text-sm font-medium"> <span x-text="property.type"></span> </span>
-      <h1 class="font-display text-[48px] mt-4"> <span x-text="property.name"></span> </h1>
-      <div class="mt-3 flex items-center gap-3 text-[16px] text-white/85">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color:#ffffff;">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        <span x-text="property.city + ', ' + property.address"></span>
+    <!-- CINEMATIC HERO -->
+    <section class="prop-hero">
+      <div class="prop-hero-bg"
+           :style="photoUrl(property.cover_photo)
+             ? 'background-image:url(' + photoUrl(property.cover_photo) + ')'
+             : 'background:linear-gradient(135deg,#1B4332 0%,#2D6A4F 100%)'">
       </div>
-      <div class="mt-3 text-[20px] text-[var(--color-gold)]" x-text="getStars(property.stars)"></div>
-    </div>
-
-    <button x-show="property.photos?.length > 1" @click="prevPhoto()"
-            class="glass-card absolute left-4 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full flex items-center justify-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--color-forest)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-      </svg>
-    </button>
-
-    <button x-show="property.photos?.length > 1" @click="nextPhoto()"
-            class="glass-card absolute right-4 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full flex items-center justify-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--color-forest)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-      </svg>
-    </button>
-
-    <div class="glass-card absolute bottom-4 right-4 px-4 py-2 rounded-full text-sm text-[var(--color-forest)]">
-      <span x-text="(activePhoto + 1) + ' / ' + (property.photos?.length || 1)"></span>
-    </div>
-
-    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
-      <template x-for="(photo, index) in property.photos" :key="photo.id ?? index">
-        <button @click="activePhoto = index"
-                class="h-2.5 w-2.5 rounded-full bg-white/50 transition-transform duration-200"
-                :class="{ 'scale-110 bg-[var(--color-gold)]': activePhoto === index }"></button>
-      </template>
-    </div>
-
-    <button @click="lightboxOpen = true"
-            class="glass-card-strong absolute top-4 right-4 px-4 py-2 rounded-full inline-flex items-center gap-2 text-[var(--color-forest)]">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16M12 4v16"/>
-      </svg>
-      Voir toutes les photos
-    </button>
-  </section>
-  </template>
-
-  <!-- SECTION 2 — CONTENU PRINCIPAL -->
-  <template x-if="property && !loading">
-  <section class="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
-
-    <!-- COLONNE GAUCHE -->
-    <div class="space-y-10">
-
-      <!-- Bloc À propos -->
-      <div>
-        <h2 class="font-display text-[32px] text-[var(--color-forest)]">À propos de cet établissement</h2>
-        <p class="mt-4 text-[16px] text-[#4A5568] leading-8"
-           x-text="property.description ?? 'Un établissement de qualité situé au cœur de la Côte d\'Ivoire, offrant confort et services premium à ses hôtes.'">
-        </p>
-      </div>
-
-      <!-- Bloc Équipements -->
-      <div>
-        <h2 class="font-display text-[32px] text-[var(--color-forest)]">Équipements & Services</h2>
-        <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <template x-for="(amenity, index) in (property.amenities ?? ['WiFi gratuit','Parking','Piscine','Climatisation','Restaurant','Salle de sport','Room service','Bar'])" :key="amenity + index">
-            <div class="glass-card px-4 py-2 rounded-full flex items-center gap-3" style="border-radius:50px;">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" style="color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-              <span class="text-[14px] text-[var(--color-forest)]" x-text="amenity"></span>
-            </div>
-          </template>
+      <div class="prop-hero-overlay"></div>
+      <div class="prop-hero-content">
+        <div class="prop-hero-left">
+          <div class="prop-hero-rule"></div>
+          <span class="prop-hero-tag" x-text="typeLabel(property.type) + ' · ' + property.city"></span>
+          <h1 class="prop-hero-title" x-text="property.name"></h1>
+          <div class="prop-hero-loc">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 10c0 6-9 12-9 12S3 16 3 10a9 9 0 1118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span x-text="(property.address ? property.address + ', ' : '') + property.city + ' · Côte d\'Ivoire'"></span>
+          </div>
+          <span class="prop-hero-badge">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Établissement vérifié Ivoire Stay
+          </span>
         </div>
-      </div>
-
-      <!-- Bloc Chambres disponibles -->
-      <div id="chambres" x-init="rooms.forEach(r => loadAvailability(r.id))">
-        <h2 class="font-display text-[32px] text-[var(--color-forest)]">Nos chambres</h2>
-        <div class="mt-6 space-y-4">
-          <template x-for="room in rooms" :key="room.id">
-            <div class="glass-card overflow-hidden rounded-[20px] hover:-translate-y-1 transition-transform duration-300 flex flex-col md:flex-row">
-              <div class="relative w-full md:w-[200px] h-[160px] flex-shrink-0">
-                <img x-bind:src="room.photos?.[0]?.url || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800'"
-                     alt="Photo de chambre"
-                     class="w-full h-full object-cover" />
-                <div class="absolute top-3 left-3 rounded-full bg-[rgba(27,67,50,0.9)] px-3 py-1 text-white text-[13px]">
-                  <span x-text="formatPrice(room.base_price)"></span><span class="text-xs">/nuit</span>
-                </div>
+        <div class="prop-hero-right">
+          <div class="prop-hero-price-card">
+            <div class="prop-hero-price-label">À partir de</div>
+            <template x-if="minPrice">
+              <div class="prop-hero-price">
+                <span x-text="new Intl.NumberFormat('fr-FR').format(minPrice)"></span>
+                <small>FCFA</small>
               </div>
-              <div class="flex-1 p-5">
-                <div class="font-display text-[22px] text-[var(--color-forest)]" x-text="room.name"></div>
-                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-[14px] text-[#4A5568]">
-                  <div class="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" style="color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.766 0 5.347.836 7.579 2.273M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <span x-text="(room.capacity ?? 2) + ' personnes'"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" style="color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M4 6h16M5 6a2 2 0 00-2 2v11h18V8a2 2 0 00-2-2M15 6V4a3 3 0 00-6 0v2"/>
-                    </svg>
-                    <span x-text="(room.size ?? '25') + ' m²'"></span>
-                  </div>
-                </div>
-                <div class="mt-4 flex flex-wrap gap-2">
-                  <template x-for="amenity in (room.amenities ?? []).slice(0, 3)" :key="amenity">
-                    <span class="inline-flex items-center gap-2 rounded-full bg-[rgba(201,168,76,0.15)] px-3 py-2 text-[13px] text-[var(--color-forest)]">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" style="color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                      </svg>
-                      <span x-text="amenity"></span>
-                    </span>
-                  </template>
-                </div>
-              </div>
-              <div class="p-5 flex items-end justify-between gap-3">
-                <div class="text-sm text-[#4A5568]" x-text="availability[room.id]?.status ?? 'Disponibilité en cours...' "></div>
-                <button @click="bookRoom(room)"
-                        :disabled="!checkIn || !checkOut"
-                        class="btn-gold rounded-[16px] px-5 py-3 disabled:opacity-50 disabled:cursor-not-allowed">
-                  Réserver
-                </button>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
-
-      <!-- Bloc Localisation -->
-      <div>
-        <h2 class="font-display text-[32px] text-[var(--color-forest)]">Localisation</h2>
-        <div class="glass-card overflow-hidden rounded-[24px] mt-6">
-          <div class="bg-[#E8DDD0] h-[280px] flex flex-col items-center justify-center text-center px-6">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-4" style="color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-            <p class="font-display text-[20px] text-[var(--color-forest)] mb-2" x-text="property.city + ', ' + property.address"></p>
-            <p class="text-[16px] text-[var(--color-forest)]">(Carte interactive disponible prochainement)</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- COLONNE DROITE -->
-    <aside class="sticky top-24 self-start space-y-6">
-      <div class="glass-card-strong p-7 rounded-[28px]">
-        <div class="text-[12px] uppercase tracking-[0.18em] text-[#718096]">À partir de</div>
-        <div class="mt-3 flex items-end gap-2">
-          <div class="font-display text-[36px] text-[var(--color-forest)] font-semibold"
-               x-text="formatPrice(Math.min(...rooms.map(r => r.base_price).filter(Boolean)) || 0)"></div>
-          <div class="text-[14px] text-[#718096]">/nuit</div>
-        </div>
-        <div class="mt-2 flex items-center gap-2 text-[var(--color-gold)]">
-          <span x-text="getStars(property.stars)"></span>
-          <span class="text-[14px]">Excellent</span>
-        </div>
-
-        <div class="mt-6 space-y-4">
-          <div>
-            <label class="block text-[11px] uppercase tracking-[0.22em] text-[var(--color-gold)]">Arrivée</label>
-            <input type="date" x-model="checkIn" class="w-full mt-2 px-4 py-3 rounded-[12px] bg-[var(--color-cream)]" style="border:1px solid rgba(201,168,76,0.3);" />
-          </div>
-          <div>
-            <label class="block text-[11px] uppercase tracking-[0.22em] text-[var(--color-gold)]">Départ</label>
-            <input type="date" x-model="checkOut" :min="checkIn" class="w-full mt-2 px-4 py-3 rounded-[12px] bg-[var(--color-cream)]" style="border:1px solid rgba(201,168,76,0.3);" />
-          </div>
-        </div>
-
-        <button @click="document.querySelector('#chambres').scrollIntoView({ behavior: 'smooth' })"
-                class="btn-gold w-full h-[52px] rounded-[16px] mt-6">Choisir une chambre ↓</button>
-
-        <div class="mt-6 space-y-3 text-[13px] text-[#4A5568]">
-          <div class="flex items-start gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" style="color:#16a34a;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            <span>Annulation gratuite 24h avant</span>
-          </div>
-          <div class="flex items-start gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" style="color:#16a34a;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            <span>Paiement sécurisé Mobile Money</span>
-          </div>
-          <div class="flex items-start gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" style="color:#16a34a;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            <span>Confirmation instantanée</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="glass-card p-5 rounded-[24px]">
-        <div class="text-[15px] text-[var(--color-forest)] font-semibold">Besoin d'aide ?</div>
-        <p class="mt-3 text-[14px] text-[#4A5568]">Notre équipe est disponible 24h/24</p>
-        <a href="tel:+2250123456789" class="mt-4 inline-block text-[var(--color-gold)] font-medium">+225 01 23 45 67 89</a>
-      </div>
-    </aside>
-  </section>
-  </template>
-
-  <!-- SECTION 3 — LIGHTBOX -->
-  <template x-if="property">
-  <div x-show="lightboxOpen" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
-    <div class="relative w-full max-w-6xl h-full bg-white/95 rounded-[24px] overflow-hidden">
-      <button @click="lightboxOpen = false" class="absolute top-4 right-4 z-20 glass-card p-3 rounded-full">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--color-forest)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
-      <div class="h-full flex flex-col">
-        <div class="relative flex-1 bg-[var(--color-forest)]">
-          <img x-bind:src="property.photos?.[activePhoto]?.url || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200'"
-               alt="Photo agrandie"
-               class="w-full h-full object-cover" />
-          <div class="absolute inset-0 bg-black/30"></div>
-        </div>
-        <div class="bg-white p-6">
-          <div class="flex items-center justify-between gap-4">
-            <div>
-              <div class="font-display text-[24px] text-[var(--color-forest)]" x-text="property.name"></div>
-              <div class="mt-2 text-[14px] text-[#4A5568]" x-text="(activePhoto + 1) + ' / ' + (property.photos?.length || 1) + ' photos'"></div>
-            </div>
-            <div class="flex items-center gap-2">
-              <button @click="prevPhoto()" class="glass-card p-3 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--color-forest)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
-              </button>
-              <button @click="nextPhoto()" class="glass-card p-3 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--color-forest)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div class="mt-6 flex flex-wrap gap-2 items-center justify-center">
-            <template x-for="(photo, index) in property.photos" :key="photo.id ?? index">
-              <button @click="activePhoto = index"
-                      class="h-3 w-3 rounded-full bg-[#CBD5E1] transition-transform duration-200"
-                      :class="{ 'bg-[var(--color-gold)] scale-110': activePhoto === index }"></button>
+            </template>
+            <template x-if="!minPrice">
+              <div class="prop-hero-price" style="font-size:20px;line-height:1.3;">Sur<br>demande</div>
+            </template>
+            <div style="font-family:'Inter',sans-serif;font-size:11px;color:rgba(27,67,50,0.4);margin-top:2px;">/nuit</div>
+            <template x-if="rooms.length > 0">
+              <a :href="'<?= $base ?>/booking/' + rooms[0].id" class="prop-hero-book-btn">Réserver maintenant →</a>
+            </template>
+            <template x-if="rooms.length === 0">
+              <a href="<?= $base ?>/contact" class="prop-hero-book-btn">Nous contacter →</a>
             </template>
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- STATS BAND -->
+    <div class="prop-stats-band">
+      <div class="prop-stat">
+        <span class="prop-stat-label">Chambres disponibles</span>
+        <div class="prop-stat-value">
+          <span x-text="property.available_rooms ?? 0"></span><span>+</span>
+        </div>
+      </div>
+      <div class="prop-stat">
+        <span class="prop-stat-label">Total des chambres</span>
+        <div class="prop-stat-value"><span x-text="property.total_rooms ?? rooms.length"></span></div>
+      </div>
+      <div class="prop-stat">
+        <span class="prop-stat-label">Type d'établissement</span>
+        <div class="prop-stat-value" style="font-size:18px;padding-top:4px;" x-text="typeLabel(property.type)"></div>
+      </div>
+      <div class="prop-stat">
+        <span class="prop-stat-label">Annulation gratuite</span>
+        <div class="prop-stat-value" style="font-size:20px;padding-top:4px;">Sous 24h</div>
+      </div>
     </div>
+
+    <!-- ABOUT + SIDEBAR -->
+    <section class="prop-about">
+      <div class="prop-about-main">
+        <div class="prop-about-rule"></div>
+        <span class="prop-about-tag">À propos de l'établissement</span>
+        <h2 class="prop-about-title" x-text="property.name"></h2>
+        <template x-if="property.description">
+          <p class="prop-about-body" x-text="property.description"></p>
+        </template>
+        <template x-if="!property.description">
+          <p class="prop-about-body" style="color:rgba(27,67,50,0.35);font-style:italic;">Description non renseignée.</p>
+        </template>
+        <!-- Dates rapides -->
+        <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;">
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-family:Inter,sans-serif;font-size:11px;color:rgba(27,67,50,0.5);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Arrivée</label>
+            <input type="date" x-model="checkIn" style="padding:8px 12px;border:1px solid rgba(27,67,50,0.15);border-radius:10px;font-family:Inter,sans-serif;font-size:13px;color:#1B4332;">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-family:Inter,sans-serif;font-size:11px;color:rgba(27,67,50,0.5);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Départ</label>
+            <input type="date" x-model="checkOut" style="padding:8px 12px;border:1px solid rgba(27,67,50,0.15);border-radius:10px;font-family:Inter,sans-serif;font-size:13px;color:#1B4332;">
+          </div>
+        </div>
+      </div>
+      <div class="prop-about-side">
+        <div class="prop-about-side-card">
+          <h4>Informations pratiques</h4>
+          <div class="prop-about-side-row"><span>Check-in</span><span>À partir de 14h00</span></div>
+          <div class="prop-about-side-row"><span>Check-out</span><span>Jusqu'à 12h00</span></div>
+          <template x-if="property.phone">
+            <div class="prop-about-side-row"><span>Téléphone</span><span x-text="property.phone"></span></div>
+          </template>
+          <template x-if="property.email">
+            <div class="prop-about-side-row"><span>Email</span><span x-text="property.email"></span></div>
+          </template>
+          <template x-if="property.website">
+            <div class="prop-about-side-row">
+              <span>Site web</span>
+              <a :href="property.website" target="_blank" rel="noopener" style="color:#1B4332;" x-text="property.website"></a>
+            </div>
+          </template>
+        </div>
+        <div class="prop-about-side-card">
+          <h4>Localisation</h4>
+          <div style="width:100%;height:110px;background:rgba(27,67,50,0.05);border-radius:10px;display:flex;align-items:center;justify-content:center;color:rgba(27,67,50,0.2);font-family:'Inter',sans-serif;font-size:13px;">Carte interactive</div>
+          <p style="font-family:'Inter',sans-serif;font-size:13px;color:rgba(27,67,50,0.55);margin-top:12px;line-height:1.7;"
+             x-text="(property.address ? property.address + ', ' : '') + property.city + ', Côte d\'Ivoire'">
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROOMS -->
+    <section class="prop-rooms">
+      <div class="prop-rooms-header">
+        <div class="prop-rooms-rule"></div>
+        <span class="prop-rooms-tag">Nos chambres</span>
+        <div class="prop-rooms-rule"></div>
+      </div>
+
+      <template x-if="rooms.length === 0">
+        <div style="text-align:center;padding:48px;color:rgba(27,67,50,0.35);font-family:Inter,sans-serif;">
+          Aucune chambre disponible pour le moment.
+        </div>
+      </template>
+
+      <div x-show="rooms.length > 0" class="prop-rooms-grid">
+        <template x-for="room in rooms" :key="room.id">
+          <div class="prop-room-card">
+            <div class="prop-room-img" style="position:relative;">
+              <template x-if="photoUrl(room.cover_photo)">
+                <img :src="photoUrl(room.cover_photo)" :alt="room.type_name"
+                     style="width:100%;height:100%;object-fit:cover;">
+              </template>
+              <template x-if="!photoUrl(room.cover_photo)">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
+              </template>
+              <template x-if="room.is_available === false">
+                <span style="position:absolute;top:10px;right:10px;background:rgba(220,38,38,0.88);color:white;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;font-family:Inter,sans-serif;">
+                  Non disponible
+                </span>
+              </template>
+            </div>
+            <div class="prop-room-body">
+              <div class="prop-room-name" x-text="room.type_name + (room.number ? ' — Chambre ' + room.number : '')"></div>
+              <p class="prop-room-desc">
+                <template x-if="room.capacity">
+                  <span>Jusqu'à <strong x-text="room.capacity"></strong> pers.</span>
+                </template>
+                <template x-if="room.floor">
+                  <span> · Étage <span x-text="room.floor"></span></span>
+                </template>
+              </p>
+              <div class="prop-room-footer">
+                <div class="prop-room-price">
+                  <span x-text="formatPrice(room.base_price)"></span> <small>/nuit</small>
+                </div>
+                <button class="prop-room-btn" @click="bookRoom(room)" type="button">Réserver →</button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
   </div>
-  </template>
+</template>
 
 </div>
-

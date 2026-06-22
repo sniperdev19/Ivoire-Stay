@@ -19,6 +19,7 @@ $router->get('/saas/expenses',  'PageController@expenses');
 $router->get('/saas/reports',   'PageController@reports');
 $router->get('/saas/settings',  'PageController@settings');
 $router->get('/saas/help',      'PageController@help');
+$router->get('/saas/checkout',  'PageController@checkout');
 
 // ─── Pages HTML (Vitrine) ─────────────────────────────────────────────────────
 $router->get('/',               'PageController@home');
