@@ -141,8 +141,11 @@ $defaultTab = $defaultTab ?? 'invoices';
                       <td x-text="formatPrice(inv.amount_ht)"></td>
                       <td x-text="(inv.tax_rate ?? 0) + '%'"></td>
                       <td style="font-weight:800;color:#1B4332;" x-text="formatPrice(inv.amount_ttc)"></td>
-                      <td><span :class="invStatusCfg(inv.status).badge" x-text="invStatusCfg(inv.status).label"></span></td>
-                      <td x-text="formatDate(inv.created_at)"></td>
+                      <td>
+                        <span :class="invStatusCfg(inv.status).badge" x-text="invStatusCfg(inv.status).label"></span>
+                        <div x-show="inv.paid_at" style="font-size:11px;color:#16a34a;margin-top:2px;" x-text="inv.paid_at ? formatDate(inv.paid_at) : ''"></div>
+                      </td>
+                      <td x-text="formatDate(inv.issued_at)"></td>
                       <td style="white-space:nowrap;display:flex;gap:6px;">
                         <button class="btn-saas-secondary" @click.stop="downloadPdf(inv.id)" title="Télécharger PDF">
                           <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -236,7 +239,7 @@ $defaultTab = $defaultTab ?? 'invoices';
                       </td>
                       <td style="font-size:12px;color:#6B7280;" x-text="typeLabel(p.type)"></td>
                       <td><span :class="payStatusCfg(p.status).badge" x-text="payStatusCfg(p.status).label"></span></td>
-                      <td x-text="formatDate(p.created_at)"></td>
+                      <td x-text="formatDate(p.paid_at)"></td>
                       <td>
                         <button class="btn-saas-secondary" @click.stop="openEditPayment(p)">Modifier</button>
                       </td>

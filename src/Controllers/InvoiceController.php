@@ -124,20 +124,34 @@ class InvoiceController
             Response::error('Facture et réservation incohérentes');
         }
 
-        $id = Payment::create([
+        $now = date('Y-m-d H:i:s');
+        $id  = Payment::create([
             'booking_id' => (int) $data['booking_id'],
             'invoice_id' => (int) $data['invoice_id'],
             'amount'     => (float) $data['amount'],
             'method'     => $data['method'],
             'type'       => $data['type'] ?? 'full',
             'status'     => 'completed',
+            'notes'      => $data['notes'] ?? null,
+            'paid_at'    => $now,
         ]);
 
-        // Check if invoice is fully paid
-        $inv      = Invoice::find((int) $data['invoice_id']);
-        $paid     = Invoice::paidAmount((int) $data['invoice_id']);
-        if ($inv && $paid >= (float) $inv['amount_ttc']) {
-            Invoice::update((int) $data['invoice_id'], ['status' => 'paid']);
+        // Mettre à jour le statut de la facture selon le montant encaissé
+        $invoiceId = (int) $data['invoice_id'];
+        $inv       = Invoice::find($invoiceId);
+        $paid      = Invoice::paidAmount($invoiceId);
+
+        if ($inv) {
+            $ttc = (float) $inv['amount_ttc'];
+            if ($paid >= $ttc) {
+                // Totalement réglée
+                Invoice::update($invoiceId, ['status' => 'paid', 'paid_at' => $now]);
+            } elseif ($paid > 0) {
+                // Acompte / paiement partiel — on sort du brouillon
+                if ($inv['status'] === 'draft') {
+                    Invoice::update($invoiceId, ['status' => 'sent']);
+                }
+            }
         }
 
         Response::success(Payment::find($id), 'Paiement enregistré', 201);
@@ -145,13 +159,38 @@ class InvoiceController
 
     public function updatePayment(Request $req, array $params = []): void
     {
-        $id = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
-        Guard::requirePayment($id);
+        $id      = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+        $payment = Guard::requirePayment($id);
 
         $data    = $req->all();
-        $allowed = ['amount','method','type','status'];
+        $allowed = ['amount', 'method', 'type', 'status', 'notes'];
         $update  = array_intersect_key($data, array_flip($allowed));
+
+        // Si passage à completed et paid_at absent, le dater maintenant
+        if (($update['status'] ?? '') === 'completed' && empty($payment['paid_at'])) {
+            $update['paid_at'] = date('Y-m-d H:i:s');
+        }
+
         Payment::update($id, $update);
+
+        // Réévaluer la facture associée
+        $invoiceId = (int) $payment['invoice_id'];
+        $inv       = Invoice::find($invoiceId);
+        $paid      = Invoice::paidAmount($invoiceId);
+
+        if ($inv) {
+            $now = date('Y-m-d H:i:s');
+            $ttc = (float) $inv['amount_ttc'];
+            if ($paid >= $ttc && $inv['status'] !== 'paid') {
+                Invoice::update($invoiceId, ['status' => 'paid', 'paid_at' => $now]);
+            } elseif ($paid > 0 && $inv['status'] === 'draft') {
+                Invoice::update($invoiceId, ['status' => 'sent']);
+            } elseif ($paid <= 0 && $inv['status'] === 'paid') {
+                // Remboursement total — repasser en envoyée
+                Invoice::update($invoiceId, ['status' => 'sent', 'paid_at' => null]);
+            }
+        }
+
         Response::success(Payment::find($id), 'Paiement mis à jour');
     }
 }

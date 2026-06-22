@@ -22,7 +22,8 @@ class Invoice extends BaseModel
             "SELECT i.*,
                 b.check_in, b.check_out,
                 r.number as room_number,
-                COALESCE(CONCAT(pc.first_name, ' ', pc.last_name), u.name) as client_name
+                COALESCE(CONCAT(pc.first_name, ' ', pc.last_name), u.name) as client_name,
+                COALESCE(pc.email, u.email) as client_email
              FROM invoices i
              JOIN bookings b ON b.id = i.booking_id
              JOIN rooms r ON r.id = b.room_id
