@@ -85,7 +85,7 @@ class InvoiceController
             $absPath = BASE_PATH . '/' . $pdfPath;
             if (file_exists($absPath) && str_ends_with($absPath, '.pdf')) {
                 header('Content-Type: application/pdf');
-                header('Content-Disposition: inline; filename="' . $inv['invoice_number'] . '.pdf"');
+                header('Content-Disposition: attachment; filename="' . $inv['invoice_number'] . '.pdf"');
                 readfile($absPath);
                 exit;
             }

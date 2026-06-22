@@ -127,8 +127,23 @@ function billingPage(baseUrl, defaultTab) {
     finally { this.submitting = false; }
   },
 
-  downloadPdf(id) {
-    window.open(baseUrl + '/api/invoices/' + id + '/pdf?token=' + localStorage.getItem('token'), '_blank');
+  async downloadPdf(inv) {
+    const invoiceNum = inv.invoice_number ?? ('facture-' + inv.id);
+    try {
+      const res = await fetch(baseUrl + '/api/invoices/' + inv.id + '/pdf', {
+        headers: this.apiHeaders(),
+      });
+      if (!res.ok) { alert('Erreur lors de la génération du PDF.'); return; }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = invoiceNum + '.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch(e) { alert('Erreur réseau lors du téléchargement.'); }
   },
 
   // ── Envoi facture par email ────────────────────────────────────────────
