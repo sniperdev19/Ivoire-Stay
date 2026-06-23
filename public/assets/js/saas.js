@@ -176,3 +176,74 @@ const saasHelpers = {
     this.toastTimer = setTimeout(() => { this.toast = null; }, 3500);
   },
 };
+
+/* ─── Panneau de notifications ───────────────────────────────────────────────
+   Composant Alpine autonome utilisé dans le header de saas/layout.php.       */
+function notificationsPanel(baseUrl) {
+  return {
+    open:          false,
+    notifications: [],
+    unread:        0,
+    loading:       false,
+    _pollTimer:    null,
+
+    async init() {
+      await this.load();
+      this._pollTimer = setInterval(() => this.load(), 30_000);
+    },
+
+    _headers() {
+      return { 'Authorization': 'Bearer ' + localStorage.getItem('token') };
+    },
+
+    async load() {
+      this.loading = true;
+      try {
+        const res  = await fetch(baseUrl + '/api/notifications', { headers: this._headers() });
+        const data = await res.json();
+        if (data.success) {
+          this.notifications = data.data?.notifications ?? [];
+          this.unread        = data.data?.unread        ?? 0;
+        }
+      } catch { /* hors-ligne — conserve l'état précédent */ }
+      finally { this.loading = false; }
+    },
+
+    async markRead(id) {
+      const n = this.notifications.find(n => n.id == id);
+      if (!n || n.read_at) return;
+      n.read_at = new Date().toISOString();
+      this.unread = Math.max(0, this.unread - 1);
+      fetch(baseUrl + '/api/notifications/' + id + '/read', { method: 'PUT', headers: this._headers() });
+    },
+
+    async markAllRead() {
+      const now = new Date().toISOString();
+      this.notifications.forEach(n => { if (!n.read_at) n.read_at = now; });
+      this.unread = 0;
+      fetch(baseUrl + '/api/notifications/read-all', { method: 'POST', headers: this._headers() });
+    },
+
+    timeAgo(dateStr) {
+      if (!dateStr) return '';
+      const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+      if (diff < 60)    return 'À l\'instant';
+      if (diff < 3600)  return 'Il y a ' + Math.floor(diff / 60) + ' min';
+      if (diff < 86400) return 'Il y a ' + Math.floor(diff / 3600) + 'h';
+      return 'Il y a ' + Math.floor(diff / 86400) + 'j';
+    },
+
+    typeConfig(type) {
+      return {
+        booking_new:      { icon: '🏨', color: '#2563EB', bg: '#EFF6FF' },
+        payment_received: { icon: '💳', color: '#16a34a', bg: '#F0FDF4' },
+        invoice_sent:     { icon: '📧', color: '#C9A84C', bg: '#FFFBEB' },
+        invoice_paid:     { icon: '✅', color: '#16a34a', bg: '#F0FDF4' },
+      }[type] ?? { icon: '🔔', color: '#6B7280', bg: '#F9FAFB' };
+    },
+
+    get badgeLabel() {
+      return this.unread > 99 ? '99+' : String(this.unread);
+    },
+  };
+}

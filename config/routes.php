@@ -102,6 +102,12 @@ $router->post('/api/subscriptions/initiate',      'SubscriptionController@initia
 $router->post('/api/subscriptions/callback',      'SubscriptionController@callback');
 $router->get('/api/subscriptions/verify/{ref}',   'SubscriptionController@verify',   ['auth']);
 
+// ─── API Notifications ────────────────────────────────────────────────────────
+$router->get('/api/notifications',             'NotificationController@index',       ['auth']);
+$router->get('/api/notifications/count',       'NotificationController@count',       ['auth']);
+$router->post('/api/notifications/read-all',   'NotificationController@markAllRead', ['auth']);
+$router->put('/api/notifications/{id}/read',   'NotificationController@markRead',    ['auth']);
+
 // ─── API Dashboard ────────────────────────────────────────────────────────────
 $router->get('/api/dashboard/stats',    'DashboardController@stats',   ['auth']);
 $router->get('/api/dashboard/planning', 'DashboardController@planning', ['auth']);

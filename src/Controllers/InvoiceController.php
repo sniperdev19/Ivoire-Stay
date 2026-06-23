@@ -4,7 +4,7 @@ namespace Controllers;
 
 use Core\{Request, Response, PlanGate, Guard};
 use Models\{Invoice, Payment, Booking, Establishment};
-use Services\{PdfService, MailService};
+use Services\{PdfService, MailService, NotificationService};
 
 class InvoiceController
 {
@@ -117,6 +117,9 @@ class InvoiceController
             $inv['client_email'] = $email;
             MailService::invoiceMail($inv, $pdfAbsPath);
 
+            $estabId = (int) ($_REQUEST['_user']['establishment_id'] ?? 0);
+            NotificationService::invoiceSent($estabId, $inv['invoice_number'] ?? '#' . $id, $email, $id);
+
             Response::success(['sent_to' => $email], 'Facture envoyée par email');
         } catch (\Exception $e) {
             Response::error('Erreur envoi email : ' . $e->getMessage());
@@ -168,18 +171,21 @@ class InvoiceController
         $inv       = Invoice::find($invoiceId);
         $paid      = Invoice::paidAmount($invoiceId);
 
+        $estabId = (int) ($_REQUEST['_user']['establishment_id'] ?? 0);
+
         if ($inv) {
             $ttc = (float) $inv['amount_ttc'];
             if ($paid >= $ttc) {
-                // Totalement réglée
                 Invoice::update($invoiceId, ['status' => 'paid', 'paid_at' => $now]);
+                NotificationService::invoicePaid($estabId, $inv['invoice_number'] ?? '#' . $invoiceId, $invoiceId);
             } elseif ($paid > 0) {
-                // Acompte / paiement partiel — on sort du brouillon
                 if ($inv['status'] === 'draft') {
                     Invoice::update($invoiceId, ['status' => 'sent']);
                 }
             }
         }
+
+        NotificationService::paymentReceived($estabId, (float) $data['amount'], $data['method'], $invoiceId);
 
         Response::success(Payment::find($id), 'Paiement enregistré', 201);
     }

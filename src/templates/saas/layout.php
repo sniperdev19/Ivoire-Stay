@@ -269,27 +269,98 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
         >
       </div>
 
-      <div style="position:relative;" x-data="{ open: false }">
-        <button @click="open = !open" style="position:relative;width:38px;height:38px;border-radius:10px;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.08);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;">
+      <!-- ── Panneau notifications ────────────────────────────────────── -->
+      <div style="position:relative;"
+           x-data="notificationsPanel('<?= $base_url ?? '' ?>')"
+           x-init="init()"
+           @keydown.escape.window="open = false">
+
+        <!-- Bouton cloche -->
+        <button @click="open = !open"
+                style="position:relative;width:38px;height:38px;border-radius:10px;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.08);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;"
+                title="Notifications">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:18px;height:18px;color:#6B7280;">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
-          <div style="position:absolute;top:6px;right:6px;width:8px;height:8px;background:#DC2626;border-radius:50%;border:2px solid white;"></div>
+          <!-- Badge compteur non-lu -->
+          <div x-show="unread > 0" x-cloak
+               style="position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;background:#DC2626;border-radius:999px;border:2px solid white;display:flex;align-items:center;justify-content:center;padding:0 3px;">
+            <span x-text="badgeLabel" style="font-size:9px;font-weight:700;color:white;line-height:1;"></span>
+          </div>
+          <!-- Point vide quand 0 non-lus -->
+          <div x-show="unread === 0" x-cloak
+               style="position:absolute;top:6px;right:6px;width:8px;height:8px;background:#D1D5DB;border-radius:50%;border:2px solid white;"></div>
         </button>
-        <div x-show="open" x-transition @click.away="open=false" style="position:absolute;top:100%;right:0;margin-top:8px;width:300px;background:white;border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,0.12);border:1px solid rgba(0,0,0,0.06);overflow:hidden;z-index:50;">
-          <div style="padding:16px 16px 12px;border-bottom:1px solid rgba(0,0,0,0.06);font-size:13px;font-weight:700;color:#111827;">Notifications</div>
-          <div style="padding:8px;">
-            <button type="button" style="width:100%;padding:10px;border-radius:10px;text-align:left;cursor:pointer;transition:background 0.2s;border:none;background:transparent;" @mouseover="($event.currentTarget.style.background='#F9FAFB')" @mouseout="($event.currentTarget.style.background='transparent')">
-              <div style="font-size:13px;color:#111827;font-weight:500;">Nouvelle réservation</div>
-              <div style="font-size:12px;color:#9CA3AF;margin-top:2px;">Chambre Deluxe · il y a 5 min</div>
-            </button>
-            <button type="button" style="width:100%;padding:10px;border-radius:10px;text-align:left;cursor:pointer;transition:background 0.2s;border:none;background:transparent;" @mouseover="($event.currentTarget.style.background='#F9FAFB')" @mouseout="($event.currentTarget.style.background='transparent')">
-              <div style="font-size:13px;color:#111827;font-weight:500;">Check-in aujourd'hui</div>
-              <div style="font-size:12px;color:#9CA3AF;margin-top:2px;">3 clients · à 14h00</div>
+
+        <!-- Dropdown -->
+        <div x-show="open" x-cloak x-transition @click.away="open=false"
+             style="position:absolute;top:calc(100% + 8px);right:0;width:340px;background:white;border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,0.14);border:1px solid rgba(0,0,0,0.06);overflow:hidden;z-index:100;">
+
+          <!-- En-tête -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 12px;border-bottom:1px solid rgba(0,0,0,0.06);">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:13px;font-weight:700;color:#111827;">Notifications</span>
+              <span x-show="unread > 0"
+                    style="background:#FEE2E2;color:#DC2626;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;"
+                    x-text="unread + ' non lu' + (unread > 1 ? 'es' : 'e')"></span>
+            </div>
+            <button x-show="unread > 0" @click="markAllRead()"
+                    style="font-size:12px;color:#C9A84C;font-weight:600;background:none;border:none;cursor:pointer;padding:0;">
+              Tout marquer lu
             </button>
           </div>
-          <div style="padding:12px;text-align:center;border-top:1px solid rgba(0,0,0,0.06);">
-            <a href="#" style="font-size:13px;color:var(--saas-gold);font-weight:500;text-decoration:none;">Voir tout →</a>
+
+          <!-- Liste -->
+          <div style="max-height:380px;overflow-y:auto;">
+            <!-- Loading -->
+            <template x-if="loading && notifications.length === 0">
+              <div style="padding:32px;text-align:center;">
+                <div style="width:20px;height:20px;border-radius:50%;border:2px solid #E5E7EB;border-top-color:#C9A84C;animation:spin 0.7s linear infinite;margin:0 auto;"></div>
+              </div>
+            </template>
+
+            <!-- Vide -->
+            <template x-if="!loading && notifications.length === 0">
+              <div style="padding:36px 24px;text-align:center;">
+                <div style="font-size:28px;margin-bottom:8px;">🔔</div>
+                <div style="font-size:13px;color:#9CA3AF;font-weight:500;">Aucune notification</div>
+                <div style="font-size:12px;color:#D1D5DB;margin-top:4px;">Vous êtes à jour !</div>
+              </div>
+            </template>
+
+            <!-- Notifications -->
+            <template x-for="n in notifications" :key="n.id">
+              <button type="button"
+                      @click="markRead(n.id); open = false"
+                      :style="n.read_at ? 'background:transparent;' : 'background:#FAFBFF;'"
+                      style="width:100%;padding:12px 14px;border:none;border-bottom:1px solid rgba(0,0,0,0.04);cursor:pointer;text-align:left;display:flex;align-items:flex-start;gap:10px;transition:background 0.15s;"
+                      @mouseover="$el.style.background='#F9FAFB'"
+                      @mouseout="$el.style.background = n.read_at ? 'transparent' : '#FAFBFF'">
+
+                <!-- Icône type -->
+                <div :style="'flex-shrink:0;width:34px;height:34px;border-radius:10px;background:' + typeConfig(n.type).bg + ';display:flex;align-items:center;justify-content:center;font-size:16px;'">
+                  <span x-text="typeConfig(n.type).icon"></span>
+                </div>
+
+                <!-- Texte -->
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:13px;font-weight:600;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;" x-text="n.title"></span>
+                    <span x-show="!n.read_at" style="flex-shrink:0;width:6px;height:6px;background:#3B82F6;border-radius:50%;"></span>
+                  </div>
+                  <div x-show="n.message" style="font-size:12px;color:#6B7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="n.message"></div>
+                  <div style="font-size:11px;color:#9CA3AF;margin-top:3px;" x-text="timeAgo(n.created_at)"></div>
+                </div>
+              </button>
+            </template>
+          </div>
+
+          <!-- Pied -->
+          <div style="padding:10px 14px;border-top:1px solid rgba(0,0,0,0.06);display:flex;justify-content:center;">
+            <button @click="load(); " style="font-size:12px;color:#9CA3AF;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:4px;" :class="loading ? 'opacity-50' : ''">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:12px;height:12px;" :style="loading ? 'animation:spin 1s linear infinite' : ''"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              Actualiser
+            </button>
           </div>
         </div>
       </div>

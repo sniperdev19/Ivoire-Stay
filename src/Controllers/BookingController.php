@@ -4,6 +4,7 @@ namespace Controllers;
 
 use Core\{Request, Response, Guard};
 use Models\{Booking, Room, Invoice};
+use Services\NotificationService;
 
 class BookingController
 {
@@ -102,6 +103,15 @@ class BookingController
         if (($data['status'] ?? 'confirmed') === 'checked_in') {
             Room::updateStatus($roomId, 'occupied');
         }
+
+        // Notification au propriétaire de l'établissement
+        $clientName = '';
+        if (!empty($data['client'])) {
+            $c = $data['client'];
+            $clientName = trim(($c['first_name'] ?? '') . ' ' . ($c['last_name'] ?? ''));
+        }
+        if (!$clientName) $clientName = $user['name'] ?? 'Client';
+        NotificationService::bookingNew($room['establishment_id'], $clientName, $room['number'] ?? '?', $id);
 
         Response::success(Booking::findWithDetails($id), 'Réservation créée', 201);
     }
