@@ -1,8 +1,8 @@
 /* ============================================================
-   Ivoire Stay — Page autonome : Inscription (saas/register.php)
+   Afristay — Page autonome : Inscription (saas/register.php)
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap');
+/* Polices chargées via <link> vers /assets/css/fonts.css dans le template */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

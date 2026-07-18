@@ -20,7 +20,7 @@
   </div>
 
   <!-- KPI compactes -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+  <div class="client-kpi-grid">
     <div class="saas-card" style="padding:14px 16px;border-top:3px solid #C9A84C;">
       <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Total clients</div>
       <div style="font-size:24px;font-weight:800;color:#111827;" x-text="clients.length"></div>
@@ -136,13 +136,14 @@
     <div class="saas-modal" style="max-width:620px;" @click.stop>
       <div class="saas-modal-header">
         <div style="display:flex;align-items:center;gap:12px;">
-          <div class="client-avatar" style="width:44px;height:44px;border-radius:12px;font-size:16px;" :style="'background:' + avatarBg(selectedClient?.id)" x-text="initials(selectedClient?.name ?? '')"></div>
+          <div class="client-avatar" style="width:44px;height:44px;border-radius:12px;font-size:16px;" :style="{ background: avatarBg(selectedClient?.id) }" x-text="initials(selectedClient?.name ?? '')"></div>
           <div>
             <h2 style="font-size:17px;font-weight:700;color:#111827;margin:0 0 2px;" x-text="selectedClient?.name ?? 'Client'"></h2>
             <div style="font-size:12px;color:#9CA3AF;">Client depuis <span x-text="formatDate(selectedClient?.created_at)"></span></div>
           </div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
+          <a :href="bookingUrl(selectedClient)" class="btn-saas-primary" style="font-size:13px;padding:7px 14px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Réserver</a>
           <button @click="openEdit(selectedClient)" class="btn-saas-secondary" style="font-size:13px;padding:7px 14px;"><svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg> Modifier</button>
           <button @click="showDetail = false" style="width:32px;height:32px;border-radius:8px;background:rgba(0,0,0,0.05);border:none;cursor:pointer;display:grid;place-items:center;"><svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;color:#6B7280;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         </div>
@@ -215,7 +216,7 @@
 
   <!-- Toast -->
   <div x-show="toast" style="position:fixed;bottom:24px;right:24px;z-index:200;min-width:300px;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-    <div style="background:white;border-radius:12px;padding:14px 18px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px;" :style="toast?.type==='success' ? 'border-left:4px solid #16a34a;' : 'border-left:4px solid #DC2626;'">
+    <div style="background:white;border-radius:12px;padding:14px 18px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px;" :style="{ 'border-left': toast?.type === 'success' ? '4px solid #16a34a' : '4px solid #DC2626' }">
       <svg x-show="toast?.type==='success'" xmlns="http://www.w3.org/2000/svg" style="width:17px;height:17px;color:#16a34a;flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
       <svg x-show="toast?.type!=='success'" xmlns="http://www.w3.org/2000/svg" style="width:17px;height:17px;color:#DC2626;flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       <span style="font-size:14px;font-weight:500;color:#111827;" x-text="toast?.msg"></span>

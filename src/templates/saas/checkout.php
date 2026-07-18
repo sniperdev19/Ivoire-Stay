@@ -6,13 +6,12 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Paiement abonnement – Ivoire Stay</title>
+  <title>Paiement abonnement – Afristay</title>
 
   <meta name="theme-color" content="#1B4332">
+  <link rel="icon" href="<?= $base_url ?>/assets/icons/icon-192.png" type="image/png">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,700;1,300;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="<?= $base_url ?>/assets/css/fonts.css">
 
   <link rel="stylesheet" href="<?= $base_url ?>/assets/css/pages/checkout.css">
   <script src="<?= $base_url ?>/assets/js/pages/checkout.js"></script>
@@ -34,7 +33,7 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
       <a class="ck-brand-inner" href="<?= $base_url ?>/">
         <div class="ck-brand-sq">IS</div>
         <div class="ck-brand-text">
-          <strong>Ivoire Stay</strong>
+          <strong>Afristay</strong>
           <span>SaaS Hôtelier</span>
         </div>
       </a>
@@ -67,6 +66,7 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
 
       <!-- Prix -->
       <div class="ck-price-block">
+        <div x-show="prorationCredit > 0" style="font-size:12px;color:rgba(255,255,255,0.55);text-decoration:line-through;margin-bottom:2px;" x-text="new Intl.NumberFormat('fr-CI').format(fullPrice) + ' FCFA'"></div>
         <div class="ck-price-label">Total à régler</div>
         <div class="ck-price-row">
           <span class="ck-price-amount" x-text="new Intl.NumberFormat('fr-CI').format(total)"></span>
@@ -78,6 +78,12 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
           </svg>
           Économie de <span x-text="new Intl.NumberFormat('fr-CI').format(savings) + ' FCFA'"></span>
+        </div>
+        <div class="ck-savings-badge" x-show="prorationCredit > 0" style="margin-top:6px;">
+          <svg xmlns="http://www.w3.org/2000/svg" style="width:12px;height:12px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+          </svg>
+          Crédit de prorata de <span x-text="new Intl.NumberFormat('fr-CI').format(prorationCredit) + ' FCFA'"></span> appliqué
         </div>
       </div>
     </div>
@@ -172,6 +178,7 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
         <div class="ck-summary-left">
           <div class="ck-summary-label-main" x-text="'Plan ' + current.name"></div>
           <div class="ck-summary-desc" x-text="billing === 'yearly' ? 'Facturation annuelle' : 'Facturation mensuelle'"></div>
+          <div x-show="prorationCredit > 0" style="font-size:12px;color:#16A34A;font-weight:600;margin-top:4px;" x-text="'Crédit prorata : -' + new Intl.NumberFormat('fr-CI').format(prorationCredit) + ' FCFA'"></div>
         </div>
         <div>
           <div class="ck-summary-amount" x-text="new Intl.NumberFormat('fr-CI').format(total) + ' FCFA'"></div>

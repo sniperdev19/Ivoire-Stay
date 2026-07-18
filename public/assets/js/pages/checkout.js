@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page paiement abonnement (saas/checkout.php)
+   Afristay — Page paiement abonnement (saas/checkout.php)
    ============================================================ */
 
 function checkoutPage(baseUrl) {
@@ -13,6 +13,7 @@ function checkoutPage(baseUrl) {
 
     loading: false,
     error: null,
+    prorationCredit: 0,
 
     plans: {
       pro: {
@@ -46,7 +47,8 @@ function checkoutPage(baseUrl) {
     },
 
     get current()     { return this.plans[this.plan] || this.plans.pro; },
-    get total()       { return this.current.prices[this.billing]; },
+    get fullPrice()   { return this.current.prices[this.billing]; },
+    get total()       { return Math.max(0, this.fullPrice - this.prorationCredit); },
     get monthlyEq()   { return this.current.monthlyEq[this.billing]; },
     get periodLabel() {
       if (this.billing !== 'yearly') return 'par mois';
@@ -61,7 +63,7 @@ function checkoutPage(baseUrl) {
       return new Intl.NumberFormat('fr-CI').format(n) + ' FCFA';
     },
 
-    init() {
+    async init() {
       this.token = localStorage.getItem('token');
       if (!this.token) {
         window.location.href = this.api + '/login?redirect=' + encodeURIComponent(window.location.href);
@@ -72,6 +74,14 @@ function checkoutPage(baseUrl) {
       const billing = p.get('billing');
       if (plan && this.plans[plan])              this.plan    = plan;
       if (billing === 'monthly' || billing === 'yearly') this.billing = billing;
+
+      try {
+        const res  = await fetch(this.api + '/api/subscriptions/status', { headers: { Authorization: 'Bearer ' + this.token } });
+        const data = await res.json();
+        if (data.success) this.prorationCredit = Number(data.data?.proration_credit) || 0;
+      } catch (e) {
+        this.prorationCredit = 0;
+      }
     },
 
     setBilling(b) {

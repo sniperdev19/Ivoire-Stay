@@ -39,8 +39,10 @@ class Response
         require $templatePath;
         $content = ob_get_clean();
 
-        if (str_starts_with($template, 'saas/') && !in_array($template, ['saas/login', 'saas/register', 'saas/install'])) {
+        if (str_starts_with($template, 'saas/') && !in_array($template, ['saas/login', 'saas/register', 'saas/install', 'saas/forgot-password', 'saas/reset-password'])) {
             require SRC_PATH . '/templates/saas/layout.php';
+        } elseif (str_starts_with($template, 'admin/')) {
+            require SRC_PATH . '/templates/admin/layout.php';
         } elseif (str_starts_with($template, 'vitrine/')) {
             require SRC_PATH . '/templates/vitrine/layout.php';
         } else {

@@ -2,7 +2,7 @@
 
 namespace Core;
 
-use Services\AuthService;
+use Services\{AuthService, SchedulerService};
 
 class Middleware
 {
@@ -46,6 +46,16 @@ class Middleware
 
         // Store user in globals for controllers
         $_REQUEST['_user'] = $payload;
+
+        // Auto-déclenchement des tâches quotidiennes (rappels, abonnements
+        // expirants) — pas de cron externe requis, cf. SchedulerService.
+        // Isolé : un souci ici ne doit jamais faire échouer la requête réelle.
+        try {
+            SchedulerService::maybeRunDueJobs();
+        } catch (\Throwable $e) {
+            error_log('[Middleware] SchedulerService — ' . $e->getMessage());
+        }
+
         return true;
     }
 

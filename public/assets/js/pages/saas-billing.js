@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Comptabilité : Factures + Paiements (billing.php)
+   Afristay — Comptabilité : Factures + Paiements (billing.php)
    ============================================================ */
 
 function billingPage(baseUrl, defaultTab) {
@@ -193,13 +193,7 @@ function billingPage(baseUrl, defaultTab) {
     this.invPage = p; await this.loadInvoices();
   },
 
-  invStatusCfg(s) {
-    return {
-      draft: { label: 'Brouillon', badge: 'badge badge-info' },
-      sent:  { label: 'Envoyée',   badge: 'badge badge-warning' },
-      paid:  { label: 'Payée',     badge: 'badge badge-success' },
-    }[s] ?? { label: s ?? '—', badge: 'badge' };
-  },
+  invStatusCfg(s) { return this.invoiceStatus(s); },
 
   // ── Paiements ─────────────────────────────────────────────
   async loadPayments() {
@@ -292,11 +286,11 @@ function billingPage(baseUrl, defaultTab) {
 
   // ── KPI calculés ──────────────────────────────────────────
   get kpi() {
-    const totalTtc   = this.invoices.reduce((s, i) => s + (i.amount_ttc || 0), 0);
+    const totalTtc   = this.invoices.reduce((s, i) => s + (Number(i.amount_ttc) || 0), 0);
     const paidInv    = this.invoices.filter(i => i.status === 'paid').length;
     const pendingInv = this.invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled').length;
-    const encaisse   = this.payments.filter(p => p.status === 'completed').reduce((s, p) => s + (p.amount || 0), 0);
-    const enAttente  = this.payments.filter(p => p.status === 'pending').reduce((s, p) => s + (p.amount || 0), 0);
+    const encaisse   = this.payments.filter(p => p.status === 'completed').reduce((s, p) => s + (Number(p.amount) || 0), 0);
+    const enAttente  = this.payments.filter(p => p.status === 'pending').reduce((s, p) => s + (Number(p.amount) || 0), 0);
     return { totalTtc, paidInv, pendingInv, encaisse, enAttente };
   },
   };

@@ -146,6 +146,16 @@ class Guard
         return $row;
     }
 
+    public static function requireEstablishmentPhoto(int $id): array
+    {
+        $row = Database::query(
+            "SELECT * FROM establishment_photos WHERE id = ?", [$id]
+        )->fetch();
+        if (!$row) Response::notFound('Photo introuvable');
+        self::requireEstablishment((int) $row['establishment_id']);
+        return $row;
+    }
+
     public static function requireInvoice(int $id): array
     {
         $row = Database::query(
@@ -183,6 +193,33 @@ class Guard
         )->fetch();
         if (!$row) Response::notFound('Dépense introuvable');
         self::requireEstablishment((int) $row['establishment_id']);
+        return $row;
+    }
+
+    public static function requirePayoutRequest(int $id): array
+    {
+        $row = Database::query(
+            "SELECT * FROM payout_requests WHERE id = ?", [$id]
+        )->fetch();
+        if (!$row) Response::notFound('Demande de retrait introuvable');
+        self::requireEstablishment((int) $row['establishment_id']);
+        return $row;
+    }
+
+    /**
+     * Un membre d'équipe (rôle receptionist) est accessible s'il appartient à un
+     * établissement du périmètre de l'appelant. Les comptes owner/superadmin ne
+     * sont jamais gérables via ce point d'entrée (création/édition/suppression
+     * de membres), même par un autre superadmin.
+     */
+    public static function requireTeamMember(int $id): array
+    {
+        $row = Database::query("SELECT * FROM users WHERE id = ?", [$id])->fetch();
+        if (!$row) Response::notFound('Membre introuvable');
+        if (in_array($row['role'], ['owner', 'superadmin'], true)) {
+            Response::forbidden('Action non autorisée sur ce compte');
+        }
+        self::requireEstablishment((int) ($row['establishment_id'] ?? 0));
         return $row;
     }
 

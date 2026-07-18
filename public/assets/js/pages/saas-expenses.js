@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page SaaS : Dépenses (src/templates/saas/expenses.php)
+   Afristay — Page SaaS : Dépenses (src/templates/saas/expenses.php)
    ============================================================ */
 
 function expensesPage(baseUrl) {
@@ -98,10 +98,10 @@ function expensesPage(baseUrl) {
     } catch(e) {}
   },
 
-  get totalExpenses() { return this.expenses.reduce((s, e) => s + (e.amount || 0), 0); },
+  get totalExpenses() { return this.expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0); },
   get byCategory() {
     const map = {};
-    this.expenses.forEach(e => { map[e.category] = (map[e.category] || 0) + (e.amount || 0); });
+    this.expenses.forEach(e => { map[e.category] = (map[e.category] || 0) + (Number(e.amount) || 0); });
     return Object.entries(map).map(([cat, total]) => ({ cat, total }));
   },
   };

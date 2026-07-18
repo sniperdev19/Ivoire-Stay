@@ -4,6 +4,11 @@
 
 <section class="bk-hero">
   <div class="bk-hero-overlay"></div>
+  <a href="<?= $base ?>/search" class="bk-hero-back"
+     @click.prevent="goBackToProperty()">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    <span x-text="room?.establishment_name ? 'Retour à ' + room.establishment_name : 'Retour aux résultats'"></span>
+  </a>
   <div class="bk-hero-ghost">Réserver</div>
   <div class="bk-hero-content">
     <div class="bk-hero-rule"></div>
@@ -13,7 +18,7 @@
   </div>
 </section>
 
-<div class="bk-steps-bar" x-show="!booking">
+<div class="bk-steps-bar" x-show="!booking && !error">
   <div class="bk-step-tab" :class="step===1?'bk-active':step>1?'bk-done':''">
     <span class="bk-step-num">1</span>
     <span>Dates &amp; chambre</span>
@@ -27,6 +32,19 @@
   <div class="bk-step-tab" :class="step===3?'bk-active':''">
     <span class="bk-step-num">3</span>
     <span>Paiement &amp; confirmation</span>
+  </div>
+</div>
+
+<!-- ERROR STATE (chambre introuvable ou indisponible) -->
+<div x-show="error && !loading" x-transition class="bk-success">
+  <div class="bk-success-icon" style="background:rgba(220,38,38,0.08);color:#DC2626;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+  </div>
+  <h2 class="bk-success-title">Chambre<br><em>indisponible</em></h2>
+  <p class="bk-success-sub" x-text="error"></p>
+  <div class="bk-success-btns">
+    <a href="<?= $base ?>/search" class="bk-success-btn-p">Voir d'autres chambres</a>
+    <a href="<?= $base ?>/" class="bk-success-btn-o">Retour à l'accueil</a>
   </div>
 </div>
 
@@ -46,13 +64,20 @@
     <div class="bk-panel-row"><span class="bk-panel-label">Arrivée</span><span class="bk-panel-value" x-text="formatDate(form.check_in) || '—'"></span></div>
     <div class="bk-panel-row" x-show="!isPassage"><span class="bk-panel-label">Départ</span><span class="bk-panel-value" x-text="formatDate(form.check_out) || '—'"></span></div>
     <div class="bk-panel-row" x-show="isPassage"><span class="bk-panel-label">Durée</span><span class="bk-panel-value" x-text="form.hours + ' heure' + (form.hours > 1 ? 's' : '')"></span></div>
-    <div class="bk-panel-row"><span class="bk-panel-label">Total</span><span class="bk-panel-value" x-text="formatPrice(totalPrice)"></span></div>
+    <div class="bk-panel-row"><span class="bk-panel-label">Total</span><span class="bk-panel-value" x-text="formatPrice(booking?.total_amount ?? totalPrice)"></span></div>
     <div class="bk-panel-divider"></div>
     <div class="bk-panel-row">
       <span class="bk-panel-label">Paiement</span>
       <span x-text="payMode === 'online' ? '✓ Payé en ligne' : 'À régler sur place'" :style="payMode === 'online' ? 'color:#16A34A;font-weight:600;' : 'color:#6B7280;'"></span>
     </div>
   </div>
+  <div x-show="guestPushSupported && !guestPushEnabled" style="margin:4px 0 16px;">
+    <button type="button" class="bk-success-btn-o" style="width:100%;" @click="enableGuestPushReminder()">
+      🔔 Recevoir un rappel avant mon séjour
+    </button>
+  </div>
+  <p x-show="guestPushEnabled" style="color:#16A34A;font-size:14px;font-weight:600;margin:4px 0 16px;">✓ Rappel activé — vous serez notifié la veille</p>
+
   <div class="bk-success-btns">
     <a href="<?= $base ?>/search" class="bk-success-btn-p">Découvrir d'autres séjours</a>
     <a href="<?= $base ?>/" class="bk-success-btn-o">Retour à l'accueil</a>
@@ -60,17 +85,48 @@
 </div>
 
 <!-- MAIN 2-COL LAYOUT -->
-<div class="bk-layout" x-show="!booking">
+<div class="bk-layout" x-show="!booking && !error">
 
   <aside class="bk-panel">
-    <div class="bk-panel-img-placeholder">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
+    <div class="bk-panel-img-placeholder" style="position:relative;touch-action:pan-y;"
+         @touchstart.passive="touchStartX = $event.touches[0].clientX"
+         @touchend="swipeRoomPhoto($event)">
+      <template x-if="room && roomPhotos()[photoIdx]">
+        <img :src="photoUrl(roomPhotos()[photoIdx])"
+             :alt="room.type_name || 'Chambre'"
+             style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;">
+      </template>
+      <template x-if="!room || !roomPhotos()[photoIdx]">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
+      </template>
+      <div x-show="room && roomPhotos().length > 1"
+           style="position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:2px;z-index:2;">
+        <template x-for="(p, i) in roomPhotos()" :key="i">
+          <button type="button" @click.stop="photoIdx = i"
+                  style="width:26px;height:26px;padding:0;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+            <span :style="(photoIdx === i
+                    ? 'width:8px;height:8px;background:white;'
+                    : 'width:6px;height:6px;background:rgba(255,255,255,0.55);')
+                    + 'border-radius:50%;display:block;box-shadow:0 0 0 1px rgba(0,0,0,0.35);transition:width 0.15s,height 0.15s;'"></span>
+          </button>
+        </template>
+      </div>
     </div>
     <div class="bk-panel-header">
       <div class="bk-panel-rule"></div>
       <span class="bk-panel-tag">Votre sélection</span>
       <div class="bk-panel-room-name" x-text="room ? (room.type_name || room.name || 'Chambre') : '…'"></div>
       <div class="bk-panel-hotel" x-text="room ? (room.establishment_name || room.hotel_name || '') + (room.city ? ' · ' + room.city : '') : '…'"></div>
+      <div class="bk-panel-meta" x-show="room && (room.capacity || room.beds_count)">
+        <template x-if="room && room.capacity"><span x-text="room.capacity + ' pers. max'"></span></template>
+        <template x-if="room && room.capacity && room.beds_count"><span> · </span></template>
+        <template x-if="room && room.beds_count"><span x-text="room.beds_count + ' ' + (room.bed_type || 'lit(s)')"></span></template>
+      </div>
+      <div class="bk-panel-amenities" x-show="room && room.type_amenities && room.type_amenities.length">
+        <template x-for="a in (room?.type_amenities || [])" :key="a">
+          <span class="bk-panel-amenity" x-text="a"></span>
+        </template>
+      </div>
     </div>
     <div class="bk-panel-divider"></div>
     <div class="bk-panel-row">
@@ -107,14 +163,61 @@
         <div class="bk-field-row">
           <div class="bk-field">
             <label class="bk-label">Date d'arrivée</label>
-            <input type="date" class="bk-input" x-model="form.check_in">
+            <input type="date" class="bk-input" x-model="form.check_in" :min="todayStr()">
             <span x-show="errors.check_in" class="bk-error" x-text="errors.check_in"></span>
           </div>
           <div class="bk-field">
             <label class="bk-label">Date de départ</label>
-            <input type="date" class="bk-input" x-model="form.check_out">
+            <input type="date" class="bk-input" x-model="form.check_out" :min="form.check_in || todayStr()">
             <span x-show="errors.check_out" class="bk-error" x-text="errors.check_out"></span>
           </div>
+        </div>
+
+        <!-- Planning de disponibilité de la chambre -->
+        <div class="bk-availability">
+          <div class="bk-avail-header">
+            <button type="button" class="bk-avail-nav" @click="calPrevMonth()" :disabled="isCurrentCalMonth()" aria-label="Mois précédent">‹</button>
+            <span class="bk-avail-month" x-text="calMonthLabel()"></span>
+            <button type="button" class="bk-avail-nav" @click="calNextMonth()" aria-label="Mois suivant">›</button>
+          </div>
+          <div class="bk-avail-legend">
+            <span><i class="bk-avail-dot bk-avail-dot-free"></i>Disponible</span>
+            <span><i class="bk-avail-dot bk-avail-dot-booked"></i>Déjà réservé</span>
+            <span><i class="bk-avail-dot bk-avail-dot-selected"></i>Sélectionné</span>
+          </div>
+          <div class="bk-avail-grid">
+            <template x-for="(d, dowIdx) in ['L','M','M','J','V','S','D']" :key="dowIdx">
+              <div class="bk-avail-dow" x-text="d"></div>
+            </template>
+            <template x-for="(cell, i) in calDays()" :key="i">
+              <button type="button" class="bk-avail-cell"
+                      :class="{
+                        'bk-avail-empty':    !cell,
+                        'bk-avail-booked':   cell && cell.booked,
+                        'bk-avail-past':     cell && cell.past,
+                        'bk-avail-in-range': cell && cell.inRange,
+                        'bk-avail-selected': cell && (cell.date === form.check_in || cell.date === form.check_out)
+                      }"
+                      :disabled="!cell || cell.booked || cell.past"
+                      :title="cell && cell.booked ? 'Déjà réservé' : ''"
+                      @click="cell && calSelectDate(cell.date)"
+                      x-text="cell ? cell.day : ''">
+              </button>
+            </template>
+          </div>
+          <p class="bk-avail-hint" x-show="availabilityLoading">Chargement du planning…</p>
+          <p class="bk-avail-hint" x-show="!availabilityLoading">Cliquez sur une date d'arrivée puis de départ pour les reporter dans le formulaire.</p>
+        </div>
+
+        <!-- Forfait(s) week-end (vendredi+samedi+dimanche) inclus dans le séjour -->
+        <div x-show="weekendPackageCount > 0" x-transition class="bk-weekend-notice">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m0 16v1m8.485-8.485h-1M4.515 12h-1m14.142 5.657l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 8a4 4 0 00-4 4c0 1.5.8 2.8 2 3.5V17h4v-1.5c1.2-.7 2-2 2-3.5a4 4 0 00-4-4z"/></svg>
+          <span>
+            Votre séjour inclut <strong x-text="weekendPackageCount + ' forfait' + (weekendPackageCount > 1 ? 's' : '') + ' week-end'"></strong>
+            (vendredi-samedi-dimanche), facturé<span x-text="weekendPackageCount > 1 ? 's' : ''"></span>
+            <strong x-text="formatPrice(room?.weekend_price || 0)"></strong> les 3 nuits au lieu de
+            <span x-text="formatPrice((room?.base_price || 0) * 3)"></span>.
+          </span>
         </div>
 
         <!-- Forfait passage : dates identiques -->
@@ -197,26 +300,33 @@
         <div class="bk-recap-item"><span class="bk-recap-label">Total</span><span class="bk-recap-value" x-text="formatPrice(totalPrice)"></span></div>
       </div>
 
-      <!-- Choix du mode de paiement -->
-      <div class="bk-label" style="margin-bottom:16px;">Comment souhaitez-vous payer ?</div>
-      <div class="bk-payment-opts" style="margin-bottom:28px;">
-        <div class="bk-pay-opt" :class="payMode==='online'?'bk-selected':''" @click="payMode='online'">
-          <div class="bk-pay-radio"><div class="bk-pay-radio-dot" :style="payMode==='online'?'opacity:1;transform:scale(1)':''"></div></div>
-          <div class="bk-pay-icon" style="background:#1B4332;font-size:16px;">💳</div>
-          <div>
-            <div class="bk-pay-name">Payer en ligne</div>
-            <div class="bk-pay-sub">Paiement sécurisé via GeniusPay · Orange Money, Wave, MTN</div>
+      <!-- Choix du mode de paiement (uniquement si l'établissement accepte le paiement en ligne) -->
+      <template x-if="room?.online_payment_enabled !== false">
+        <div>
+          <div class="bk-label" style="margin-bottom:16px;">Comment souhaitez-vous payer ?</div>
+          <div class="bk-payment-opts" style="margin-bottom:28px;">
+            <div class="bk-pay-opt" :class="payMode==='online'?'bk-selected':''" @click="payMode='online'">
+              <div class="bk-pay-radio"><div class="bk-pay-radio-dot" :style="payMode==='online'?'opacity:1;transform:scale(1)':''"></div></div>
+              <div class="bk-pay-icon" style="background:#1B4332;font-size:16px;">💳</div>
+              <div>
+                <div class="bk-pay-name">Payer en ligne</div>
+                <div class="bk-pay-sub">Paiement sécurisé via GeniusPay · Orange Money, Wave, MTN</div>
+              </div>
+            </div>
+            <div class="bk-pay-opt" :class="payMode==='onsite'?'bk-selected':''" @click="payMode='onsite'">
+              <div class="bk-pay-radio"><div class="bk-pay-radio-dot" :style="payMode==='onsite'?'opacity:1;transform:scale(1)':''"></div></div>
+              <div class="bk-pay-icon" style="background:#6B7280;font-size:16px;">🏨</div>
+              <div>
+                <div class="bk-pay-name">Payer sur place</div>
+                <div class="bk-pay-sub">Réglez à l'arrivée à l'hôtel · Réservation garantie</div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="bk-pay-opt" :class="payMode==='onsite'?'bk-selected':''" @click="payMode='onsite'">
-          <div class="bk-pay-radio"><div class="bk-pay-radio-dot" :style="payMode==='onsite'?'opacity:1;transform:scale(1)':''"></div></div>
-          <div class="bk-pay-icon" style="background:#6B7280;font-size:16px;">🏨</div>
-          <div>
-            <div class="bk-pay-name">Payer sur place</div>
-            <div class="bk-pay-sub">Réglez à l'arrivée à l'hôtel · Réservation garantie</div>
-          </div>
-        </div>
-      </div>
+      </template>
+      <template x-if="room?.online_payment_enabled === false">
+        <div class="bk-label" style="margin-bottom:16px;">Cet établissement accepte uniquement le paiement sur place.</div>
+      </template>
 
       <!-- Méthode Mobile Money (uniquement si paiement en ligne) -->
       <div x-show="payMode==='online'" x-transition>

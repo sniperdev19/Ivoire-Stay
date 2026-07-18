@@ -26,6 +26,10 @@
         <label class="sr-sb-label">Arrivée</label>
         <input type="date" class="sr-sb-input" x-model="filters.check_in">
       </div>
+      <div class="sr-sb-field">
+        <label class="sr-sb-label">Départ</label>
+        <input type="date" class="sr-sb-input" x-model="filters.check_out">
+      </div>
       <button class="sr-sb-btn" @click="search()">Rechercher</button>
     </div>
   </div>
@@ -76,7 +80,7 @@
   <!-- RESULTS GRID -->
   <div x-show="!loading && !error && results.length > 0 && viewMode==='grid'" class="sr-results-grid">
     <template x-for="(p, idx) in results" :key="p.id">
-      <div class="sr-card" @click="goProperty(p.id)" style="cursor:pointer;">
+      <div class="sr-card" @click="goProperty(p.slug || p.id)" style="cursor:pointer;">
         <div class="sr-card-img-wrap">
           <template x-if="photoUrl(p)">
             <img :src="photoUrl(p)" :alt="p.name" style="width:100%;height:100%;object-fit:cover;">
@@ -86,8 +90,8 @@
               <svg xmlns="http://www.w3.org/2000/svg" style="width:48px;height:48px;color:rgba(201,168,76,0.3);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
             </div>
           </template>
-          <span class="sr-card-badge" :class="isFeatured(idx) ? 'sr-card-badge-featured' : ''"
-                x-text="isFeatured(idx) ? 'Coup de ♥' : typeLabel(p.type)"></span>
+          <span class="sr-card-badge" :class="isFeatured(p) ? 'sr-card-badge-featured' : ''"
+                x-text="isFeatured(p) ? '✦ Établissement mis en avant' : typeLabel(p.type)"></span>
         </div>
         <div class="sr-card-body">
           <div class="sr-card-name" x-text="p.name"></div>
@@ -99,7 +103,7 @@
             <div class="sr-card-price">
               <span x-text="formatPrice(p.min_price)"></span><small>/nuit</small>
             </div>
-            <a :href="base + '/property/' + p.id" class="sr-card-link" @click.stop>Voir →</a>
+            <a :href="base + '/property/' + (p.slug || p.id)" class="sr-card-link" @click.stop>Voir →</a>
           </div>
         </div>
       </div>
@@ -109,7 +113,7 @@
   <!-- RESULTS LIST -->
   <div x-show="!loading && !error && results.length > 0 && viewMode==='list'" class="sr-results-list">
     <template x-for="(p, idx) in results" :key="p.id">
-      <div class="sr-card-list" @click="goProperty(p.id)" style="cursor:pointer;">
+      <div class="sr-card-list" @click="goProperty(p.slug || p.id)" style="cursor:pointer;">
         <div class="sr-card-img-wrap">
           <template x-if="photoUrl(p)">
             <img :src="photoUrl(p)" :alt="p.name" style="width:100%;height:100%;object-fit:cover;">
@@ -123,6 +127,7 @@
         <div class="sr-card-body">
           <div>
             <div class="sr-card-name" x-text="p.name"></div>
+            <span x-show="isFeatured(p)" style="display:inline-block;margin-bottom:6px;font-size:11px;font-weight:700;color:#C9A84C;background:rgba(201,168,76,0.12);padding:2px 8px;border-radius:20px;">✦ Établissement mis en avant</span>
             <div class="sr-card-loc">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M21 10c0 6-9 12-9 12S3 16 3 10a9 9 0 1118 0z"/><circle cx="12" cy="10" r="3"/></svg>
               <span x-text="p.city + ', Côte d\'Ivoire'"></span>
@@ -136,7 +141,7 @@
             <div class="sr-card-price">
               <span x-text="formatPrice(p.min_price)"></span><small>/nuit</small>
             </div>
-            <a :href="base + '/property/' + p.id" class="sr-card-link" @click.stop>Voir les chambres →</a>
+            <a :href="base + '/property/' + (p.slug || p.id)" class="sr-card-link" @click.stop>Voir les chambres →</a>
           </div>
         </div>
       </div>

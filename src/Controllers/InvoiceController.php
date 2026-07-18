@@ -13,11 +13,11 @@ class InvoiceController
         return Guard::resolveEstabId($req);
     }
 
-    private function gate(): void
+    private function gate(string $feature = 'invoices'): void
     {
         $user  = $_REQUEST['_user'];
         $estab = Establishment::find($user['establishment_id'] ?? 0) ?? [];
-        PlanGate::require($estab, 'invoices');
+        PlanGate::require($estab, $feature);
     }
 
     public function index(Request $req, array $params = []): void
@@ -130,6 +130,7 @@ class InvoiceController
 
     public function payments(Request $req, array $params = []): void
     {
+        $this->gate('payments');
         $estabId = $this->estabId($req);
         if (!$estabId) Response::error('establishment_id requis');
         $filters = array_filter([
@@ -154,37 +155,29 @@ class InvoiceController
             Response::error('Facture et réservation incohérentes');
         }
 
-        $now = date('Y-m-d H:i:s');
-        $id  = Payment::create([
-            'booking_id' => (int) $data['booking_id'],
-            'invoice_id' => (int) $data['invoice_id'],
-            'amount'     => (float) $data['amount'],
-            'method'     => $data['method'],
-            'type'       => $data['type'] ?? 'full',
-            'status'     => 'completed',
-            'notes'      => $data['notes'] ?? null,
-            'paid_at'    => $now,
-        ]);
-
-        // Mettre à jour le statut de la facture selon le montant encaissé
-        $invoiceId = (int) $data['invoice_id'];
-        $inv       = Invoice::find($invoiceId);
-        $paid      = Invoice::paidAmount($invoiceId);
-
-        $estabId = (int) ($_REQUEST['_user']['establishment_id'] ?? 0);
-
-        if ($inv) {
-            $ttc = (float) $inv['amount_ttc'];
-            if ($paid >= $ttc) {
-                Invoice::update($invoiceId, ['status' => 'paid', 'paid_at' => $now]);
-                NotificationService::invoicePaid($estabId, $inv['invoice_number'] ?? '#' . $invoiceId, $invoiceId);
-            } elseif ($paid > 0) {
-                if ($inv['status'] === 'draft') {
-                    Invoice::update($invoiceId, ['status' => 'sent']);
-                }
-            }
+        // Phase B du gel (voir EstablishmentFreezeService) : plus d'encaissement
+        // possible une fois le délai de grâce dépassé (phase A l'autorisait encore).
+        $estab = Establishment::find($inv['establishment_id']);
+        if (PlanGate::isHardFrozen($estab ?? [])) {
+            Response::error("Cet établissement est totalement gelé (délai de grâce dépassé) — plus aucune action possible. Mettez à niveau votre abonnement pour le réactiver.", 403);
         }
 
+        $invoiceId = (int) $data['invoice_id'];
+        $id = Invoice::registerPayment(
+            (int) $data['booking_id'],
+            $invoiceId,
+            (float) $data['amount'],
+            $data['method'],
+            $data['type'] ?? 'full',
+            $data['notes'] ?? null
+        );
+
+        $estabId = (int) ($_REQUEST['_user']['establishment_id'] ?? 0);
+        $inv     = Invoice::find($invoiceId);
+
+        if ($inv && $inv['status'] === 'paid') {
+            NotificationService::invoicePaid($estabId, $inv['invoice_number'] ?? '#' . $invoiceId, $invoiceId);
+        }
         NotificationService::paymentReceived($estabId, (float) $data['amount'], $data['method'], $invoiceId);
 
         Response::success(Payment::find($id), 'Paiement enregistré', 201);
@@ -192,6 +185,7 @@ class InvoiceController
 
     public function updatePayment(Request $req, array $params = []): void
     {
+        $this->gate('payments');
         $id      = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
         $payment = Guard::requirePayment($id);
 

@@ -7,7 +7,9 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Inscription – Ivoire Stay</title>
+  <title>Inscription – Afristay</title>
+  <link rel="icon" href="<?= $base_url ?>/assets/icons/icon-192.png" type="image/png">
+  <link rel="stylesheet" href="<?= $base_url ?>/assets/css/fonts.css">
   <link rel="stylesheet" href="<?= $base_url ?>/assets/css/pages/register.css">
   <style>
     /* ── Le wrapper x-data ne doit pas casser le grid body ────── */
@@ -118,7 +120,7 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
       <a class="rg-brand-inner" href="<?= $base_url ?>/">
         <div class="rg-brand-sq">IS</div>
         <div class="rg-brand-text">
-          <strong>Ivoire Stay</strong>
+          <strong>Afristay</strong>
           <span>SaaS Hôtelier</span>
         </div>
       </a>

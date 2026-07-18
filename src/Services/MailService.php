@@ -143,7 +143,7 @@ HTML;
             . "Bienvenue, <em style='color:#C9A84C;font-style:italic;'>" . htmlspecialchars($name) . " !</em></h1>"
             . $estabLine
             . "<div style='width:40px;height:2px;background:#C9A84C;margin:20px 0;'></div>"
-            . "<p style='margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;'>Votre compte <strong>Ivoire Stay</strong> est prêt. "
+            . "<p style='margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;'>Votre compte <strong>Afristay</strong> est prêt. "
             . "Gérez vos réservations, chambres et finances depuis votre tableau de bord.</p>"
             . "<table width='100%' cellpadding='0' cellspacing='0' style='background:#F0FDF4;border-radius:12px;padding:16px 20px;margin-bottom:24px;'>"
             . "<tr><td style='padding:6px 0;font-size:13px;color:#166534;'>✓ &nbsp;Tableau de bord en temps réel</td></tr>"
@@ -154,7 +154,23 @@ HTML;
             . "<p style='margin:0;font-size:13px;color:#9CA3AF;line-height:1.6;'>Connectez-vous via l'application installée sur votre appareil. "
             . "Des questions ? Répondez à cet email, nous sommes là.</p>";
 
-        self::send($to, $name, 'Bienvenue sur Ivoire Stay — Votre compte est prêt ✓', self::layout($content, 'Votre compte Ivoire Stay est prêt'));
+        self::send($to, $name, 'Bienvenue sur Afristay — Votre compte est prêt ✓', self::layout($content, 'Votre compte Afristay est prêt'));
+    }
+
+    // =========================================================================
+    // 1b. RÉINITIALISATION MOT DE PASSE
+    // =========================================================================
+    public static function passwordReset(string $to, string $name, string $resetUrl): void
+    {
+        $content = "<h1 style='margin:0 0 4px;font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1B4332;line-height:1.2;'>"
+            . "Réinitialisation du <em style='color:#C9A84C;font-style:italic;'>mot de passe</em></h1>"
+            . "<div style='width:40px;height:2px;background:#C9A84C;margin:20px 0;'></div>"
+            . "<p style='margin:0 0 8px;font-size:15px;color:#374151;line-height:1.7;'>Bonjour " . htmlspecialchars($name) . ", une demande de réinitialisation de mot de passe a été effectuée pour votre compte Afristay.</p>"
+            . "<p style='margin:0 0 8px;font-size:14px;color:#6B7280;line-height:1.7;'>Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe. Ce lien expire dans <strong>1 heure</strong>.</p>"
+            . self::btn($resetUrl, 'Réinitialiser mon mot de passe →')
+            . "<p style='margin:16px 0 0;font-size:13px;color:#9CA3AF;line-height:1.6;'>Si vous n'êtes pas à l'origine de cette demande, ignorez simplement cet email : votre mot de passe restera inchangé.</p>";
+
+        self::send($to, $name, 'Réinitialisation de votre mot de passe — Afristay', self::layout($content, 'Réinitialisez votre mot de passe Afristay'));
     }
 
     // =========================================================================
@@ -202,7 +218,60 @@ HTML;
             . self::infoTable($rows)
             . "<p style='margin:0;font-size:13px;color:#6B7280;line-height:1.6;'>Présentez-vous à la réception avec votre référence. Pour toute modification, contactez directement l'établissement.</p>";
 
-        self::send($to, $name, "Réservation #{$ref} — {$hotel}", self::layout($content, "Votre réservation #{$ref} est confirmée"));
+        self::send($to, $name, "Réservation #{$ref} — {$hotel}", self::layout($content, "Votre demande de réservation #{$ref} a bien été reçue"));
+    }
+
+    // =========================================================================
+    // 2b. RAPPEL DE SÉJOUR — veille de l'arrivée
+    // =========================================================================
+    public static function stayReminder(array $booking): void
+    {
+        $to   = $booking['client_email'] ?? '';
+        $name = $booking['client_name'] ?? trim(($booking['first_name'] ?? '') . ' ' . ($booking['last_name'] ?? '')) ?: 'Client';
+        if (!$to) return;
+
+        $hotel   = htmlspecialchars($booking['establishment_name'] ?? '—');
+        $room    = $booking['room_number'] ?? '—';
+        $checkIn = self::fmtDate($booking['check_in'] ?? '');
+
+        $rows = [
+            ['Hôtel / Résidence', $hotel],
+            ['Chambre', 'N° ' . $room],
+            ['Arrivée', $checkIn],
+        ];
+
+        $content = "<h1 style='margin:0 0 6px;font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1B4332;'>Votre séjour <em style='color:#C9A84C;font-style:italic;'>approche</em></h1>"
+            . "<p style='margin:0 0 16px;font-size:14px;color:#6B7280;'>Bonjour " . htmlspecialchars($name) . ", petit rappel : votre arrivée à <strong>{$hotel}</strong> est prévue demain.</p>"
+            . self::infoTable($rows)
+            . "<p style='margin:0;font-size:13px;color:#6B7280;line-height:1.6;'>À très bientôt !</p>";
+
+        self::send($to, $name, "Rappel — votre séjour à {$hotel} approche", self::layout($content, "Votre arrivée à {$hotel} est prévue demain"));
+    }
+
+    // =========================================================================
+    // 2c. RÉSERVATION ANNULÉE (voyageur)
+    // =========================================================================
+    public static function bookingCancelledGuest(array $booking): void
+    {
+        $to   = $booking['client_email'] ?? '';
+        $name = $booking['client_name'] ?? trim(($booking['first_name'] ?? '') . ' ' . ($booking['last_name'] ?? '')) ?: 'Client';
+        if (!$to) return;
+
+        $hotel = htmlspecialchars($booking['establishment_name'] ?? '—');
+        $room  = $booking['room_number'] ?? '—';
+
+        $rows = [
+            ['Hôtel / Résidence', $hotel],
+            ['Chambre', 'N° ' . $room],
+            ['Arrivée', self::fmtDate($booking['check_in'] ?? '')],
+        ];
+
+        $content = "<h1 style='margin:0 0 6px;font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1B4332;'>Réservation <em style='color:#C9A84C;font-style:italic;'>annulée</em></h1>"
+            . "<p style='margin:0 0 16px;font-size:14px;color:#6B7280;'>Bonjour " . htmlspecialchars($name) . ", votre réservation à <strong>{$hotel}</strong> a bien été annulée.</p>"
+            . self::infoTable($rows)
+            . "<p style='margin:0;font-size:13px;color:#6B7280;line-height:1.6;'>Pour toute question, contactez directement l'établissement.</p>";
+
+        self::send($to, $name, "Réservation annulée — {$hotel}", self::layout($content, "Votre réservation à {$hotel} a été annulée"));
     }
 
     // =========================================================================
@@ -274,12 +343,92 @@ HTML;
             . "<p style='margin:0 0 8px;font-size:15px;color:#374151;line-height:1.7;'>Toutes les fonctionnalités du plan <strong>{$planLabel}</strong> sont disponibles immédiatement dans votre tableau de bord.</p>"
             . self::btn($dashUrl, 'Accéder au tableau de bord →');
 
-        self::send($to, $name, "Abonnement {$planLabel} activé — Ivoire Stay", self::layout($content, "Votre abonnement {$planLabel} est actif"));
+        self::send($to, $name, "Abonnement {$planLabel} activé — Afristay", self::layout($content, "Votre abonnement {$planLabel} est actif"));
+    }
+
+    // =========================================================================
+    // 4b. ANNULATION / RÉTROGRADATION ABONNEMENT SaaS
+    // =========================================================================
+    public static function subscriptionCancelled(string $to, string $name, string $fromPlan, string $toPlan): void
+    {
+        $isFullCancel = strtolower($toPlan) === 'gratuit' || strtolower($toPlan) === 'starter';
+        $settingsUrl  = rtrim(APP_URL, '/') . '/saas/settings';
+
+        $rows = [
+            ['Ancien plan', $fromPlan],
+            ['Nouveau plan', $toPlan],
+        ];
+
+        $title = $isFullCancel
+            ? "Abonnement <em style='color:#C9A84C;font-style:italic;'>annulé</em>"
+            : "Abonnement <em style='color:#C9A84C;font-style:italic;'>rétrogradé</em>";
+
+        $desc = $isFullCancel
+            ? "Bonjour " . htmlspecialchars($name) . ", votre abonnement <strong>{$fromPlan}</strong> a bien été annulé. Vous êtes repassé au plan <strong>{$toPlan}</strong> avec effet immédiat."
+            : "Bonjour " . htmlspecialchars($name) . ", votre abonnement est passé de <strong>{$fromPlan}</strong> à <strong>{$toPlan}</strong> avec effet immédiat.";
+
+        $content = "<h1 style='margin:0 0 8px;font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1B4332;'>{$title}</h1>"
+            . "<p style='margin:0 0 24px;font-size:14px;color:#6B7280;'>{$desc}</p>"
+            . self::infoTable($rows)
+            . "<p style='margin:0 0 8px;font-size:13px;color:#9CA3AF;line-height:1.6;'>Vous pouvez remettre à niveau votre abonnement à tout moment depuis vos paramètres.</p>"
+            . self::btn($settingsUrl, 'Voir mon abonnement →');
+
+        self::send($to, $name, ($isFullCancel ? 'Abonnement annulé' : 'Abonnement rétrogradé') . ' — Afristay', self::layout($content));
+    }
+
+    // =========================================================================
+    // 4c. RAPPEL D'EXPIRATION ABONNEMENT SaaS
+    // =========================================================================
+    public static function subscriptionExpiringSoon(string $to, string $name, string $planLabel, string $expiresAt, int $daysLeft): void
+    {
+        $expires   = self::fmtDate($expiresAt);
+        $renewUrl  = rtrim(APP_URL, '/') . '/saas/settings';
+        $dayWord   = $daysLeft > 1 ? 'jours' : 'jour';
+
+        $rows = [
+            ['Plan actuel', $planLabel],
+            ['Expire le', $expires],
+        ];
+
+        $content = "<h1 style='margin:0 0 8px;font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1B4332;'>"
+            . "Votre abonnement expire <em style='color:#C9A84C;font-style:italic;'>bientôt</em></h1>"
+            . "<p style='margin:0 0 24px;font-size:14px;color:#6B7280;'>Bonjour " . htmlspecialchars($name) . ", votre abonnement <strong>{$planLabel}</strong> expire dans <strong>{$daysLeft} {$dayWord}</strong>. "
+            . "Renouvelez-le pour continuer à profiter de toutes vos fonctionnalités sans interruption.</p>"
+            . self::infoTable($rows)
+            . "<p style='margin:0 0 8px;font-size:13px;color:#9CA3AF;line-height:1.6;'>Passé cette date, votre établissement repassera automatiquement au plan Starter (fonctionnalités limitées).</p>"
+            . self::btn($renewUrl, 'Renouveler mon abonnement →');
+
+        self::send($to, $name, "Votre abonnement expire dans {$daysLeft} {$dayWord} — Afristay", self::layout($content, "Abonnement {$planLabel} expirant le {$expires}"));
     }
 
     // =========================================================================
     // 5. ENVOI DE FACTURE
     // =========================================================================
+    public static function sendContact(array $data): void
+    {
+        $adminEmail = MAIL_USER ?: MAIL_FROM;
+        if (!$adminEmail) return;
+
+        $name    = htmlspecialchars($data['name']    ?? '');
+        $email   = htmlspecialchars($data['email']   ?? '');
+        $phone   = htmlspecialchars($data['phone']   ?? '—');
+        $subject = htmlspecialchars($data['subject'] ?? 'Contact vitrine');
+        $message = nl2br(htmlspecialchars($data['message'] ?? ''));
+
+        $content = "<h1 style='margin:0 0 6px;font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1B4332;'>"
+            . "Nouveau message — <em style='color:#C9A84C;font-style:italic;'>{$subject}</em></h1>"
+            . self::infoTable([
+                ['Nom',      $name],
+                ['Email',    $email],
+                ['Téléphone', $phone],
+                ['Sujet',    $subject],
+              ])
+            . "<div style='background:#F9FAFB;border-radius:10px;padding:16px 20px;margin-top:8px;font-size:14px;color:#374151;line-height:1.7;'>{$message}</div>"
+            . "<p style='margin:16px 0 0;font-size:13px;color:#9CA3AF;'>Pour répondre, écrivez directement à : <a href='mailto:{$email}' style='color:#C9A84C;'>{$email}</a></p>";
+
+        self::send($adminEmail, MAIL_FROM_NAME, "Contact Afristay — {$subject}", self::layout($content));
+    }
+
     public static function invoiceMail(array $inv, string $pdfAbsPath): void
     {
         $to       = $inv['client_email'] ?? '';

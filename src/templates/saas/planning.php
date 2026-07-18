@@ -6,49 +6,68 @@
      @keydown.escape.window="closeDetail()">
 
   <!-- HEADER -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+  <div class="plan-header-row" style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
     <div>
-      <h1 style="font-size:22px;font-weight:700;color:#111827;margin:0 0 4px;">Planning</h1>
-      <p style="font-size:13px;color:#9CA3AF;margin:0;text-transform:capitalize;" x-text="monthLabel"></p>
+      <h1 class="plan-title" style="font-size:26px;font-weight:700;color:#111827;margin:0;font-family:Georgia,serif;">Planning des Chambres</h1>
+      <p class="plan-subtitle" style="font-size:13px;color:#9CA3AF;margin:8px 0 0;">Calendrier interactif d'attribution des chambres et de suivi des séjours.</p>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <div class="plan-view-toggle">
+      <button type="button" class="plan-view-btn" :class="{ active: viewMode === 'week' }" @click="viewMode = 'week'">Semaine</button>
+      <button type="button" class="plan-view-btn" :class="{ active: viewMode === 'month' }" @click="viewMode = 'month'">Mois</button>
+    </div>
+  </div>
 
-      <!-- Légende statuts -->
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-right:8px;">
-        <?php
-          $statuses = [
-            ['confirmed',  '#16a34a', 'Confirmée'],
-            ['checked_in', '#2563EB', 'Arrivée'],
-            ['pending',    '#D97706', 'En attente'],
-            ['cancelled',  '#DC2626', 'Annulée'],
-          ];
-          foreach ($statuses as [$s, $c, $l]):
-        ?>
-        <div style="display:flex;align-items:center;gap:5px;">
-          <div style="width:10px;height:10px;border-radius:3px;background:<?= $c ?>;flex-shrink:0;"></div>
-          <span style="font-size:11px;color:#6B7280;"><?= $l ?></span>
+  <!-- Légende des statuts -->
+  <div class="plan-legend-row">
+    <?php
+      $statuses = [
+        ['confirmed',  '#16a34a', 'Confirmée'],
+        ['checked_in', '#2563EB', 'Arrivée'],
+        ['pending',    '#D97706', 'En attente'],
+        ['cancelled',  '#DC2626', 'Annulée'],
+      ];
+      foreach ($statuses as [$s, $c, $l]):
+    ?>
+    <div class="plan-legend-item">
+      <div class="plan-legend-dot" style="background:<?= $c ?>;"></div>
+      <span><?= $l ?></span>
+    </div>
+    <?php endforeach; ?>
+  </div>
+
+  <!-- Barre de navigation + action -->
+  <div class="plan-toolbar">
+    <span class="plan-toolbar-label" x-text="viewMode === 'week' ? weekLabel : monthLabel"></span>
+
+    <div class="plan-toolbar-actions">
+      <template x-if="viewMode === 'week'">
+        <div style="display:flex;gap:8px;">
+          <button @click="prevWeek()" class="btn-saas-secondary" style="padding:8px 12px;">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button @click="goTodayWeek()" class="btn-saas-secondary" style="padding:8px 14px;font-size:12px;">Aujourd'hui</button>
+          <button @click="nextWeek()" class="btn-saas-secondary" style="padding:8px 12px;">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
         </div>
-        <?php endforeach; ?>
-      </div>
+      </template>
+      <template x-if="viewMode === 'month'">
+        <div style="display:flex;gap:8px;">
+          <button @click="prevMonth()" class="btn-saas-secondary" style="padding:8px 12px;">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button @click="goToday()" class="btn-saas-secondary" style="padding:8px 14px;font-size:12px;">Aujourd'hui</button>
+          <button @click="nextMonth()" class="btn-saas-secondary" style="padding:8px 12px;">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </template>
 
-      <!-- Navigation mois -->
-      <button @click="prevMonth()" class="btn-saas-secondary" style="padding:8px 12px;">
-        <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-        </svg>
-      </button>
-      <button @click="goToday()" class="btn-saas-secondary" style="padding:8px 14px;font-size:12px;">Aujourd'hui</button>
-      <button @click="nextMonth()" class="btn-saas-secondary" style="padding:8px 12px;">
-        <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-        </svg>
-      </button>
-
-      <a href="<?= $base_url ?>/saas/bookings" class="btn-saas-primary">
-        <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <a href="<?= $base_url ?>/saas/bookings" class="btn-saas-primary plan-add-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
-        Réservation
+        <span class="plan-add-btn-label">Réservation</span>
       </a>
     </div>
   </div>
@@ -65,8 +84,63 @@
     <div style="font-size:14px;color:#9CA3AF;">Chargement du planning...</div>
   </div>
 
+  <!-- Planning hebdomadaire (timeline chambres) -->
+  <div x-show="!loading && viewMode === 'week'" class="saas-card plan-week-card">
+    <div class="plan-week-grid">
+      <!-- Ligne d'en-tête -->
+      <div class="plan-week-row plan-week-header-row">
+        <div class="plan-week-roomcell plan-week-head-label">Chambre / Catégorie</div>
+        <template x-for="d in weekDays" :key="d.ymd">
+          <div class="plan-week-daycell plan-week-daycol" :class="{ today: d.isToday }">
+            <span x-text="d.dow + ' ' + String(d.dayNum).padStart(2,'0')"></span>
+          </div>
+        </template>
+        <div class="plan-week-restcell plan-week-head-label">Reste de la semaine</div>
+      </div>
+
+      <template x-if="!rooms.length">
+        <div class="plan-week-empty">Aucune chambre configurée pour le moment.</div>
+      </template>
+
+      <!-- Lignes chambres -->
+      <template x-for="room in rooms" :key="room.id">
+        <div class="plan-week-row">
+          <div class="plan-week-roomcell">
+            <div class="plan-week-room-number" x-text="'Ch. ' + room.number"></div>
+            <div class="plan-week-room-type" x-text="room.room_type?.name || ''"></div>
+          </div>
+
+          <template x-for="d in weekDays" :key="d.ymd">
+            <div class="plan-week-daycell" :class="{ today: d.isToday }"></div>
+          </template>
+
+          <template x-for="bar in getRoomWeekBars(room.id)" :key="bar.booking.id">
+            <div class="plan-week-bar"
+                 :style="{ gridColumn: bar.colStart + ' / ' + bar.colEnd, gridRow: 1, background: chipColor(bar.booking.status) }"
+                 @click="openDetail(bar.booking)"
+                 :title="bar.booking.client_name">
+              <span x-text="'Séjour ' + bar.booking.client_name"></span>
+              <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            </div>
+          </template>
+
+          <template x-if="getRoomStatusBlock(room)">
+            <div class="plan-week-status-block" :class="'status-' + room.status"
+                 :style="{ gridColumn: getRoomStatusBlock(room).col + ' / ' + (getRoomStatusBlock(room).col + 1), gridRow: 1 }">
+              <svg x-show="getRoomStatusBlock(room).kind === 'cleaning'" xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17l10-10 3 3L9 20l-4 1 1-4z"/></svg>
+              <svg x-show="getRoomStatusBlock(room).kind === 'maintenance'" xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a1 1 0 00.86 1.5h18.64a1 1 0 00.86-1.5L13.71 3.86a1 1 0 00-1.72 0z"/></svg>
+              <span x-text="getRoomStatusBlock(room).label"></span>
+            </div>
+          </template>
+
+          <div class="plan-week-restcell"></div>
+        </div>
+      </template>
+    </div>
+  </div>
+
   <!-- Calendrier mensuel -->
-  <div x-show="!loading" class="saas-card" style="padding:0;overflow:hidden;">
+  <div x-show="!loading && viewMode === 'month'" class="saas-card" style="padding:0;overflow:hidden;">
 
     <!-- En-têtes des jours -->
     <div class="cal-month-header">

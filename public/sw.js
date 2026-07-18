@@ -1,10 +1,10 @@
 /* ============================================================
-   Ivoire Stay — Service Worker
+   Afristay — Service Worker
    Scope : dossier où se trouve ce fichier (racine /public de l'app).
    Stratégie : network-first (toujours frais si en ligne), repli cache hors-ligne.
    N'intercepte que les GET same-origin ; les API/POST passent direct au réseau.
    ============================================================ */
-const CACHE = 'ivoire-stay-v5';
+const CACHE = 'afristay-v6';
 
 // URLs relatives au scope du SW (= racine de l'app)
 const SHELL = [
@@ -33,6 +33,45 @@ self.addEventListener('activate', (event) => {
     const keys = await caches.keys();
     await Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)));
     await self.clients.claim();
+  })());
+});
+
+// ── Notifications push (hors application) ─────────────────────────────────
+self.addEventListener('push', (event) => {
+  let payload = { title: 'Afristay', body: '' };
+  try { if (event.data) payload = event.data.json(); } catch (e) { /* payload non-JSON, on garde le défaut */ }
+
+  const title = payload.title || 'Afristay';
+  const options = {
+    body: payload.body || '',
+    icon: 'assets/icons/icon-192.png',
+    badge: 'assets/icons/icon-192.png',
+    data: payload.data || {},
+    tag: payload.data?.type || undefined, // évite l'empilement de notifs du même type
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const data = event.notification.data || {};
+  // Notification voyageur (sans compte SaaS) : pas d'espace "mes réservations",
+  // on ramène simplement à la vitrine plutôt que vers l'espace hôtelier.
+  const target = data.audience === 'guest'
+    ? ''
+    : (data.booking_id ? 'saas/bookings' : (data.invoice_id ? 'saas/payments' : 'saas'));
+  const url = new URL(target, self.registration.scope).href;
+
+  event.waitUntil((async () => {
+    const allClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of allClients) {
+      if (client.url.startsWith(self.registration.scope) && 'focus' in client) {
+        client.navigate(url);
+        return client.focus();
+      }
+    }
+    return clients.openWindow(url);
   })());
 });
 

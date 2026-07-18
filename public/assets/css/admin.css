@@ -1,0 +1,32 @@
+/* ============================================================
+   Afristay — Espace Admin plateforme (superadmin)
+   Réutilise saas.css / saas-responsive.css (cartes, boutons, modales,
+   tableaux, badges) — seules les variables de couleur sont redéfinies
+   ici pour une identité distincte de l'espace hôtelier (indigo/slate
+   au lieu du vert/or), pour qu'on distingue immédiatement les deux espaces.
+   ============================================================ */
+
+:root {
+  --saas-sidebar:       #1e1b4b; /* indigo-950 */
+  --saas-sidebar-hover: #312e81; /* indigo-900 */
+  --saas-gold:          #6366f1; /* indigo-500 — remplace l'accent or hôtelier */
+  --saas-gold-light:    rgba(99,102,241,0.12);
+}
+
+.admin-badge {
+  display:inline-block; font-size:10px; font-weight:700; letter-spacing:0.06em;
+  text-transform:uppercase; color:#6366f1; background:rgba(99,102,241,0.12);
+  padding:3px 10px; border-radius:20px;
+}
+
+.admin-plan-pill { display:inline-flex; align-items:center; font-size:12px; font-weight:700; padding:4px 10px; border-radius:9999px; white-space:nowrap; }
+.admin-plan-starter  { background:#F3F4F6; color:#6B7280; }
+.admin-plan-pro      { background:rgba(37,99,235,0.1); color:#2563EB; }
+.admin-plan-business { background:rgba(99,102,241,0.12); color:#6366F1; }
+
+.admin-status-pill { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; padding:4px 10px; border-radius:9999px; white-space:nowrap; }
+.admin-status-active   { background:rgba(22,163,74,0.1); color:#16A34A; }
+.admin-status-inactive { background:rgba(220,38,38,0.08); color:#DC2626; }
+
+.admin-kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+@media(max-width:900px) { .admin-kpi-grid { grid-template-columns:repeat(2, minmax(0,1fr)); } }

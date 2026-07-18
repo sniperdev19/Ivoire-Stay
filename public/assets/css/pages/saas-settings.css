@@ -1,48 +1,68 @@
 /* ============================================================
-   Ivoire Stay — Page SaaS : paramètres (saas/settings.php)
+   Afristay — Page SaaS : paramètres (saas/settings.php)
    ============================================================ */
 
 /* ── En-tête ──────────────────────────────────────────────── */
 .stg-page-title { margin: 0; font-size: 20px; font-weight: 700; color: #111827; }
 .stg-page-sub   { margin: 4px 0 0; color: #9CA3AF; font-size: 13px; }
 
-/* ── Navigation par onglets ───────────────────────────────── */
-.stg-tabs {
+/* ── Mise en page : nav latérale + contenu ────────────────── */
+.stg-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  align-items: start;
+  gap: 24px;
+}
+@media(max-width:900px) {
+  .stg-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Navigation latérale ───────────────────────────────────── */
+.stg-side-nav {
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 2px;
   background: white;
-  border-radius: 14px;
-  padding: 5px;
-  margin-bottom: 20px;
+  border-radius: 16px;
+  padding: 8px;
   box-shadow: 0 1px 6px rgba(0,0,0,0.06);
   border: 1px solid rgba(0,0,0,0.05);
+  position: sticky;
+  top: 84px;
 }
-.stg-tab {
-  flex: 1;
-  display: inline-flex;
+@media(max-width:900px) {
+  .stg-side-nav {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+}
+.stg-side-item {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 9px 14px;
+  gap: 10px;
+  padding: 10px 12px;
   border: none;
   border-radius: 10px;
   background: transparent;
   color: #6B7280;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
+  text-align: left;
   white-space: nowrap;
 }
-.stg-tab svg { width: 15px; height: 15px; opacity: 0.55; flex-shrink: 0; transition: opacity 0.2s; }
-.stg-tab:hover { background: rgba(0,0,0,0.04); color: #374151; }
-.stg-tab-active {
-  background: linear-gradient(135deg, #C9A84C, #A67C2E);
-  color: white;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(201,168,76,0.3);
+.stg-side-item svg { width: 16px; height: 16px; opacity: 0.55; flex-shrink: 0; transition: opacity 0.15s; }
+.stg-side-item:hover { background: rgba(0,0,0,0.04); color: #374151; }
+.stg-side-item-active {
+  background: rgba(201,168,76,0.12);
+  color: #A67C2E;
+  font-weight: 700;
 }
-.stg-tab-active svg { opacity: 1; }
+.stg-side-item-active svg { opacity: 1; color: #C9A84C; }
+
+.stg-content { min-width: 0; }
 
 /* ── Bannière nouvel établissement ────────────────────────── */
 .stg-welcome {
@@ -72,6 +92,22 @@
 
 .stg-divider { height: 1px; background: rgba(0,0,0,0.06); margin: 20px -24px; }
 
+/* ── Groupes de champs (Identité / Contact / Présentation) ─── */
+.stg-group + .stg-group {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px dashed rgba(0,0,0,0.08);
+}
+.stg-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #C9A84C;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+.stg-label-optional { font-size: 11px; font-weight: 400; color: #9CA3AF; text-transform: none; letter-spacing: normal; }
+
 /* ── Grille de champs ─────────────────────────────────────── */
 .stg-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 4px; }
 .stg-col-2     { grid-column: span 2; }
@@ -79,6 +115,68 @@
   .stg-form-grid { grid-template-columns: 1fr; }
   .stg-col-2     { grid-column: span 1; }
 }
+
+/* ── Champs avec icône ────────────────────────────────────── */
+.stg-input-wrap  { position: relative; }
+.stg-input-icon  {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  width: 15px; height: 15px; color: #9CA3AF; pointer-events: none;
+}
+.stg-input-has-icon { padding-left: 36px; }
+
+/* ── Localisation (bouton "Localiser mon hôtel") ──────────── */
+.stg-locate {
+  display: flex; align-items: center; gap: 16px;
+  background: rgba(201,168,76,0.05);
+  border: 1px solid rgba(201,168,76,0.15);
+  border-radius: 14px;
+  padding: 16px 18px;
+  flex-wrap: wrap;
+}
+.stg-locate-info { flex: 1; min-width: 220px; }
+.stg-locate-empty { margin: 0; font-size: 13px; color: #6B7280; line-height: 1.5; }
+.stg-locate-done { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.stg-locate-done svg { width: 22px; height: 22px; color: #16a34a; flex-shrink: 0; }
+.stg-locate-done-title  { font-size: 13px; font-weight: 700; color: #111827; }
+.stg-locate-done-coords { font-size: 12px; color: #6B7280; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.stg-locate-view {
+  font-size: 12px; font-weight: 600; color: #C9A84C;
+  text-decoration: none; margin-left: auto; white-space: nowrap;
+}
+.stg-locate-view:hover { text-decoration: underline; }
+.stg-locate-btn { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
+.stg-locate-btn svg { width: 15px; height: 15px; }
+.stg-locate-error { margin: 10px 2px 0; font-size: 12px; color: #DC2626; }
+
+/* ── Paiement des réservations (switch) ───────────────────── */
+.stg-payment-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  background: #F9FAFB; border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 14px; padding: 16px 18px;
+}
+.stg-payment-toggle.stg-locked { background: rgba(201,168,76,0.05); border-color: rgba(201,168,76,0.15); }
+.stg-payment-toggle-info { flex: 1; min-width: 220px; }
+.stg-payment-toggle-title { font-size: 14px; font-weight: 700; color: #111827; display: flex; align-items: center; gap: 8px; }
+.stg-payment-toggle-desc { margin: 6px 0 0; font-size: 12.5px; color: #6B7280; line-height: 1.5; }
+.stg-pro-badge {
+  font-size: 10px; font-weight: 700; color: #A67C2E;
+  background: rgba(201,168,76,0.15); padding: 2px 7px; border-radius: 5px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+
+.stg-switch {
+  flex-shrink: 0; width: 46px; height: 26px; border-radius: 999px;
+  background: #D1D5DB; border: none; cursor: pointer; position: relative;
+  transition: background 0.2s; padding: 0;
+}
+.stg-switch:disabled { cursor: not-allowed; opacity: 0.6; }
+.stg-switch-on { background: linear-gradient(135deg, #C9A84C, #A67C2E); }
+.stg-switch-dot {
+  position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+  border-radius: 50%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  transition: transform 0.2s;
+}
+.stg-switch-on .stg-switch-dot { transform: translateX(20px); }
 
 /* ── Alertes inline ───────────────────────────────────────── */
 .stg-feedback { margin-top: 14px; }
@@ -104,6 +202,30 @@
   border-top-color: white;
   animation: spin 0.7s linear infinite;
 }
+
+/* ── Galerie photos (établissement) ───────────────────────── */
+.stg-photo-grid { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+.stg-photo-slot { width: 120px; height: 120px; border-radius: 14px; position: relative; overflow: hidden; flex-shrink: 0; }
+.stg-photo-filled img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.stg-photo-cover-badge {
+  position: absolute; bottom: 6px; left: 6px;
+  background: rgba(0,0,0,0.55); color: white;
+  font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 6px;
+}
+.stg-photo-remove {
+  position: absolute; top: 6px; right: 6px; width: 22px; height: 22px;
+  border-radius: 50%; border: none; background: rgba(0,0,0,0.55); color: white;
+  cursor: pointer; font-size: 12px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.stg-photo-remove:disabled { opacity: 0.5; cursor: not-allowed; }
+.stg-photo-empty {
+  border: 2px dashed rgba(201,168,76,0.3); background: rgba(201,168,76,0.04);
+  display: flex; align-items: center; justify-content: center;
+  color: #C9A84C; cursor: pointer; transition: background 0.15s;
+}
+.stg-photo-empty:hover { background: rgba(201,168,76,0.08); }
+.stg-photo-loading { cursor: wait; }
 
 /* ── Hero abonnement ──────────────────────────────────────── */
 .stg-sub-hero {

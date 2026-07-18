@@ -78,15 +78,18 @@ class Invoice extends BaseModel
 
     public static function generateNumber(int $estabId): string
     {
+        // invoice_number est UNIQUE sur toute la plateforme (toutes établissements confondus) :
+        // on inclut l'ID de l'établissement dans le numéro pour garantir l'unicité globale
+        // tout en gardant une séquence propre à chaque établissement, remise à zéro chaque année.
         $count = (int) Database::query(
             "SELECT COUNT(*) FROM invoices i
              JOIN bookings b ON b.id = i.booking_id
              JOIN rooms r ON r.id = b.room_id
-             WHERE r.establishment_id = ?",
+             WHERE r.establishment_id = ? AND YEAR(i.issued_at) = YEAR(CURDATE())",
             [$estabId]
         )->fetchColumn();
 
-        return 'SYNC-' . date('Y') . '-' . str_pad((string)($count + 1), 4, '0', STR_PAD_LEFT);
+        return 'SYNC-' . $estabId . '-' . date('Y') . '-' . str_pad((string)($count + 1), 4, '0', STR_PAD_LEFT);
     }
 
     public static function createForBooking(int $bookingId, float $amount, float $taxRate = 0): int
@@ -100,14 +103,27 @@ class Invoice extends BaseModel
         $amountHt  = round($amount / (1 + $taxRate / 100), 2);
         $amountTtc = $amount;
 
-        return self::create([
-            'booking_id'     => $bookingId,
-            'invoice_number' => self::generateNumber($estabId),
-            'amount_ht'      => $amountHt,
-            'tax_rate'       => $taxRate,
-            'amount_ttc'     => $amountTtc,
-            'status'         => 'draft',
-        ]);
+        // generateNumber() n'est pas atomique : sous forte concurrence, deux réservations
+        // peuvent obtenir le même numéro. On retente avec un nouveau numéro en cas de collision
+        // sur la contrainte UNIQUE plutôt que de laisser la réservation sans facture.
+        $maxAttempts = 5;
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                return self::create([
+                    'booking_id'     => $bookingId,
+                    'invoice_number' => self::generateNumber($estabId),
+                    'amount_ht'      => $amountHt,
+                    'tax_rate'       => $taxRate,
+                    'amount_ttc'     => $amountTtc,
+                    'status'         => 'draft',
+                ]);
+            } catch (\PDOException $e) {
+                $isDuplicate = $e->getCode() === '23000';
+                if (!$isDuplicate || $attempt === $maxAttempts) throw $e;
+            }
+        }
+
+        return 0;
     }
 
     public static function paidAmount(int $invoiceId): float
@@ -116,5 +132,46 @@ class Invoice extends BaseModel
             "SELECT COALESCE(SUM(amount), 0) FROM payments WHERE invoice_id = ? AND status = 'completed'",
             [$invoiceId]
         )->fetchColumn();
+    }
+
+    /**
+     * Enregistre un paiement pour une facture et met à jour son statut en conséquence.
+     * Partagé entre l'encaissement manuel (InvoiceController) et l'encaissement à la
+     * création d'une réservation (BookingController).
+     */
+    public static function registerPayment(
+        int $bookingId,
+        int $invoiceId,
+        float $amount,
+        string $method,
+        string $type = 'full',
+        ?string $notes = null
+    ): int {
+        $now = date('Y-m-d H:i:s');
+
+        $paymentId = Payment::create([
+            'booking_id' => $bookingId,
+            'invoice_id' => $invoiceId,
+            'amount'     => $amount,
+            'method'     => $method,
+            'type'       => $type,
+            'status'     => 'completed',
+            'notes'      => $notes,
+            'paid_at'    => $now,
+        ]);
+
+        $inv  = self::find($invoiceId);
+        $paid = self::paidAmount($invoiceId);
+
+        if ($inv) {
+            $ttc = (float) $inv['amount_ttc'];
+            if ($paid >= $ttc) {
+                self::update($invoiceId, ['status' => 'paid', 'paid_at' => $now]);
+            } elseif ($paid > 0 && $inv['status'] === 'draft') {
+                self::update($invoiceId, ['status' => 'sent']);
+            }
+        }
+
+        return $paymentId;
     }
 }

@@ -1,14 +1,43 @@
 /* ============================================================
-   Ivoire Stay — Page établissement (vitrine/property.php)
+   Afristay — Page établissement (vitrine/property.php)
    ============================================================ */
 
 .prop-page { overflow-x: hidden; font-family: 'Inter', sans-serif; background: #FAF7F2; }
+
+/* ── Carte de localisation (Leaflet) ── */
+/* L'attribution OpenStreetMap est obligatoire (licence ODbL) mais on la réduit
+   à un lien discret au lieu de la barre d'outils complète de l'embed OSM classique. */
+#property-map .leaflet-control-attribution {
+  font-size: 9px;
+  padding: 1px 4px;
+  background: rgba(255,255,255,0.75);
+}
+#property-map .leaflet-control-zoom a { font-size: 15px; }
 
 /* ── HERO CINÉMATIQUE ── */
 .prop-hero { position: relative; min-height: 80vh; background: #1B4332; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
 .prop-hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transition: transform 8s ease; }
 .prop-hero-bg:hover { transform: scale(1.04); }
-.prop-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(8,22,14,0.96) 0%, rgba(8,22,14,0.65) 40%, rgba(8,22,14,0.2) 70%, transparent 100%); }
+.prop-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(8,22,14,0.97) 0%, rgba(8,22,14,0.78) 40%, rgba(8,22,14,0.4) 70%, rgba(8,22,14,0.15) 100%); }
+.prop-hero-back {
+  position: absolute; top: 24px; left: 24px; z-index: 5;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 999px;
+  background: rgba(0,0,0,0.35); backdrop-filter: blur(6px);
+  color: white; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+  text-decoration: none; border: 1px solid rgba(255,255,255,0.15);
+  cursor: pointer; transition: background 0.2s;
+}
+.prop-hero-back:hover { background: rgba(0,0,0,0.5); }
+.prop-hero-back svg { width: 15px; height: 15px; }
+.prop-hero-thumbs { position: absolute; z-index: 5; top: 24px; right: 24px; display: flex; gap: 8px; }
+.prop-hero-thumb {
+  width: 56px; height: 56px; border-radius: 10px; padding: 0; cursor: pointer;
+  background-size: cover; background-position: center;
+  border: 2px solid rgba(255,255,255,0.35); opacity: 0.7; transition: opacity 0.2s, border-color 0.2s;
+}
+.prop-hero-thumb:hover { opacity: 0.9; }
+.prop-hero-thumb-active { opacity: 1; border-color: #C9A84C; }
 .prop-hero-content { position: relative; z-index: 2; padding: 64px 80px; display: grid; grid-template-columns: 1fr auto; align-items: flex-end; gap: 40px; }
 .prop-hero-left { display: flex; flex-direction: column; gap: 12px; }
 .prop-hero-rule { width: 40px; height: 1px; background: #C9A84C; }
@@ -32,7 +61,7 @@
 .prop-stats-band { background: white; border-bottom: 0.5px solid rgba(27,67,50,0.08); display: grid; grid-template-columns: repeat(4,1fr); }
 .prop-stat { padding: 20px 28px; border-right: 0.5px solid rgba(27,67,50,0.06); display: flex; flex-direction: column; gap: 5px; }
 .prop-stat:last-child { border-right: none; }
-.prop-stat-label { font-family: 'Inter', sans-serif; font-size: 9px; text-transform: uppercase; letter-spacing: 0.3em; color: rgba(27,67,50,0.38); }
+.prop-stat-label { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3em; color: rgba(27,67,50,0.65); }
 .prop-stat-value { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 700; color: #1B4332; line-height: 1; }
 .prop-stat-value span { color: #C9A84C; font-size: 18px; }
 
@@ -66,7 +95,12 @@
 .prop-room-img svg { width: 56px; height: 56px; }
 .prop-room-body { padding: 20px 22px; }
 .prop-room-name { font-family: 'Cormorant Garamond', serif; font-size: 24px; color: #1B4332; margin-bottom: 6px; }
-.prop-room-desc { font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(27,67,50,0.55); line-height: 1.7; margin-bottom: 14px; }
+.prop-room-desc { font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(27,67,50,0.55); line-height: 1.7; margin-bottom: 6px; }
+.prop-room-longdesc { font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(27,67,50,0.65); line-height: 1.6; font-style: italic; margin: 0 0 12px; }
+.prop-room-amenities { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.prop-room-amenity { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; color: #1B4332; background: rgba(27,67,50,0.06); border: 1px solid rgba(27,67,50,0.12); padding: 4px 10px; border-radius: 999px; }
+.prop-room-alt-prices { font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(27,67,50,0.6); margin-bottom: 12px; }
+.prop-room-alt-prices strong { color: #1B4332; font-weight: 700; }
 .prop-room-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; border-top: 0.5px solid rgba(27,67,50,0.07); }
 .prop-room-price { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: #1B4332; font-weight: 700; }
 .prop-room-price small { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 400; color: rgba(27,67,50,0.4); }
@@ -124,8 +158,12 @@
   .prop-similar-grid { grid-template-columns: repeat(2,1fr); }
 }
 @media (max-width: 768px) {
+  .prop-hero { min-height: 60vh; }
   .prop-hero-content { padding: 32px 24px; }
   .prop-hero-title { font-size: 44px; }
+  .prop-hero-thumbs { top: 76px; right: 16px; gap: 6px; }
+  .prop-hero-back { top: 76px; left: 16px; }
+  .prop-hero-thumb { width: 42px; height: 42px; border-radius: 8px; }
   .prop-stats-band { grid-template-columns: repeat(2,1fr); }
   .prop-about-main { padding: 40px 24px; }
   .prop-about-side { padding: 32px 24px; }

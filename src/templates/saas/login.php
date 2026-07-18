@@ -6,10 +6,12 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Connexion – Ivoire Stay</title>
+  <title>Connexion – Afristay</title>
   <meta name="theme-color" content="#1B4332">
   <link rel="manifest" href="<?= $base_url ?>/manifest.webmanifest">
+  <link rel="icon" href="<?= $base_url ?>/assets/icons/icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= $base_url ?>/assets/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="<?= $base_url ?>/assets/css/fonts.css">
   <link rel="stylesheet" href="<?= $base_url ?>/assets/css/pages/login.css">
   <!-- pwa.js d'abord (sans defer) : capture beforeinstallprompt + enregistre le SW -->
   <script src="<?= $base_url ?>/assets/js/pwa.js"></script>
@@ -26,7 +28,7 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
       <a class="lg-brand-inner" href="<?= $base_url ?>/">
         <div class="lg-brand-sq">IS</div>
         <div class="lg-brand-text">
-          <strong>Ivoire Stay</strong>
+          <strong>Afristay</strong>
           <span>SaaS Hôtelier</span>
         </div>
       </a>
@@ -45,7 +47,7 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
       <div class="lg-testimonial">
         <span class="lg-quote-mark">"</span>
         <p class="lg-quote-text">
-          Ivoire Stay a transformé la gestion de mon hôtel.
+          Afristay a transformé la gestion de mon hôtel.
           Je gagne 3h par jour et mes clients sont ravis.
         </p>
         <div class="lg-quote-author">
@@ -104,7 +106,7 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
 
       <p class="lg-gate-desc">
         Pour protéger votre espace hôtelier, la connexion est
-        uniquement disponible depuis l'application Ivoire Stay
+        uniquement disponible depuis l'application Afristay
         installée sur votre appareil.
       </p>
 
@@ -220,6 +222,10 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
           <button type="button" class="lg-toggle-btn" @click="showPass = !showPass"
             x-text="showPass ? 'Masquer' : 'Afficher'"></button>
         </div>
+      </div>
+
+      <div class="lg-field-options">
+        <a href="<?= $base_url ?>/forgot-password" class="lg-forgot">Mot de passe oublié ?</a>
       </div>
 
       <button class="lg-btn lg-btn-gold" type="button" @click="submit()" :disabled="loading">

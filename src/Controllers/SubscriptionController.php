@@ -2,9 +2,9 @@
 
 namespace Controllers;
 
-use Core\{Request, Response, Database, PlanGate};
+use Core\{Request, Response, Database, PlanGate, Guard};
 use Models\Establishment;
-use Services\{GeniusPayService, MailService};
+use Services\{GeniusPayService, MailService, NotificationService, EstablishmentFreezeService};
 
 class SubscriptionController
 {
@@ -31,13 +31,148 @@ class SubscriptionController
         )->fetch();
 
         Response::success([
-            'plan'           => $plan,
-            'plan_label'     => (require BASE_PATH . '/config/plans.php')[$plan]['name'] ?? $plan,
-            'expires_at'     => $expiresAt,
-            'is_expired'     => $isExpired,
-            'last_sub'       => $last ?: null,
-            'max_rooms'      => PlanGate::maxRooms($estab),
+            'plan'              => $plan,
+            'plan_label'        => (require BASE_PATH . '/config/plans.php')[$plan]['name'] ?? $plan,
+            'expires_at'        => $expiresAt,
+            'is_expired'        => $isExpired,
+            'last_sub'          => $last ?: null,
+            'max_rooms'         => PlanGate::maxRooms($estab),
+            'proration_credit'  => $this->prorationCredit($estab),
         ]);
+    }
+
+    // ─── GET /api/subscriptions/history ──────────────────────────────────────
+    public function history(Request $req, array $params = []): void
+    {
+        $user  = $_REQUEST['_user'];
+        $estab = Establishment::find($user['establishment_id'] ?? 0);
+        if (!$estab) Response::notFound('Établissement introuvable');
+
+        $rows = Database::query(
+            "SELECT * FROM subscriptions WHERE establishment_id = ? ORDER BY created_at DESC",
+            [$estab['id']]
+        )->fetchAll();
+
+        Response::success($rows);
+    }
+
+    // ─── POST /api/subscriptions/cancel ──────────────────────────────────────
+    public function cancel(Request $req, array $params = []): void
+    {
+        $user  = $_REQUEST['_user'];
+        $estab = Establishment::find($user['establishment_id'] ?? 0);
+        if (!$estab) Response::notFound('Établissement introuvable');
+
+        $currentPlan = PlanGate::getPlan($estab);
+        if ($currentPlan === 'starter') {
+            Response::error('Aucun abonnement payant actif à annuler');
+        }
+
+        Database::query(
+            "UPDATE subscriptions SET status = 'cancelled', cancelled_at = NOW()
+             WHERE establishment_id = ? AND status = 'active'",
+            [$estab['id']]
+        );
+        Database::query(
+            "UPDATE establishments SET plan = 'starter', plan_expires_at = NULL WHERE id = ?",
+            [$estab['id']]
+        );
+
+        $this->notifyPlanChange($estab, $currentPlan, 'starter');
+        EstablishmentFreezeService::recompute((int) $estab['owner_id']);
+
+        Response::success(null, 'Abonnement annulé — vous êtes repassé au plan Starter');
+    }
+
+    // ─── POST /api/subscriptions/downgrade  { plan: 'starter'|'pro' } ────────
+    public function downgrade(Request $req, array $params = []): void
+    {
+        $user  = $_REQUEST['_user'];
+        $estab = Establishment::find($user['establishment_id'] ?? 0);
+        if (!$estab) Response::notFound('Établissement introuvable');
+
+        $target      = $req->all()['plan'] ?? '';
+        $currentPlan = PlanGate::getPlan($estab);
+        $plans       = require BASE_PATH . '/config/plans.php';
+
+        if (!isset($plans[$target])) Response::error('Plan invalide');
+        if ($this->planRank($target) >= $this->planRank($currentPlan)) {
+            Response::error("Ce n'est pas une rétrogradation — utilisez la page d'abonnement pour mettre à niveau");
+        }
+
+        Database::query(
+            "UPDATE subscriptions SET status = 'cancelled', cancelled_at = NOW()
+             WHERE establishment_id = ? AND status = 'active'",
+            [$estab['id']]
+        );
+
+        if ($target === 'starter') {
+            Database::query(
+                "UPDATE establishments SET plan = 'starter', plan_expires_at = NULL WHERE id = ?",
+                [$estab['id']]
+            );
+        } else {
+            // Rétrogradation vers un plan payant intermédiaire : conserve l'échéance en cours,
+            // pas de nouveau paiement (le nouveau plan est moins cher, pas de solde à réclamer).
+            Database::query(
+                "INSERT INTO subscriptions (establishment_id, plan, billing, amount, currency, status, started_at, expires_at)
+                 VALUES (?, ?, 'monthly', 0, 'XOF', 'active', NOW(), ?)",
+                [$estab['id'], $target, $estab['plan_expires_at']]
+            );
+            Database::query("UPDATE establishments SET plan = ? WHERE id = ?", [$target, $estab['id']]);
+        }
+
+        $this->notifyPlanChange($estab, $currentPlan, $target);
+        EstablishmentFreezeService::recompute((int) $estab['owner_id']);
+
+        Response::success(null, 'Abonnement rétrogradé vers ' . ($plans[$target]['name'] ?? $target));
+    }
+
+    private function planRank(string $plan): int
+    {
+        return ['starter' => 0, 'pro' => 1, 'business' => 2][$plan] ?? 0;
+    }
+
+    private function notifyPlanChange(array $estab, string $fromPlan, string $toPlan): void
+    {
+        $owner = Database::query(
+            "SELECT name, email FROM users WHERE id = ?", [$estab['owner_id']]
+        )->fetch();
+        if (!$owner) return;
+
+        $plans = require BASE_PATH . '/config/plans.php';
+        MailService::subscriptionCancelled(
+            $owner['email'],
+            $owner['name'],
+            $plans[$fromPlan]['name'] ?? $fromPlan,
+            $plans[$toPlan]['name'] ?? $toPlan
+        );
+    }
+
+    /**
+     * Crédit de prorata (en FCFA) sur le temps restant de l'abonnement payant en cours,
+     * à déduire du prochain paiement lors d'un changement de plan/période en cours de cycle.
+     */
+    private function prorationCredit(array $estab): float
+    {
+        $plan = PlanGate::getPlan($estab);
+        if ($plan === 'starter') return 0.0;
+
+        $sub = Database::query(
+            "SELECT * FROM subscriptions WHERE establishment_id = ? AND status = 'active' ORDER BY id DESC LIMIT 1",
+            [$estab['id']]
+        )->fetch();
+        if (!$sub || empty($sub['started_at']) || empty($sub['expires_at'])) return 0.0;
+
+        $now   = time();
+        $start = strtotime($sub['started_at']);
+        $end   = strtotime($sub['expires_at']);
+        if ($now >= $end || $end <= $start) return 0.0;
+
+        $totalDays     = max(1, ($end - $start) / 86400);
+        $remainingDays = max(0, ($end - $now) / 86400);
+
+        return round(((float) $sub['amount']) * ($remainingDays / $totalDays));
     }
 
     // ─── POST /api/subscriptions/initiate ────────────────────────────────────
@@ -56,10 +191,46 @@ class SubscriptionController
             Response::error('Plan invalide');
         }
 
-        $amount = $plans[$plan]['prices'][$billing] ?? 0;
-        if ($amount <= 0) Response::error('Montant invalide');
+        $fullAmount = $plans[$plan]['prices'][$billing] ?? 0;
+        if ($fullAmount <= 0) Response::error('Montant invalide');
+
+        // Crédit de prorata sur le temps restant d'un abonnement payant en cours (upgrade/downgrade/changement de période)
+        $credit = $this->prorationCredit($estab);
+        $amount = max(0, $fullAmount - $credit);
 
         $reference = 'SYNC-' . $estab['id'] . '-' . strtoupper($plan) . '-' . time();
+
+        // Crédit de prorata suffisant pour couvrir entièrement le nouveau plan : pas de paiement à initier,
+        // on active tout de suite (évite d'envoyer un montant à 0 à GeniusPay).
+        if ($amount <= 0) {
+            Database::query(
+                "UPDATE subscriptions SET status = 'cancelled', cancelled_at = NOW()
+                 WHERE establishment_id = ? AND status = 'active'",
+                [$estab['id']]
+            );
+
+            $months    = $billing === 'yearly' ? 12 : 1;
+            $startedAt = date('Y-m-d H:i:s');
+            $expiresAt = date('Y-m-d H:i:s', strtotime("+$months months"));
+
+            Database::query(
+                "INSERT INTO subscriptions (establishment_id, plan, billing, amount, status, started_at, expires_at)
+                 VALUES (?, ?, ?, 0, 'active', ?, ?)",
+                [$estab['id'], $plan, $billing, $startedAt, $expiresAt]
+            );
+            Database::query(
+                "UPDATE establishments SET plan = ?, plan_expires_at = ? WHERE id = ?",
+                [$plan, $expiresAt, $estab['id']]
+            );
+
+            $owner = Database::query("SELECT name, email FROM users WHERE id = ?", [$estab['owner_id']])->fetch();
+            if ($owner) MailService::subscriptionActivated($owner['email'], $owner['name'], $plan, $expiresAt);
+            NotificationService::subscriptionActivated($estab['name'] ?? ('#' . $estab['id']), $plans[$plan]['name'] ?? $plan, (int) $estab['id']);
+            EstablishmentFreezeService::recompute((int) $estab['owner_id']);
+
+            Response::success(['activated' => true], 'Abonnement activé — entièrement couvert par votre crédit de prorata');
+            return;
+        }
 
         // Save pending subscription
         Database::query(
@@ -71,7 +242,7 @@ class SubscriptionController
         try {
             $result = GeniusPayService::initiate([
                 'amount'         => $amount,
-                'description'    => 'Abonnement SYNC ' . $plans[$plan]['name'],
+                'description'    => 'Abonnement SYNC ' . $plans[$plan]['name'] . ($credit > 0 ? ' (prorata déduit)' : ''),
                 'reference'      => $reference,
                 'pay_method'     => $data['pay_method'] ?? '',
                 'success_url'    => APP_URL . '/saas/settings?sub=ok&plan=' . $plan . '&ref=' . $reference,
@@ -155,14 +326,25 @@ class SubscriptionController
 
             // Email de confirmation d'abonnement
             $owner = Database::query(
-                "SELECT u.name, u.email FROM users u
+                "SELECT u.name, u.email, e.name as estab_name FROM users u
                  JOIN establishments e ON e.owner_id = u.id
                  WHERE e.id = ?",
                 [$sub['establishment_id']]
             )->fetch();
             if ($owner) {
                 MailService::subscriptionActivated($owner['email'], $owner['name'], $sub['plan'], $expiresAt);
+                $plans = require BASE_PATH . '/config/plans.php';
+                NotificationService::subscriptionActivated(
+                    $owner['estab_name'] ?? ('#' . $sub['establishment_id']),
+                    $plans[$sub['plan']]['name'] ?? $sub['plan'],
+                    (int) $sub['establishment_id']
+                );
             }
+
+            $ownerId = (int) Database::query(
+                "SELECT owner_id FROM establishments WHERE id = ?", [$sub['establishment_id']]
+            )->fetchColumn();
+            if ($ownerId) EstablishmentFreezeService::recompute($ownerId);
         } elseif ($internalStatus === 'failed') {
             Database::query(
                 "UPDATE subscriptions SET status = 'failed' WHERE id = ?",
@@ -186,6 +368,11 @@ class SubscriptionController
         )->fetch();
 
         if (!$sub) Response::notFound('Transaction introuvable');
+
+        // La référence (SYNC-{id établissement}-{plan}-{timestamp}) est prévisible :
+        // sans ce contrôle, n'importe quel utilisateur authentifié pourrait consulter
+        // ou déclencher l'activation de l'abonnement d'un autre établissement.
+        Guard::requireEstablishment((int) $sub['establishment_id']);
 
         // Already active — return early
         if ($sub['status'] === 'active') {
@@ -225,14 +412,25 @@ class SubscriptionController
 
                 // Email activation (si pas encore envoyé via webhook)
                 $owner = Database::query(
-                    "SELECT u.name, u.email FROM users u
+                    "SELECT u.name, u.email, e.name as estab_name FROM users u
                      JOIN establishments e ON e.owner_id = u.id
                      WHERE e.id = ?",
                     [$sub['establishment_id']]
                 )->fetch();
                 if ($owner) {
                     MailService::subscriptionActivated($owner['email'], $owner['name'], $sub['plan'], $expiresAt);
+                    $plans = require BASE_PATH . '/config/plans.php';
+                    NotificationService::subscriptionActivated(
+                        $owner['estab_name'] ?? ('#' . $sub['establishment_id']),
+                        $plans[$sub['plan']]['name'] ?? $sub['plan'],
+                        (int) $sub['establishment_id']
+                    );
                 }
+
+                $ownerId = (int) Database::query(
+                    "SELECT owner_id FROM establishments WHERE id = ?", [$sub['establishment_id']]
+                )->fetchColumn();
+                if ($ownerId) EstablishmentFreezeService::recompute($ownerId);
 
                 Response::success(['status' => 'active', 'plan' => $sub['plan'], 'expires_at' => $expiresAt]);
             }

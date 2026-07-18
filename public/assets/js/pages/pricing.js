@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page tarification (vitrine/pricing.php)
+   Afristay — Page tarification (vitrine/pricing.php)
    Toggle annuel/mensuel + accordéon FAQ
    ============================================================ */
 

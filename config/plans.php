@@ -14,6 +14,7 @@ return [
             'pdf'       => false,
             'boost'     => false,
             'multi_estab' => false,
+            'online_payment_control' => false,
         ],
     ],
     'pro' => [
@@ -29,6 +30,7 @@ return [
             'pdf'       => true,
             'boost'     => false,
             'multi_estab' => false,
+            'online_payment_control' => true,
         ],
     ],
     'business' => [
@@ -44,6 +46,7 @@ return [
             'pdf'       => true,
             'boost'     => true,
             'multi_estab' => true,
+            'online_payment_control' => true,
         ],
     ],
 ];

@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page SaaS : dashboard (saas/dashboard.php)
+   Afristay — Page SaaS : dashboard (saas/dashboard.php)
    ============================================================ */
 
 @keyframes shimmer {
@@ -17,7 +17,7 @@
 .bottom-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 @media(max-width:1200px){ .kpi-grid  { grid-template-columns:repeat(2,1fr)!important; } }
 @media(max-width:900px) { .main-grid { grid-template-columns:1fr!important; } }
-@media(max-width:640px) { .kpi-grid  { grid-template-columns:1fr!important; } .bottom-grid{ grid-template-columns:1fr!important; } }
+@media(max-width:640px) { .bottom-grid{ grid-template-columns:1fr!important; } }
 
 /* KPI card — variantes de couleur (bandeau supérieur via ::before) */
 .kpi-gold:before   { background: linear-gradient(90deg, #C9A84C, #E8D5A3); }

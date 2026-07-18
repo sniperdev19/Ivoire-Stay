@@ -8,6 +8,18 @@ class Booking extends BaseModel
 {
     protected static string $table = 'bookings';
 
+    /**
+     * guest_token : jeton opaque généré à chaque réservation, renvoyé une
+     * seule fois au client dans la réponse de création. Requis pour
+     * autoriser l'abonnement push anonyme du voyageur à SA réservation
+     * (sans ça, un booking_id séquentiel serait devinable — cf. PushController).
+     */
+    public static function create(array $data): int
+    {
+        $data['guest_token'] = $data['guest_token'] ?? bin2hex(random_bytes(32));
+        return parent::create($data);
+    }
+
     public static function allWithDetails(int $estabId, array $filters = []): array
     {
         $where = ['r.establishment_id = ?'];
@@ -50,14 +62,18 @@ class Booking extends BaseModel
     {
         return Database::query(
             "SELECT b.*, b.booking_type, b.hours,
-                r.number as room_number, r.floor,
+                r.number as room_number, r.floor, r.slug as room_slug,
                 rt.name as room_type, rt.base_price, rt.weekend_price, rt.passage_price,
                 e.name as establishment_name,
                 COALESCE(CONCAT(pc.first_name, ' ', pc.last_name), u.name) as client_name,
                 COALESCE(pc.email, u.email) as client_email,
                 COALESCE(pc.phone, u.phone) as client_phone,
                 i.id as invoice_id, i.invoice_number, i.status as invoice_status,
-                i.amount_ttc
+                i.amount_ttc,
+                COALESCE((
+                    SELECT SUM(p.amount) FROM payments p
+                    WHERE p.invoice_id = i.id AND p.status = 'completed'
+                ), 0) as paid_amount
              FROM bookings b
              JOIN rooms r ON r.id = b.room_id
              JOIN room_types rt ON rt.id = r.room_type_id
@@ -91,13 +107,23 @@ class Booking extends BaseModel
         )->fetchAll();
     }
 
+    /**
+     * Un "passage" a check_in == check_out en base (aucune heure précise n'est stockée,
+     * seule la durée en heures) : on le traite comme occupant la journée entière pour la
+     * comparaison de chevauchement (côté nouvelle réservation ET côté réservations
+     * existantes), sinon `check_out > check_in` échoue toujours et un conflit — y compris
+     * un double passage sur le même jour — n'est jamais détecté.
+     */
     public static function isRoomAvailable(int $roomId, string $checkIn, string $checkOut, ?int $excludeId = null): bool
     {
+        $effectiveCheckOut = $checkOut > $checkIn ? $checkOut : date('Y-m-d', strtotime($checkIn . ' +1 day'));
+
         $sql = "SELECT COUNT(*) FROM bookings
                 WHERE room_id = ?
                   AND status NOT IN ('cancelled', 'checked_out')
-                  AND check_in < ? AND check_out > ?";
-        $params = [$roomId, $checkOut, $checkIn];
+                  AND check_in < ?
+                  AND (CASE WHEN check_out <= check_in THEN DATE_ADD(check_in, INTERVAL 1 DAY) ELSE check_out END) > ?";
+        $params = [$roomId, $effectiveCheckOut, $checkIn];
 
         if ($excludeId) {
             $sql .= " AND id != ?";
@@ -117,11 +143,42 @@ class Booking extends BaseModel
             return max(1, $hours) * $pricePerHour;
         }
 
-        $nights = (new \DateTime($checkOut))->diff(new \DateTime($checkIn))->days;
-        $price  = $bookingType === 'weekend'
-            ? (float) ($rt['weekend_price'] ?: $rt['base_price'])
-            : (float) $rt['base_price'];
-        return max(1, $nights) * $price;
+        $nights = max(1, (new \DateTime($checkOut))->diff(new \DateTime($checkIn))->days);
+
+        $basePrice    = (float) $rt['base_price'];
+        $weekendPrice = (float) ($rt['weekend_price'] ?? 0);
+
+        // Réservation manuelle "weekend" : le forfait week-end (override staff),
+        // au même tarif forfaitaire que la détection automatique ci-dessous.
+        if ($bookingType === 'weekend') {
+            return $weekendPrice ?: ($nights * $basePrice);
+        }
+
+        // Nuit standard : le tarif week-end est un FORFAIT pour un bloc complet
+        // vendredi+samedi+dimanche (pas un prix par nuit) — un week-end incomplet
+        // (arrivée un samedi par ex.) reste au tarif de base. Cohérent avec
+        // l'estimation client (booking.js / saas-bookings.js).
+        if (!$weekendPrice || $weekendPrice === $basePrice) {
+            return $nights * $basePrice;
+        }
+
+        $dows = [];
+        $day  = new \DateTime($checkIn);
+        for ($i = 0; $i < $nights; $i++) {
+            $dows[] = (int) $day->format('w'); // 0 = dimanche … 6 = samedi
+            $day->modify('+1 day');
+        }
+
+        $total = 0.0;
+        for ($i = 0; $i < count($dows); $i++) {
+            if (($dows[$i] ?? null) === 5 && ($dows[$i + 1] ?? null) === 6 && ($dows[$i + 2] ?? null) === 0) {
+                $total += $weekendPrice;
+                $i += 2; // bloc vendredi-samedi-dimanche déjà compté
+            } else {
+                $total += $basePrice;
+            }
+        }
+        return $total;
     }
 
     public static function recentByEstablishment(int $estabId, int $limit = 5): array

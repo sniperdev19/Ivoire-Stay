@@ -3,6 +3,7 @@
 namespace Controllers;
 
 use Core\{Request, Response};
+use Models\{Establishment, Room};
 
 class PageController
 {
@@ -10,17 +11,27 @@ class PageController
 
     public function login(Request $req, array $params = []): void
     {
-        Response::render('saas/login', ['title' => 'Connexion – Ivoire Stay']);
+        Response::render('saas/login', ['title' => 'Connexion – Afristay']);
     }
 
     public function register(Request $req, array $params = []): void
     {
-        Response::render('saas/register', ['title' => 'Inscription – Ivoire Stay']);
+        Response::render('saas/register', ['title' => 'Inscription – Afristay']);
     }
 
     public function install(Request $req, array $params = []): void
     {
-        Response::render('saas/install', ['title' => 'Installer l\'application – Ivoire Stay']);
+        Response::render('saas/install', ['title' => 'Installer l\'application – Afristay']);
+    }
+
+    public function forgotPassword(Request $req, array $params = []): void
+    {
+        Response::render('saas/forgot-password', ['title' => 'Mot de passe oublié – Afristay']);
+    }
+
+    public function resetPassword(Request $req, array $params = []): void
+    {
+        Response::render('saas/reset-password', ['title' => 'Réinitialiser le mot de passe – Afristay']);
     }
 
     public function saas(Request $req, array $params = []): void
@@ -63,6 +74,11 @@ class PageController
         Response::render('saas/expenses', ['title' => 'Dépenses', 'page' => 'expenses']);
     }
 
+    public function payouts(Request $req, array $params = []): void
+    {
+        Response::render('saas/payouts', ['title' => 'Retraits', 'page' => 'payouts']);
+    }
+
     public function reports(Request $req, array $params = []): void
     {
         Response::render('saas/reports', ['title' => 'Rapports', 'page' => 'reports']);
@@ -78,32 +94,50 @@ class PageController
         Response::render('saas/help', ['title' => 'Centre d\'aide', 'page' => 'help']);
     }
 
+    public function docs(Request $req, array $params = []): void
+    {
+        Response::render('saas/docs', ['title' => 'Documentation', 'page' => 'help']);
+    }
+
     public function checkout(Request $req, array $params = []): void
     {
-        Response::render('saas/checkout', ['title' => 'Paiement abonnement – Ivoire Stay']);
+        Response::render('saas/checkout', ['title' => 'Paiement abonnement – Afristay']);
     }
 
     // ─── Vitrine Pages ────────────────────────────────────────────────────────
 
     public function home(Request $req, array $params = []): void
     {
-        Response::render('vitrine/home', ['title' => 'Ivoire Stay – Trouvez votre hébergement en Côte d\'Ivoire']);
+        Response::render('vitrine/home', [
+            'title' => 'Afristay – Trouvez votre hébergement en Côte d\'Ivoire',
+            'stats' => Establishment::platformStats(),
+        ]);
     }
 
 
     public function apropos(Request $req, array $params = []): void
     {
-        Response::render('vitrine/apropos', ['title' => 'À propos – Ivoire Stay']);
+        Response::render('vitrine/apropos', ['title' => 'À propos – Afristay']);
     }
 
     public function contact(Request $req, array $params = []): void
     {
-        Response::render('vitrine/contact', ['title' => 'Contact – Ivoire Stay']);
+        Response::render('vitrine/contact', ['title' => 'Contact – Afristay']);
     }
 
     public function pricing(Request $req, array $params = []): void
     {
-        Response::render('vitrine/pricing', ['title' => 'Tarifs – Ivoire Stay']);
+        Response::render('vitrine/pricing', ['title' => 'Tarifs – Afristay']);
+    }
+
+    public function terms(Request $req, array $params = []): void
+    {
+        Response::render('vitrine/cgu', ['title' => 'Conditions générales d\'utilisation – Afristay']);
+    }
+
+    public function privacy(Request $req, array $params = []): void
+    {
+        Response::render('vitrine/confidentialite', ['title' => 'Politique de confidentialité – Afristay']);
     }
 
     public function search(Request $req, array $params = []): void
@@ -113,13 +147,17 @@ class PageController
 
     public function property(Request $req, array $params = []): void
     {
-        $id = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+        $slug  = (string) ($params['slug'] ?? $_GET['_route_slug'] ?? '');
+        $estab = $slug !== '' ? Establishment::findBySlug($slug) : null;
+        $id    = $estab['id'] ?? 0;
         Response::render('vitrine/property', ['title' => 'Établissement', 'property_id' => $id]);
     }
 
     public function bookingPage(Request $req, array $params = []): void
     {
-        $id = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+        $slug = (string) ($params['slug'] ?? $_GET['_route_slug'] ?? '');
+        $room = $slug !== '' ? Room::findBySlug($slug) : null;
+        $id   = $room['id'] ?? 0;
         Response::render('vitrine/booking', ['title' => 'Réserver', 'room_id' => $id]);
     }
 }

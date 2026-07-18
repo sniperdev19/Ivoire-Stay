@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page SaaS : Clients (src/templates/saas/clients.php)
+   Afristay — Page SaaS : Clients (src/templates/saas/clients.php)
    ============================================================ */
 
 function clientsPage(baseUrl) {
@@ -131,6 +131,20 @@ function clientsPage(baseUrl) {
     } catch(e) {
       this.showToast('Erreur réseau.', 'error');
     }
+  },
+
+  // Lien vers /saas/bookings avec le client pré-rempli (voir prefillFromQuery() côté bookingsPage)
+  bookingUrl(client) {
+    if (!client) return baseUrl + '/saas/bookings';
+    const nameParts = (client.name ?? '').trim().split(/\s+/);
+    const params = new URLSearchParams({
+      client_id:  client.id ?? '',
+      first_name: client.first_name ?? nameParts[0] ?? '',
+      last_name:  client.last_name  ?? nameParts.slice(1).join(' '),
+      phone:      client.phone ?? '',
+      email:      client.email ?? '',
+    });
+    return baseUrl + '/saas/bookings?' + params.toString();
   },
 
   initials(name) {

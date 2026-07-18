@@ -11,7 +11,20 @@ class PublicClient extends BaseModel
     public static function findOrCreate(array $data): int
     {
         $existing = self::first(['email' => $data['email']]);
-        if ($existing) return $existing['id'];
+        if ($existing) {
+            // Synchronise les coordonnées avec la dernière saisie : sans cela, un client
+            // qui réserve avec un email déjà connu (mais un nom/téléphone différent, ex.
+            // email partagé) voyait ses vraies infos silencieusement ignorées au profit
+            // de celles du tout premier client enregistré sous cet email.
+            self::update($existing['id'], array_filter([
+                'first_name'    => $data['first_name']    ?? null,
+                'last_name'     => $data['last_name']     ?? null,
+                'phone'         => $data['phone']         ?? null,
+                'id_doc_type'   => $data['id_doc_type']   ?? null,
+                'id_doc_number' => $data['id_doc_number'] ?? null,
+            ], fn($v) => $v !== null && $v !== ''));
+            return $existing['id'];
+        }
         return self::create($data);
     }
 

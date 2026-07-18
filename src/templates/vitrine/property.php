@@ -33,13 +33,25 @@ $pid  = (int) ($property_id ?? 0);
   <div>
 
     <!-- CINEMATIC HERO -->
-    <section class="prop-hero">
-      <div class="prop-hero-bg"
-           :style="photoUrl(property.cover_photo)
-             ? 'background-image:url(' + photoUrl(property.cover_photo) + ')'
-             : 'background:linear-gradient(135deg,#1B4332 0%,#2D6A4F 100%)'">
+    <section class="prop-hero"
+      @touchstart.passive="heroTouchStartX = $event.touches[0].clientX"
+      @touchend="swipeHero($event)">
+      <div class="prop-hero-bg" style="touch-action:pan-y;"
+           :style="photoUrl(heroPhoto)
+             ? 'touch-action:pan-y;background-image:url(' + photoUrl(heroPhoto) + ')'
+             : 'touch-action:pan-y;background:linear-gradient(135deg,#1B4332 0%,#2D6A4F 100%)'">
       </div>
       <div class="prop-hero-overlay"></div>
+      <a href="<?= $base ?>/search" class="prop-hero-back">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        Retour aux résultats
+      </a>
+      <div x-show="galleryPhotos.length > 1" class="prop-hero-thumbs">
+        <template x-for="(photo, idx) in galleryPhotos" :key="idx">
+          <button type="button" class="prop-hero-thumb" :class="activePhoto === idx ? 'prop-hero-thumb-active' : ''"
+                  @click="activePhoto = idx" :style="'background-image:url(' + photoUrl(photo) + ')'"></button>
+        </template>
+      </div>
       <div class="prop-hero-content">
         <div class="prop-hero-left">
           <div class="prop-hero-rule"></div>
@@ -51,7 +63,7 @@ $pid  = (int) ($property_id ?? 0);
           </div>
           <span class="prop-hero-badge">
             <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            Établissement vérifié Ivoire Stay
+            Établissement vérifié Afristay
           </span>
         </div>
         <div class="prop-hero-right">
@@ -68,7 +80,7 @@ $pid  = (int) ($property_id ?? 0);
             </template>
             <div style="font-family:'Inter',sans-serif;font-size:11px;color:rgba(27,67,50,0.4);margin-top:2px;">/nuit</div>
             <template x-if="rooms.length > 0">
-              <a :href="'<?= $base ?>/booking/' + rooms[0].id" class="prop-hero-book-btn">Réserver maintenant →</a>
+              <a :href="'<?= $base ?>/booking/' + (rooms[0].slug || rooms[0].id)" class="prop-hero-book-btn">Réserver maintenant →</a>
             </template>
             <template x-if="rooms.length === 0">
               <a href="<?= $base ?>/contact" class="prop-hero-book-btn">Nous contacter →</a>
@@ -112,23 +124,12 @@ $pid  = (int) ($property_id ?? 0);
         <template x-if="!property.description">
           <p class="prop-about-body" style="color:rgba(27,67,50,0.35);font-style:italic;">Description non renseignée.</p>
         </template>
-        <!-- Dates rapides -->
-        <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;">
-          <div style="display:flex;flex-direction:column;gap:4px;">
-            <label style="font-family:Inter,sans-serif;font-size:11px;color:rgba(27,67,50,0.5);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Arrivée</label>
-            <input type="date" x-model="checkIn" style="padding:8px 12px;border:1px solid rgba(27,67,50,0.15);border-radius:10px;font-family:Inter,sans-serif;font-size:13px;color:#1B4332;">
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px;">
-            <label style="font-family:Inter,sans-serif;font-size:11px;color:rgba(27,67,50,0.5);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Départ</label>
-            <input type="date" x-model="checkOut" style="padding:8px 12px;border:1px solid rgba(27,67,50,0.15);border-radius:10px;font-family:Inter,sans-serif;font-size:13px;color:#1B4332;">
-          </div>
-        </div>
       </div>
       <div class="prop-about-side">
         <div class="prop-about-side-card">
           <h4>Informations pratiques</h4>
-          <div class="prop-about-side-row"><span>Check-in</span><span>À partir de 14h00</span></div>
-          <div class="prop-about-side-row"><span>Check-out</span><span>Jusqu'à 12h00</span></div>
+          <div class="prop-about-side-row"><span>Check-in</span><span x-text="'À partir de ' + formatHour(property.check_in_time)"></span></div>
+          <div class="prop-about-side-row"><span>Check-out</span><span x-text="'Jusqu\'à ' + formatHour(property.check_out_time)"></span></div>
           <template x-if="property.phone">
             <div class="prop-about-side-row"><span>Téléphone</span><span x-text="property.phone"></span></div>
           </template>
@@ -144,10 +145,20 @@ $pid  = (int) ($property_id ?? 0);
         </div>
         <div class="prop-about-side-card">
           <h4>Localisation</h4>
-          <div style="width:100%;height:110px;background:rgba(27,67,50,0.05);border-radius:10px;display:flex;align-items:center;justify-content:center;color:rgba(27,67,50,0.2);font-family:'Inter',sans-serif;font-size:13px;">Carte interactive</div>
+          <template x-if="property.latitude && property.longitude">
+            <div id="property-map" x-init="$nextTick(() => initMap())" style="width:100%;height:160px;border-radius:10px;overflow:hidden;"></div>
+          </template>
+          <template x-if="!property.latitude || !property.longitude">
+            <div style="width:100%;height:110px;background:rgba(27,67,50,0.05);border-radius:10px;display:flex;align-items:center;justify-content:center;color:rgba(27,67,50,0.35);font-family:'Inter',sans-serif;font-size:12px;text-align:center;padding:0 14px;">Localisation non renseignée par l'hôte</div>
+          </template>
           <p style="font-family:'Inter',sans-serif;font-size:13px;color:rgba(27,67,50,0.55);margin-top:12px;line-height:1.7;"
              x-text="(property.address ? property.address + ', ' : '') + property.city + ', Côte d\'Ivoire'">
           </p>
+          <template x-if="property.latitude && property.longitude">
+            <a :href="'https://www.openstreetmap.org/?mlat=' + property.latitude + '&mlon=' + property.longitude + '#map=16/' + property.latitude + '/' + property.longitude"
+               target="_blank" rel="noopener"
+               style="display:inline-block;margin-top:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#C9A84C;text-decoration:none;">Voir en plein écran →</a>
+          </template>
         </div>
       </div>
     </section>
@@ -168,13 +179,24 @@ $pid  = (int) ($property_id ?? 0);
 
       <div x-show="rooms.length > 0" class="prop-rooms-grid">
         <template x-for="room in rooms" :key="room.id">
-          <div class="prop-room-card">
-            <div class="prop-room-img" style="position:relative;">
-              <template x-if="photoUrl(room.cover_photo)">
-                <img :src="photoUrl(room.cover_photo)" :alt="room.type_name"
+          <div class="prop-room-card" x-data="{
+            photoIdx: 0,
+            touchStartX: 0,
+            swipeRoom(e, len) {
+              if (!len) return;
+              const dx = e.changedTouches[0].clientX - this.touchStartX;
+              if (Math.abs(dx) < 40) return;
+              this.photoIdx = dx < 0 ? (this.photoIdx + 1) % len : (this.photoIdx - 1 + len) % len;
+            }
+          }">
+            <div class="prop-room-img" style="position:relative;touch-action:pan-y;"
+                 @touchstart.passive="touchStartX = $event.touches[0].clientX"
+                 @touchend="swipeRoom($event, roomPhotos(room).length)">
+              <template x-if="photoUrl(roomPhotos(room)[photoIdx])">
+                <img :src="photoUrl(roomPhotos(room)[photoIdx])" :alt="room.type_name"
                      style="width:100%;height:100%;object-fit:cover;">
               </template>
-              <template x-if="!photoUrl(room.cover_photo)">
+              <template x-if="!photoUrl(roomPhotos(room)[photoIdx])">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
               </template>
               <template x-if="room.is_available === false">
@@ -182,6 +204,18 @@ $pid  = (int) ($property_id ?? 0);
                   Non disponible
                 </span>
               </template>
+              <div x-show="roomPhotos(room).length > 1"
+                   style="position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:2px;z-index:2;">
+                <template x-for="(p, i) in roomPhotos(room)" :key="i">
+                  <button type="button" @click.stop="photoIdx = i"
+                          style="width:26px;height:26px;padding:0;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+                    <span :style="(photoIdx === i
+                            ? 'width:8px;height:8px;background:white;'
+                            : 'width:6px;height:6px;background:rgba(255,255,255,0.55);')
+                            + 'border-radius:50%;display:block;box-shadow:0 0 0 1px rgba(0,0,0,0.35);transition:width 0.15s,height 0.15s;'"></span>
+                  </button>
+                </template>
+              </div>
             </div>
             <div class="prop-room-body">
               <div class="prop-room-name" x-text="room.type_name + (room.number ? ' — Chambre ' + room.number : '')"></div>
@@ -189,10 +223,30 @@ $pid  = (int) ($property_id ?? 0);
                 <template x-if="room.capacity">
                   <span>Jusqu'à <strong x-text="room.capacity"></strong> pers.</span>
                 </template>
+                <template x-if="room.beds_count">
+                  <span> · <strong x-text="room.beds_count"></strong> <span x-text="room.bed_type || 'lit(s)'"></span></span>
+                </template>
                 <template x-if="room.floor">
                   <span> · Étage <span x-text="room.floor"></span></span>
                 </template>
               </p>
+              <p class="prop-room-longdesc" x-show="room.type_description" x-text="room.type_description"></p>
+              <div class="prop-room-amenities" x-show="room.type_amenities && room.type_amenities.length">
+                <template x-for="a in (room.type_amenities || [])" :key="a">
+                  <span class="prop-room-amenity" x-text="a"></span>
+                </template>
+              </div>
+              <div class="prop-room-alt-prices" x-show="room.weekend_price || room.passage_price">
+                <template x-if="room.weekend_price">
+                  <span>Week-end : <strong x-text="formatPrice(room.weekend_price)"></strong></span>
+                </template>
+                <template x-if="room.weekend_price && room.passage_price">
+                  <span> · </span>
+                </template>
+                <template x-if="room.passage_price">
+                  <span>Passage : <strong x-text="formatPrice(room.passage_price) + ' / h'"></strong></span>
+                </template>
+              </div>
               <div class="prop-room-footer">
                 <div class="prop-room-price">
                   <span x-text="formatPrice(room.base_price)"></span> <small>/nuit</small>

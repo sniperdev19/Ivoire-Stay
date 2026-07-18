@@ -52,11 +52,17 @@ class GeniusPayService
 
         $data = json_decode($response, true);
         if (!is_array($data)) {
-            error_log('[GeniusPay] réponse non-JSON (HTTP ' . $httpCode . '): ' . substr($response, 0, 300));
+            error_log('[GeniusPay] réponse non-JSON (HTTP ' . $httpCode . '): ' . self::redact(substr($response, 0, 150)));
             throw new \RuntimeException('Réponse invalide (HTTP ' . $httpCode . ')');
         }
 
         return ['code' => $httpCode, 'data' => $data];
+    }
+
+    /** Masque les emails avant de logger un contenu tiers non maîtrisé. */
+    private static function redact(string $text): string
+    {
+        return preg_replace('/[\w.+-]+@[\w-]+\.[a-z]{2,}/i', '[email masqué]', $text);
     }
 
     private static function get(string $endpoint): array

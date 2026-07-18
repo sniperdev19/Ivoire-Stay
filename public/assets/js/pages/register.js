@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page inscription (saas/register.php)
+   Afristay — Page inscription (saas/register.php)
    Étapes: 1 Compte → 2 Établissement → 3 Paiement (plans payants)
    ============================================================ */
 
@@ -52,6 +52,8 @@ function registerPage(baseUrl) {
       if (!this.form.email.match(/^[^@]+@[^@]+\.[^@]+$/))          return void (this.error = 'Email invalide.');
       if (!this.form.phone.trim())                                   return void (this.error = 'Téléphone requis.');
       if (this.form.password.length < 8)                            return void (this.error = 'Mot de passe : 8 caractères minimum.');
+      if (!/[a-zA-Z]/.test(this.form.password) || !/\d/.test(this.form.password))
+                                                                       return void (this.error = 'Mot de passe : au moins une lettre et un chiffre.');
       if (this.form.password !== this.form.password_confirm)        return void (this.error = 'Les mots de passe ne correspondent pas.');
       this.step = 2;
     },
@@ -77,7 +79,7 @@ function registerPage(baseUrl) {
             this.token = data.data.token;
             this.step  = 3;
           } else {
-            window.location.href = base + '/login?registered=1';
+            window.location.href = base + '/install';
           }
         } else {
           this.error = data.message ?? "Erreur lors de l'inscription.";

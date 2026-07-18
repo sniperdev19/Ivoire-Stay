@@ -1,0 +1,16 @@
+# Dossier de fichiers téléversés (photos, justificatifs) : défense en
+# profondeur. La validation MIME/extension à l'upload (UploadService) suffit
+# normalement, ceci protège si un fichier exécutable passait malgré tout.
+Options -Indexes -ExecCGI
+
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(php|php\d|phtml|pht|phar|cgi|pl|py|asp|aspx|sh|exe|dll)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    <FilesMatch "\.(php|php\d|phtml|pht|phar|cgi|pl|py|asp|aspx|sh|exe|dll)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>

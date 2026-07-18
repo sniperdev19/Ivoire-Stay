@@ -9,7 +9,15 @@ class Router
 
     public function __construct()
     {
-        header('Access-Control-Allow-Origin: *');
+        // CORS restreint à l'origine propre de l'app (pas de wildcard) : défense
+        // en profondeur complémentaire au modèle JWT-en-en-tête (déjà insensible
+        // au CSRF classique faute de cookie). Un client non-navigateur (curl,
+        // app mobile) n'envoie pas d'Origin et n'est donc pas concerné par CORS.
+        $origin  = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $appHost = parse_url(APP_URL, PHP_URL_HOST);
+        if ($origin && parse_url($origin, PHP_URL_HOST) === $appHost) {
+            header('Access-Control-Allow-Origin: ' . $origin);
+        }
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
         header('Access-Control-Allow-Headers: Content-Type, Authorization');
 

@@ -52,7 +52,7 @@
                   <tr>
                     <td x-text="formatDate(exp.expense_date ?? exp.date)"></td>
                     <td style="color:#111827;font-weight:600;" x-text="exp.description ?? exp.label"></td>
-                    <td><div style="display:inline-block;padding:6px 8px;border-radius:8px;color:white;font-weight:700;" :style="'background:'+catColor(exp.category)" x-text="catLabel(exp.category)"></div></td>
+                    <td><div style="display:inline-block;padding:6px 8px;border-radius:8px;color:white;font-weight:700;" :style="{ background: catColor(exp.category) }" x-text="catLabel(exp.category)"></div></td>
                     <td style="font-weight:800;" x-text="formatPrice(exp.amount)"></td>
                     <td style="font-size:12px;color:#9CA3AF;" x-text="(exp.notes||'').length>30? (exp.notes.slice(0,30)+'...'): (exp.notes||'')"></td>
                     <td style="white-space:nowrap;">

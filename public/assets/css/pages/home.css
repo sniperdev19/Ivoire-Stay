@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page d'accueil (vitrine/home.php)
+   Afristay — Page d'accueil (vitrine/home.php)
    ============================================================ */
 
 /* ── HERO ── */
@@ -49,13 +49,14 @@
 .hm-av-item { padding: 0 36px 0 0; border-right: 0.5px solid rgba(27,67,50,0.08); display: flex; flex-direction: column; gap: 12px; }
 .hm-av-item:last-child { border-right: none; padding-right: 0; }
 .hm-av-item:not(:first-child) { padding-left: 36px; }
-.hm-av-num { font-family: 'Cormorant Garamond', serif; font-size: 64px; font-weight: 700; color: rgba(201,168,76,0.12); }
+.hm-av-num { font-family: 'Cormorant Garamond', serif; font-size: 64px; font-weight: 700; color: rgba(201,168,76,0.35); }
 .hm-av-bar { width: 24px; height: 2px; background: #C9A84C; margin-bottom: 4px; }
 .hm-av-name { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: #1B4332; font-weight: 400; }
 .hm-av-desc { font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(27,67,50,0.58); line-height: 1.75; }
 
 /* ── DESTINATIONS ── */
 .hm-dest { position: relative; overflow: hidden; padding: 80px 0 100px; background-size: cover; background-position: center; background-attachment: fixed; }
+.hm-dest::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,30,20,0.75) 0%, rgba(10,30,20,0.6) 40%, rgba(10,30,20,0.8) 100%); z-index: 1; }
 .hm-dest-header { text-align: center; padding: 0 80px; margin-bottom: 56px; position: relative; z-index: 2; }
 .hm-dest-header-top { display: flex; align-items: center; gap: 16px; justify-content: center; margin-bottom: 20px; }
 .hm-dest-rule { width: 48px; height: 0.5px; background: rgba(201,168,76,0.4); }

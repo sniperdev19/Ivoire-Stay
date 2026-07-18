@@ -39,12 +39,16 @@ define('MAIL_PORT',      env('MAIL_PORT',      '587'));
 define('MAIL_USER',      env('MAIL_USER',      ''));
 define('MAIL_PASS',      env('MAIL_PASS',      ''));
 define('MAIL_FROM',      env('MAIL_FROM',      env('MAIL_USER', '')));
-define('MAIL_FROM_NAME', env('MAIL_FROM_NAME', 'Ivoire Stay'));
+define('MAIL_FROM_NAME', env('MAIL_FROM_NAME', 'Afristay'));
 
 define('GENIUS_PAY_KEY',            env('GENIUS_PAY_KEY',    ''));
 define('GENIUS_PAY_SECRET',         env('GENIUS_PAY_SECRET', ''));
 define('GENIUS_PAY_URL',            env('GENIUS_PAY_URL',    'http://pay.genius.ci/api/v1/merchant'));
 define('GENIUS_PAY_WEBHOOK_SECRET', env('GENIUS_PAY_WEBHOOK_SECRET', ''));
+
+define('VAPID_PUBLIC_KEY',  env('VAPID_PUBLIC_KEY',  ''));
+define('VAPID_PRIVATE_KEY', env('VAPID_PRIVATE_KEY', ''));
+define('VAPID_SUBJECT',     env('VAPID_SUBJECT',     'mailto:contact@example.com'));
 
 // Error reporting
 if (APP_ENV === 'development') {

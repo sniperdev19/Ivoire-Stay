@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page recherche (vitrine/search.php)
+   Afristay — Page recherche (vitrine/search.php)
    Filtres, appel API /public/search, rendu grille/liste.
    ============================================================ */
 
@@ -116,7 +116,8 @@ function searchPage(base) {
       const u = r?.cover_photo ?? null;
       if (!u) return null;
       if (u.startsWith('http')) return u;
-      return this.base + '/' + u.replace(/^\/+/, '');
+      const clean = u.replace(/^\/+/, '');
+      return this.base + '/' + (clean.startsWith('assets/') ? clean : 'assets/' + clean);
     },
 
     formatPrice(p) {
@@ -132,7 +133,7 @@ function searchPage(base) {
       window.location.href = this.base + '/property/' + id;
     },
 
-    isFeatured(idx) { return idx === 0; },
+    isFeatured(p) { return !!p.is_boosted_effective; },
   };
 }
 

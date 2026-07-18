@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — JS global SaaS (B2B)
+   Afristay — JS global SaaS (B2B)
    Chargé par src/templates/saas/layout.php (avant Alpine)
    ============================================================ */
 
@@ -10,10 +10,11 @@ function saasLayout(baseUrl) {
     user: null,
     establishment: null,
     establishments: [],
+    pendingBookingsCount: 0,
 
     async init() {
       /* ── 1. Accès réservé à l'app installée (mode standalone) ── */
-      const pwa = window.IvoireStayPWA;
+      const pwa = window.AfristayPWA;
       const standalone = pwa
         ? pwa.isStandalone()
         : (window.matchMedia('(display-mode: standalone)').matches ||
@@ -72,6 +73,50 @@ function saasLayout(baseUrl) {
         /* Mode hors-ligne : on conserve le cache localStorage comme fallback.
            Les vraies données protégées restent inaccessibles (API calls échouent). */
       }
+
+      /* ── 5. Rafraîchit la liste des établissements depuis le serveur.
+              Le cache localStorage (étape 3) ne date que du dernier login — un
+              changement de plan (upgrade/downgrade, gel/dégel) entre-temps y
+              restait invisible jusqu'à la prochaine connexion (badge "Gelé",
+              carte "Plan actuel" et boutons désactivés figés sur l'ancien état
+              même après un window.location.reload(), puisque reload() ne fait
+              que relire le même localStorage périmé). ── */
+      if (this.userRole !== 'superadmin') {
+        try {
+          const estRes  = await fetch(this.baseUrl + '/api/establishments', {
+            headers: { 'Authorization': 'Bearer ' + token },
+          });
+          const estData = await estRes.json();
+          if (estData.success && Array.isArray(estData.data)) {
+            this.establishments = estData.data;
+            localStorage.setItem('establishments', JSON.stringify(estData.data));
+
+            const estId = localStorage.getItem('establishment_id');
+            this.establishment = (estId && this.establishments.find(e => e.id == estId))
+              ?? this.establishments[0]
+              ?? null;
+          }
+        } catch {
+          /* hors-ligne — le cache affiché à l'étape 3 reste en place */
+        }
+      }
+
+      this.loadPendingBookingsCount();
+    },
+
+    /* Badge "Réservations" du menu : nombre réel de réservations en attente de confirmation */
+    async loadPendingBookingsCount() {
+      const estId = this.establishment?.id ?? localStorage.getItem('establishment_id');
+      if (!estId) return;
+      try {
+        const res  = await fetch(this.baseUrl + '/api/bookings?establishment_id=' + estId + '&status=pending', {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+        });
+        const data = await res.json();
+        this.pendingBookingsCount = data.success ? (data.data?.length ?? 0) : 0;
+      } catch {
+        /* hors-ligne — laisse le badge à 0 plutôt que d'afficher une valeur fictive */
+      }
     },
 
     logout() {
@@ -100,12 +145,23 @@ function saasLayout(baseUrl) {
 
     /* Matrice des fonctionnalités par plan (miroir de config/plans.php) */
     planMatrix: {
-      starter:  { invoices: false, payments: false, expenses: false, reports: false, pdf: false, boost: false, multi_estab: false },
-      pro:      { invoices: true,  payments: true,  expenses: true,  reports: true,  pdf: true,  boost: false, multi_estab: false },
-      business: { invoices: true,  payments: true,  expenses: true,  reports: true,  pdf: true,  boost: true,  multi_estab: true  },
+      starter:  { invoices: false, payments: false, expenses: false, reports: false, pdf: false, boost: false, multi_estab: false, online_payment_control: false },
+      pro:      { invoices: true,  payments: true,  expenses: true,  reports: true,  pdf: true,  boost: false, multi_estab: false, online_payment_control: true  },
+      business: { invoices: true,  payments: true,  expenses: true,  reports: true,  pdf: true,  boost: true,  multi_estab: true,  online_payment_control: true  },
     },
-    get currentPlan() { return this.establishment?.plan ?? 'starter'; },
+    get currentPlan() {
+      const plan = this.establishment?.plan ?? 'starter';
+      if (plan === 'starter') return 'starter';
+      const expiresAt = this.establishment?.plan_expires_at;
+      if (expiresAt && new Date(expiresAt).getTime() < Date.now()) return 'starter';
+      return plan;
+    },
     canFeature(name)  { return this.planMatrix[this.currentPlan]?.[name] ?? false; },
+
+    /* Widget "Plan actuel" de la sidebar */
+    get planLabel() { return { starter: 'Starter', pro: 'Pro', business: 'Business' }[this.currentPlan] ?? this.currentPlan; },
+    /* Plan suivant à proposer en upsell ; null si déjà au plan le plus haut (Business) */
+    get planUpsellLabel() { return { starter: 'Pro', pro: 'Business' }[this.currentPlan] ?? null; },
   };
 }
 
@@ -119,9 +175,9 @@ function planUpgradeRequired(feature) {
     const estab = list.find(e => String(e.id) === String(id)) ?? list[0] ?? {};
     const plan  = estab.plan ?? 'starter';
     const matrix = {
-      starter:  { invoices: false, payments: false, expenses: false, reports: false, pdf: false },
-      pro:      { invoices: true,  payments: true,  expenses: true,  reports: true,  pdf: true  },
-      business: { invoices: true,  payments: true,  expenses: true,  reports: true,  pdf: true  },
+      starter:  { invoices: false, payments: false, expenses: false, reports: false, pdf: false, boost: false, multi_estab: false, online_payment_control: false },
+      pro:      { invoices: true,  payments: true,  expenses: true,  reports: true,  pdf: true,  boost: false, multi_estab: false, online_payment_control: true  },
+      business: { invoices: true,  payments: true,  expenses: true,  reports: true,  pdf: true,  boost: true,  multi_estab: true,  online_payment_control: true  },
     };
     return !(matrix[plan]?.[feature] ?? false);
   } catch { return true; }
@@ -135,6 +191,13 @@ const BOOKING_STATUS = {
   checked_in:  { label: 'Arrivée',    badge: 'badge badge-info',    color: '#2563EB' },
   checked_out: { label: 'Départ',     badge: 'badge badge-gold',    color: '#6B7280' },
   cancelled:   { label: 'Annulée',    badge: 'badge badge-danger',  color: '#DC2626' },
+};
+
+/* ─── Statuts de facture — source de vérité unique ──────────────────────── */
+const INVOICE_STATUS = {
+  draft: { label: 'Brouillon', badge: 'badge badge-info' },
+  sent:  { label: 'Envoyée',   badge: 'badge badge-warning' },
+  paid:  { label: 'Payée',     badge: 'badge badge-success' },
 };
 
 /* ─── Catégories de dépenses — source de vérité unique ─────────────────────
@@ -162,6 +225,9 @@ const saasHelpers = {
 
   /* Statut de réservation */
   bookingStatus(s) { return BOOKING_STATUS[s] ?? { label: s, badge: 'badge', color: '#9CA3AF' }; },
+
+  /* Statut de facture */
+  invoiceStatus(s) { return INVOICE_STATUS[s] ?? { label: s ?? '—', badge: 'badge' }; },
 
   /* Catégories de dépenses */
   catLabel(c) { return EXPENSE_CAT.labels[c] ?? c; },
@@ -235,10 +301,20 @@ function notificationsPanel(baseUrl) {
 
     typeConfig(type) {
       return {
-        booking_new:      { icon: '🏨', color: '#2563EB', bg: '#EFF6FF' },
-        payment_received: { icon: '💳', color: '#16a34a', bg: '#F0FDF4' },
-        invoice_sent:     { icon: '📧', color: '#C9A84C', bg: '#FFFBEB' },
-        invoice_paid:     { icon: '✅', color: '#16a34a', bg: '#F0FDF4' },
+        booking_new:            { icon: '🏨', color: '#2563EB', bg: '#EFF6FF' },
+        booking_cancelled:      { icon: '❌', color: '#DC2626', bg: '#FEF2F2' },
+        payment_received:       { icon: '💳', color: '#16a34a', bg: '#F0FDF4' },
+        invoice_sent:           { icon: '📧', color: '#C9A84C', bg: '#FFFBEB' },
+        invoice_paid:           { icon: '✅', color: '#16a34a', bg: '#F0FDF4' },
+        team_member_added:      { icon: '👤', color: '#7C3AED', bg: '#F5F3FF' },
+        subscription_expiring:  { icon: '⏳', color: '#D97706', bg: '#FFFBEB' },
+        arrival_reminder:       { icon: '🛎️', color: '#0891B2', bg: '#ECFEFF' },
+        departure_reminder:     { icon: '🧳', color: '#0891B2', bg: '#ECFEFF' },
+        new_establishment:      { icon: '🏢', color: '#2563EB', bg: '#EFF6FF' },
+        payout_requested:       { icon: '💸', color: '#D97706', bg: '#FFFBEB' },
+        subscription_activated: { icon: '⭐', color: '#16a34a', bg: '#F0FDF4' },
+        establishment_frozen:   { icon: '🧊', color: '#DC2626', bg: '#FEF2F2' },
+        establishment_unfrozen: { icon: '🔓', color: '#16a34a', bg: '#F0FDF4' },
       }[type] ?? { icon: '🔔', color: '#6B7280', bg: '#F9FAFB' };
     },
 

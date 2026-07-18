@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — JS global VITRINE (B2C)
+   Afristay — JS global VITRINE (B2C)
    Chargé par src/templates/vitrine/layout.php (avant Alpine)
    ============================================================ */
 

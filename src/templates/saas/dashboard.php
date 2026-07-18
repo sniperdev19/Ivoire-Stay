@@ -62,7 +62,6 @@
           <div style="width:42px;height:42px;border-radius:10px;background:rgba(201,168,76,0.12);display:grid;place-items:center;">
             <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
           </div>
-          <div style="background:#DCFCE7;color:#16A34A;padding:3px 8px;border-radius:9999px;font-size:11px;font-weight:700;">+12%</div>
         </div>
         <div style="font-size:22px;font-weight:800;color:#111827;line-height:1;margin-bottom:4px;" x-text="formatPrice(stats?.revenue ?? 0)"></div>
         <div style="font-size:12px;color:#6B7280;">Revenus ce mois</div>
@@ -110,7 +109,7 @@
         </div>
         <div style="font-size:12px;color:#6B7280;margin-bottom:10px;">Chambres disponibles</div>
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,0.05);font-size:12px;color:#9CA3AF;">
-          Bénéfice net : <span :style="(stats?.net_profit ?? 0) >= 0 ? 'color:#16A34A':'color:#DC2626'" style="font-weight:600;" x-text="formatPrice(stats?.net_profit ?? 0)"></span>
+          Bénéfice net : <span :style="{ color: (stats?.net_profit ?? 0) >= 0 ? '#16A34A' : '#DC2626' }" style="font-weight:600;" x-text="formatPrice(stats?.net_profit ?? 0)"></span>
         </div>
       </div>
 
@@ -126,12 +125,12 @@
           <a href="<?= $base_url ?>/saas/bookings" class="btn-saas-secondary" style="font-size:13px;padding:7px 14px;">Voir tout →</a>
         </div>
 
-        <div x-show="(planning||[]).length === 0" style="padding:32px;text-align:center;color:#9CA3AF;">
+        <div x-show="recentBookings.length === 0" style="padding:32px;text-align:center;color:#9CA3AF;">
             <svg xmlns="http://www.w3.org/2000/svg" style="width:32px;height:32px;margin:0 auto 8px;display:block;color:#E5E7EB;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
             Aucune réservation récente
         </div>
 
-        <div x-show="(planning||[]).length > 0" style="overflow-x:auto;">
+        <div x-show="recentBookings.length > 0" style="overflow-x:auto;">
           <table style="width:100%;border-collapse:collapse;">
             <thead style="text-align:left;color:rgba(0,0,0,0.65);font-size:13px;">
               <tr>
@@ -143,12 +142,12 @@
               </tr>
             </thead>
             <tbody>
-              <template x-for="b in planning" :key="b.id">
+              <template x-for="b in recentBookings" :key="b.id">
                 <tr style="border-top:1px solid rgba(0,0,0,0.06);">
                   <td style="padding:13px 20px;"><div style="display:flex;align-items:center;gap:10px;"><div style="width:30px;height:30px;border-radius:8px;background:rgba(201,168,76,0.12);display:grid;place-items:center;font-size:12px;font-weight:700;color:#C9A84C;" x-text="(b.client_name||'?').charAt(0).toUpperCase()"></div><span style="font-size:14px;font-weight:500;color:#111827;" x-text="b.client_name ?? '-'"></span></div></td>
-                  <td style="padding:13px 16px;font-size:13px;color:#4B5563;" x-text="b.room_name ?? '-'"></td>
-                  <td style="padding:13px 16px;font-size:13px;color:#4B5563;" x-text="formatDate(b.checkin ?? b.check_in)"></td>
-                  <td style="padding:13px 20px;font-size:13px;font-weight:600;color:#111827;text-align:right;" x-text="formatPrice(b.amount ?? b.total_price)"></td>
+                  <td style="padding:13px 16px;font-size:13px;color:#4B5563;" x-text="b.room_number ?? '-'"></td>
+                  <td style="padding:13px 16px;font-size:13px;color:#4B5563;" x-text="formatDate(b.check_in)"></td>
+                  <td style="padding:13px 20px;font-size:13px;font-weight:600;color:#111827;text-align:right;" x-text="formatPrice(b.total_amount)"></td>
                   <td style="padding:13px 16px;"><span :style="statusStyle(b.status)" x-text="statusLabel(b.status)"></span></td>
                 </tr>
               </template>

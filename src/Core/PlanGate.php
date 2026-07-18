@@ -61,6 +61,53 @@ class PlanGate
         return $max === PHP_INT_MAX ? -1 : $max;
     }
 
+    public static function maxEstablishments(array $estab): int
+    {
+        $plan = self::getPlan($estab);
+        $max  = self::plans()[$plan]['max_establishments'] ?? 1;
+        return $max === PHP_INT_MAX ? -1 : $max;
+    }
+
+    /**
+     * Un propriétaire peut créer un nouvel établissement tant qu'au moins un de ses
+     * établissements existants autorise, par son plan, le nombre total visé.
+     * Sans établissement existant (premier établissement), toujours autorisé.
+     */
+    public static function canAddEstablishment(array $ownerEstablishments, int $currentCount): bool
+    {
+        if ($currentCount === 0) return true;
+
+        $maxAllowed = 1;
+        foreach ($ownerEstablishments as $estab) {
+            $max = self::maxEstablishments($estab);
+            if ($max === -1) return true;
+            $maxAllowed = max($maxAllowed, $max);
+        }
+
+        return $currentCount < $maxAllowed;
+    }
+
+    /**
+     * Établissement en excédent par rapport à la limite de son plan effectif
+     * (voir Services\EstablishmentFreezeService) — phase A ou B du gel.
+     */
+    public static function isFrozen(array $estab): bool
+    {
+        return !empty($estab['frozen_at']);
+    }
+
+    /**
+     * Phase B : le délai de grâce (fin de la dernière réservation active au
+     * moment du gel) est dépassé — plus aucune gestion possible, même des
+     * réservations déjà en cours.
+     */
+    public static function isHardFrozen(array $estab): bool
+    {
+        return !empty($estab['frozen_at'])
+            && !empty($estab['frozen_hard_at'])
+            && strtotime($estab['frozen_hard_at']) <= time();
+    }
+
     private static function minPlanFor(string $feature): string
     {
         foreach (self::plans() as $config) {

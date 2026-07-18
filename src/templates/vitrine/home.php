@@ -11,7 +11,7 @@
       <div class="hm-hero-eyebrow"><span class="hm-pill">Nouveauté partagée</span></div>
       <h1 class="hm-hero-title">Réservez des séjours<br><em>mémorables</em><br>en Côte d'Ivoire</h1>
       <div class="hm-hero-rule"></div>
-      <p class="hm-hero-sub">Ivoire Stay connecte les voyageurs aux meilleurs établissements locaux, avec paiement Mobile Money et réservation instantanée.</p>
+      <p class="hm-hero-sub">Afristay connecte les voyageurs aux meilleurs établissements locaux, avec paiement Mobile Money et réservation instantanée.</p>
       <div class="hm-hero-btns">
         <a href="<?= $base ?>/search" class="hm-btn-p">Explorer les destinations →</a>
         <a href="<?= $base ?>/tarifs" class="hm-btn-g">Voir les tarifs SaaS</a>
@@ -25,31 +25,41 @@
           <p class="hm-search-sub">Destination, type d'hébergement et dates.</p>
           <div class="hm-search-rule"></div>
         </div>
-        <form class="hm-search-form">
+        <form class="hm-search-form"
+              x-data="{ city:'', check_in:'', check_out:'', type:'' }"
+              @submit.prevent="
+                const p = new URLSearchParams();
+                if (city)      p.set('city', city);
+                if (check_in)  p.set('check_in', check_in);
+                if (check_out) p.set('check_out', check_out);
+                if (type)      p.set('type', type);
+                window.location.href = '<?= $base ?>/search' + (p.toString() ? '?' + p.toString() : '');
+              ">
           <div class="hm-field">
             <label class="hm-label">Destination</label>
-            <input type="text" class="hm-input" placeholder="Abidjan, Yamoussoukro…">
+            <input type="text" class="hm-input" placeholder="Abidjan, Yamoussoukro…" x-model="city">
           </div>
           <div class="hm-field-row">
             <div class="hm-field">
               <label class="hm-label">Arrivée</label>
-              <input type="date" class="hm-input">
+              <input type="date" class="hm-input" x-model="check_in">
             </div>
             <div class="hm-field">
               <label class="hm-label">Départ</label>
-              <input type="date" class="hm-input">
+              <input type="date" class="hm-input" x-model="check_out">
             </div>
           </div>
           <div class="hm-field">
             <label class="hm-label">Type</label>
-            <select class="hm-input hm-select">
-              <option>Tous les types</option>
-              <option>Hôtel</option>
-              <option>Résidence</option>
-              <option>Villa</option>
+            <select class="hm-input hm-select" x-model="type">
+              <option value="">Tous les types</option>
+              <option value="hotel">Hôtel</option>
+              <option value="residence">Résidence</option>
+              <option value="villa">Villa</option>
+              <option value="appartement">Appartement</option>
             </select>
           </div>
-          <button type="button" onclick="window.location.href='<?= $base ?>/search'" class="hm-search-btn">
+          <button type="submit" class="hm-search-btn">
             Rechercher un hébergement
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </button>
@@ -58,11 +68,12 @@
     </div>
   </div>
 
+  <?php $stats = $stats ?? ['establishments' => 0, 'rooms' => 0, 'bookings' => 0, 'cities' => 0]; ?>
   <div class="hm-hero-strip">
-    <div class="hm-hero-stat"><strong>500<span>+</span></strong><span>Établissements</span></div>
-    <div class="hm-hero-stat"><strong>12 000<span>+</span></strong><span>Réservations</span></div>
-    <div class="hm-hero-stat"><strong>4.9<span>/5</span></strong><span>Note moyenne</span></div>
-    <div class="hm-hero-stat"><strong>3<span> villes</span></strong><span>Couverture nationale</span></div>
+    <div class="hm-hero-stat"><strong><?= number_format($stats['establishments'], 0, ',', ' ') ?></strong><span>Établissements</span></div>
+    <div class="hm-hero-stat"><strong><?= number_format($stats['rooms'], 0, ',', ' ') ?></strong><span>Chambres</span></div>
+    <div class="hm-hero-stat"><strong><?= number_format($stats['bookings'], 0, ',', ' ') ?></strong><span>Réservations</span></div>
+    <div class="hm-hero-stat"><strong><?= number_format($stats['cities'], 0, ',', ' ') ?><span> villes</span></strong><span>Couverture nationale</span></div>
   </div>
 </section>
 
@@ -75,7 +86,7 @@
   </div>
   <div class="hm-av-intro">
     <h2 class="hm-av-title">Une expérience pensée<br><em>pour l'Afrique</em></h2>
-    <p class="hm-av-sub">Ivoire Stay offre une plateforme simple, rapide et sécurisée pour les établissements et les voyageurs.</p>
+    <p class="hm-av-sub">Afristay offre une plateforme simple, rapide et sécurisée pour les établissements et les voyageurs.</p>
   </div>
   <div class="hm-av-grid">
     <div class="hm-av-item">
@@ -237,7 +248,7 @@
   <div class="hm-cta-bar"></div>
   <div class="hm-cta-body">
     <div class="hm-cta-deco">IS</div>
-    <div class="hm-cta-eyebrow"><div class="hm-cta-dot"></div><span>Rejoignez Ivoire Stay</span></div>
+    <div class="hm-cta-eyebrow"><div class="hm-cta-dot"></div><span>Rejoignez Afristay</span></div>
     <h2 class="hm-cta-title">Transformez votre<br>établissement <em>dès aujourd'hui.</em></h2>
     <p class="hm-cta-sub">Gérez réservations, clients et paiements depuis une interface conçue pour le marché ivoirien. Gratuit pour commencer.</p>
     <div class="hm-cta-btns">

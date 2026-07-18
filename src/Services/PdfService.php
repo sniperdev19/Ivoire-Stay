@@ -267,4 +267,215 @@ class PdfService
         $pdf->Output('F', $path);
         return 'storage/pdf/' . $filename;
     }
+
+    private const EXPENSE_CAT_LABELS = [
+        'maintenance' => 'Maintenance', 'salaries' => 'Salaires', 'supplies' => 'Fournitures',
+        'utilities'   => 'Énergie / Eau', 'marketing' => 'Marketing', 'other' => 'Autre',
+    ];
+
+    /**
+     * Rapport financier — simple/combiné (mode 'single'/'all') ou comparatif
+     * entre établissements (mode 'compare'). Même charte graphique que
+     * generateInvoice() (bandeau vert/or), remplace l'ancien "Exporter PDF"
+     * qui n'était en réalité qu'un window.print() côté client.
+     */
+    public static function generateReport(array $data): string
+    {
+        $dir = STORAGE_PATH . '/pdf';
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+
+        $mode     = $data['mode'] ?? 'single';
+        $slug     = $mode === 'compare' ? 'comparatif' : 'rapport';
+        $filename = $slug . '-' . ($data['from'] ?? date('Y-m-d')) . '-' . bin2hex(random_bytes(4)) . '.pdf';
+        $path     = $dir . '/' . $filename;
+
+        $pdf = new \FPDF('P', 'mm', 'A4');
+        $pdf->SetMargins(15, 15, 15);
+        $pdf->SetAutoPageBreak(true, 20);
+        $pdf->AddPage();
+
+        $u   = fn(string $s): string => mb_convert_encoding($s, 'ISO-8859-1', 'UTF-8');
+        $fmt = fn(float $v): string => number_format($v, 0, ',', ' ') . ' FCFA';
+
+        $green = [27, 67, 50];
+        $gold  = [201, 168, 76];
+        $light = [249, 247, 242];
+        $gray  = [107, 114, 128];
+        $dark  = [17, 24, 39];
+        $white = [255, 255, 255];
+        $W     = 180;
+
+        // ── BANDEAU ENTÊTE ───────────────────────────────────────────────────
+        $pdf->SetFillColor(...$green);
+        $pdf->Rect(0, 0, 210, 30, 'F');
+        $pdf->SetXY(15, 10);
+        $pdf->SetTextColor(...$gold);
+        $pdf->SetFont('Arial', 'B', 18);
+        $pdf->Cell(90, 8, $u(MAIL_FROM_NAME), 0, 0);
+
+        $periodLabel = ($data['period'] ?? 'month') === 'year' ? 'Année' : 'Mois';
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->SetTextColor(...$white);
+        $pdf->SetXY(105, 12);
+        $rangeLabel = self::fmtRange((string) ($data['from'] ?? ''), (string) ($data['to'] ?? ''));
+        $pdf->Cell(90, 5, $u($periodLabel . ' · ' . $rangeLabel), 0, 1, 'R');
+
+        $pdf->SetY(38);
+
+        // Tirets/flèches ASCII uniquement : FPDF (polices core) + ISO-8859-1
+        // n'incluent pas "—"/"→", qui ressortiraient en "?" sur le PDF.
+        $title = $mode === 'compare'
+            ? 'Rapport comparatif - tous établissements'
+            : 'Rapport - ' . ($data['title'] ?? 'Établissement');
+        $pdf->SetFont('Arial', 'B', 15);
+        $pdf->SetTextColor(...$dark);
+        $pdf->SetX(15);
+        $pdf->Cell($W, 9, $u($title), 0, 1);
+        $pdf->Ln(2);
+
+        if ($mode === 'compare') {
+            // ── TABLEAU COMPARATIF ───────────────────────────────────────────
+            $rows = $data['rows'] ?? [];
+
+            $pdf->SetFillColor(...$green);
+            $pdf->SetTextColor(...$white);
+            $pdf->SetFont('Arial', 'B', 8);
+            $pdf->SetX(15);
+            $pdf->Cell(50, 8, $u('Établissement'), 1, 0, 'L', true);
+            $pdf->Cell(32, 8, $u('Revenus'), 1, 0, 'R', true);
+            $pdf->Cell(32, 8, $u('Dépenses'), 1, 0, 'R', true);
+            $pdf->Cell(32, 8, $u('Bénéfice net'), 1, 0, 'R', true);
+            $pdf->Cell(34, 8, $u('Occupation'), 1, 1, 'R', true);
+
+            $totRevenue = 0.0; $totExpenses = 0.0; $totProfit = 0.0;
+            $pdf->SetFont('Arial', '', 9);
+            foreach ($rows as $i => $row) {
+                $pdf->SetFillColor(...($i % 2 === 0 ? [255, 255, 255] : $light));
+                $pdf->SetTextColor(...$dark);
+                $pdf->SetX(15);
+                $pdf->Cell(50, 7, $u((string) ($row['name'] ?? '—')), 1, 0, 'L', true);
+                $pdf->Cell(32, 7, $u($fmt((float) ($row['revenue'] ?? 0))), 1, 0, 'R', true);
+                $pdf->Cell(32, 7, $u($fmt((float) ($row['expenses'] ?? 0))), 1, 0, 'R', true);
+                $net = (float) ($row['net_profit'] ?? 0);
+                $pdf->SetTextColor(...($net >= 0 ? [22, 163, 74] : [220, 38, 38]));
+                $pdf->Cell(32, 7, $u($fmt($net)), 1, 0, 'R', true);
+                $pdf->SetTextColor(...$dark);
+                $pdf->Cell(34, 7, $u(number_format((float) ($row['occupancy_rate'] ?? 0), 1, ',', ' ') . ' %'), 1, 1, 'R', true);
+
+                $totRevenue  += (float) ($row['revenue'] ?? 0);
+                $totExpenses += (float) ($row['expenses'] ?? 0);
+                $totProfit   += $net;
+            }
+
+            $pdf->SetFont('Arial', 'B', 9);
+            $pdf->SetFillColor(...$green);
+            $pdf->SetTextColor(...$white);
+            $pdf->SetX(15);
+            $pdf->Cell(50, 8, $u('TOTAL'), 1, 0, 'L', true);
+            $pdf->Cell(32, 8, $u($fmt($totRevenue)), 1, 0, 'R', true);
+            $pdf->Cell(32, 8, $u($fmt($totExpenses)), 1, 0, 'R', true);
+            $pdf->Cell(32, 8, $u($fmt($totProfit)), 1, 0, 'R', true);
+            $pdf->Cell(34, 8, '', 1, 1, 'R', true);
+        } else {
+            // ── 4 INDICATEURS CLÉS ────────────────────────────────────────────
+            $kpis = [
+                ['Revenus',       $fmt((float) ($data['revenue']     ?? 0)), [22, 163, 74]],
+                ['Dépenses',      $fmt((float) ($data['expenses']    ?? 0)), [220, 38, 38]],
+                ['Bénéfice net',  $fmt((float) ($data['net_profit']  ?? 0)), ((float) ($data['net_profit'] ?? 0)) >= 0 ? [22, 163, 74] : [220, 38, 38]],
+                ["Taux d'occupation", number_format((float) ($data['occupancy_rate'] ?? 0), 1, ',', ' ') . ' %', [37, 99, 235]],
+            ];
+            $kpiW = $W / 4;
+            $kpiY = $pdf->GetY(); // fixe une bonne fois : Cell(...,0,2) déplace le curseur à chaque itération
+            foreach ($kpis as $i => [$label, $value, $color]) {
+                $x = 15 + $i * $kpiW;
+                $pdf->SetFillColor(...$light);
+                $pdf->Rect($x, $kpiY, $kpiW - 2, 20, 'F');
+                $pdf->SetXY($x + 3, $kpiY + 3);
+                $pdf->SetFont('Arial', '', 7);
+                $pdf->SetTextColor(...$gray);
+                $pdf->Cell($kpiW - 6, 4, $u($label), 0, 2);
+                $pdf->SetX($x + 3);
+                $pdf->SetFont('Arial', 'B', 11);
+                $pdf->SetTextColor(...$color);
+                $pdf->Cell($kpiW - 6, 6, $u($value), 0, 2);
+            }
+            $pdf->SetY($kpiY + 26);
+
+            // ── DÉPENSES PAR CATÉGORIE ───────────────────────────────────────
+            $byCategory = $data['expenses_by_category'] ?? [];
+            if ($byCategory) {
+                $pdf->SetFont('Arial', 'B', 11);
+                $pdf->SetTextColor(...$dark);
+                $pdf->SetX(15);
+                $pdf->Cell($W, 7, $u('Dépenses par catégorie'), 0, 1);
+
+                $pdf->SetFillColor(...$green);
+                $pdf->SetTextColor(...$white);
+                $pdf->SetFont('Arial', 'B', 8);
+                $pdf->SetX(15);
+                $pdf->Cell(120, 7, $u('Catégorie'), 1, 0, 'L', true);
+                $pdf->Cell(60, 7, $u('Montant'), 1, 1, 'R', true);
+
+                $pdf->SetFont('Arial', '', 9);
+                foreach ($byCategory as $i => $cat) {
+                    $pdf->SetFillColor(...($i % 2 === 0 ? [255, 255, 255] : $light));
+                    $pdf->SetTextColor(...$dark);
+                    $pdf->SetX(15);
+                    $label = self::EXPENSE_CAT_LABELS[$cat['category'] ?? ''] ?? ($cat['category'] ?? '—');
+                    $pdf->Cell(120, 6, $u($label), 1, 0, 'L', true);
+                    $pdf->Cell(60, 6, $u($fmt((float) ($cat['total'] ?? 0))), 1, 1, 'R', true);
+                }
+                $pdf->Ln(6);
+            }
+
+            // ── PAIEMENTS RÉCENTS ─────────────────────────────────────────────
+            $payments = $data['recent_payments'] ?? [];
+            if ($payments) {
+                $pdf->SetFont('Arial', 'B', 11);
+                $pdf->SetTextColor(...$dark);
+                $pdf->SetX(15);
+                $pdf->Cell($W, 7, $u('Paiements récents'), 0, 1);
+
+                $pdf->SetFillColor(...$green);
+                $pdf->SetTextColor(...$white);
+                $pdf->SetFont('Arial', 'B', 8);
+                $pdf->SetX(15);
+                $pdf->Cell(45, 7, $u('Référence'), 1, 0, 'L', true);
+                $pdf->Cell(55, 7, $u('Client'), 1, 0, 'L', true);
+                $pdf->Cell(40, 7, $u('Montant'), 1, 0, 'R', true);
+                $pdf->Cell(40, 7, $u('Date'), 1, 1, 'R', true);
+
+                $pdf->SetFont('Arial', '', 9);
+                foreach ($payments as $i => $p) {
+                    $pdf->SetFillColor(...($i % 2 === 0 ? [255, 255, 255] : $light));
+                    $pdf->SetTextColor(...$dark);
+                    $pdf->SetX(15);
+                    $pdf->Cell(45, 6, $u((string) ($p['reference'] ?? '—')), 1, 0, 'L', true);
+                    $pdf->Cell(55, 6, $u((string) ($p['client_name'] ?? '—')), 1, 0, 'L', true);
+                    $pdf->Cell(40, 6, $u($fmt((float) ($p['amount'] ?? 0))), 1, 0, 'R', true);
+                    $dateStr = !empty($p['paid_at']) ? date('d/m/Y', strtotime($p['paid_at'])) : '—';
+                    $pdf->Cell(40, 6, $u($dateStr), 1, 1, 'R', true);
+                }
+            }
+        }
+
+        // ── PIED DE PAGE ──────────────────────────────────────────────────────
+        $pdf->Ln(8);
+        $pdf->SetFillColor(...$green);
+        $pdf->Rect(15, $pdf->GetY(), $W, 0.5, 'F');
+        $pdf->Ln(3);
+        $pdf->SetFont('Arial', '', 7);
+        $pdf->SetTextColor(...$gray);
+        $pdf->Cell($W, 4, $u(MAIL_FROM_NAME . ' · ' . APP_URL . ' · Généré le ' . date('d/m/Y à H:i')), 0, 1, 'C');
+
+        $pdf->Output('F', $path);
+        return 'storage/pdf/' . $filename;
+    }
+
+    private static function fmtRange(string $from, string $to): string
+    {
+        $f = $from ? date('d/m/Y', strtotime($from)) : '';
+        $t = $to   ? date('d/m/Y', strtotime($to))   : '';
+        return $f && $t ? "$f au $t" : ($f ?: $t);
+    }
 }

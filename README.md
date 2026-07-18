@@ -1,4 +1,4 @@
-# Ivoire Stay
+# Afristay
 
 SaaS B2B de gestion hôtelière + vitrine B2C, en PHP (front controller) avec Tailwind CSS et Alpine.js.
 

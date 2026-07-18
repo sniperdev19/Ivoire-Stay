@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page réservation (vitrine/booking.php)
+   Afristay — Page réservation (vitrine/booking.php)
    ============================================================ */
 
 .booking-page { overflow-x: hidden; font-family: 'Inter', sans-serif; background: #FAF7F2; min-height: 100vh; }
@@ -7,6 +7,18 @@
 /* ── HERO ── */
 .bk-hero { background: #1B4332; position: relative; overflow: hidden; padding: 80px 80px 64px; padding-top: 160px; }
 .bk-hero-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(10,30,20,0.97) 0%, rgba(15,43,32,0.92) 100%); }
+.bk-hero-back {
+  position: absolute; top: 24px; left: 24px; z-index: 5;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 999px;
+  background: rgba(255,255,255,0.08); backdrop-filter: blur(6px);
+  color: white; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+  text-decoration: none; border: 1px solid rgba(255,255,255,0.15);
+  cursor: pointer; transition: background 0.2s; max-width: calc(100% - 48px);
+}
+.bk-hero-back:hover { background: rgba(255,255,255,0.16); }
+.bk-hero-back svg { width: 15px; height: 15px; flex-shrink: 0; }
+.bk-hero-back span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bk-hero-ghost { position: absolute; right: -40px; bottom: -30px; font-family: 'Cormorant Garamond', serif; font-size: 240px; font-weight: 700; color: rgba(201,168,76,0.04); line-height: 1; pointer-events: none; user-select: none; }
 .bk-hero-content { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 14px; max-width: 640px; }
 .bk-hero-rule { width: 40px; height: 1px; background: #C9A84C; }
@@ -37,6 +49,9 @@
 .bk-panel-tag { font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: rgba(201,168,76,0.55); }
 .bk-panel-room-name { font-family: 'Cormorant Garamond', serif; font-size: 32px; color: white; font-weight: 400; line-height: 1.1; }
 .bk-panel-hotel { font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(255,255,255,0.45); }
+.bk-panel-meta { font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(201,168,76,0.85); margin-top: 6px; }
+.bk-panel-amenities { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.bk-panel-amenity { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 3px 9px; border-radius: 999px; }
 .bk-panel-divider { height: 0.5px; background: rgba(255,255,255,0.06); }
 .bk-panel-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .bk-panel-label { font-family: 'Inter', sans-serif; font-size: 11px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.2em; }
@@ -57,6 +72,30 @@
 .bk-input:focus { border-color: #C9A84C; }
 .bk-input::placeholder { color: rgba(27,67,50,0.3); }
 .bk-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231B4332' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; background-size: 16px; padding-right: 40px; -webkit-appearance: none; }
+
+/* ── PLANNING / DISPONIBILITÉS ── */
+.bk-availability { margin-top: 4px; padding: 20px; background: white; border: 1px solid rgba(27,67,50,0.1); border-radius: 14px; }
+.bk-avail-header { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 14px; }
+.bk-avail-month { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: #1B4332; text-transform: capitalize; min-width: 160px; text-align: center; }
+.bk-avail-nav { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(27,67,50,0.15); background: white; color: #1B4332; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; line-height: 1; transition: all 0.15s; }
+.bk-avail-nav:hover:not(:disabled) { background: #1B4332; color: white; border-color: #1B4332; }
+.bk-avail-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+.bk-avail-legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 14px; font-family: 'Inter', sans-serif; font-size: 11px; color: rgba(27,67,50,0.55); }
+.bk-avail-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.bk-avail-dot { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+.bk-avail-dot-free { background: rgba(45,106,79,0.15); border: 1px solid rgba(27,67,50,0.15); }
+.bk-avail-dot-booked { background: rgba(220,38,38,0.75); }
+.bk-avail-dot-selected { background: #C9A84C; }
+.bk-avail-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.bk-avail-dow { text-align: center; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; color: rgba(27,67,50,0.35); padding-bottom: 4px; }
+.bk-avail-cell { aspect-ratio: 1; border: none; background: rgba(27,67,50,0.03); border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 12px; color: #1B4332; cursor: pointer; transition: all 0.15s; }
+.bk-avail-cell:hover:not(:disabled) { background: rgba(201,168,76,0.18); }
+.bk-avail-cell.bk-avail-empty { background: transparent; cursor: default; pointer-events: none; }
+.bk-avail-cell.bk-avail-past { color: rgba(27,67,50,0.2); cursor: not-allowed; }
+.bk-avail-cell.bk-avail-booked { background: rgba(220,38,38,0.12); color: rgba(220,38,38,0.75); text-decoration: line-through; cursor: not-allowed; }
+.bk-avail-cell.bk-avail-in-range { background: rgba(201,168,76,0.12); }
+.bk-avail-cell.bk-avail-selected { background: #C9A84C; color: white; font-weight: 700; }
+.bk-avail-hint { text-align: center; font-family: 'Inter', sans-serif; font-size: 11.5px; color: rgba(27,67,50,0.4); margin-top: 10px; margin-bottom: 0; }
 
 /* ── RÉCAPITULATIF (étape 3) ── */
 .bk-recap-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; margin-bottom: 28px; }
@@ -90,6 +129,12 @@
 .bk-success-title em { color: #C9A84C; font-style: italic; }
 .bk-success-sub { font-family: 'Inter', sans-serif; font-size: 15px; color: rgba(27,67,50,0.55); line-height: 1.8; max-width: 440px; }
 .bk-success-card { background: white; border: 1px solid rgba(27,67,50,0.08); border-radius: 20px; padding: 32px 40px; display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 480px; }
+/* .bk-panel-label/.bk-panel-value sont conçus pour le panneau latéral sombre
+   (texte blanc translucide sur fond #1B4332) — surcharge nécessaire ici car
+   .bk-success-card est sur fond blanc, sinon le texte est quasi invisible. */
+.bk-success-card .bk-panel-label { color: rgba(27,67,50,0.4); }
+.bk-success-card .bk-panel-value { color: #1B4332; }
+.bk-success-card .bk-panel-divider { background: rgba(27,67,50,0.08); }
 .bk-success-ref { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: #C9A84C; letter-spacing: 0.08em; }
 .bk-success-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 .bk-success-btn-p { padding: 12px 28px; background: #1B4332; color: white; border-radius: 999px; font-family: 'Inter', sans-serif; font-size: 14px; text-decoration: none; }
@@ -108,6 +153,11 @@
 /* ── INFO SUR PLACE ── */
 .bk-onsite-info { display: flex; align-items: flex-start; gap: 10px; background: rgba(45,106,79,0.06); border: 1px solid rgba(45,106,79,0.18); border-radius: 12px; padding: 14px 16px; font-family: 'Inter', sans-serif; font-size: 13px; color: #1B4332; line-height: 1.65; margin-bottom: 8px; }
 
+/* ── NUIT(S) WEEK-END INCLUSE(S) ── */
+.bk-weekend-notice { display: flex; align-items: flex-start; gap: 10px; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.25); border-radius: 12px; padding: 14px 16px; font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(27,67,50,0.8); line-height: 1.65; }
+.bk-weekend-notice svg { color: #B8860B; margin-top: 1px; }
+.bk-weekend-notice strong { color: #1B4332; font-weight: 700; }
+
 /* ── ANIMATIONS ── */
 @keyframes bk-scale-in { from { transform: scale(0); } to { transform: scale(1); } }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -125,6 +175,7 @@
   .bk-hero-title { font-size: 60px; }
 }
 @media (max-width: 768px) {
+  .bk-hero-back { top: 76px; left: 16px; }
   .bk-hero { padding: 60px 24px 48px; padding-top: 120px; }
   .bk-hero-title { font-size: 48px; }
   .bk-steps-bar { padding: 0 24px; overflow-x: auto; }

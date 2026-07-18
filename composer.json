@@ -5,7 +5,9 @@
   "require": {
     "php": ">=8.0",
     "phpmailer/phpmailer": "^6.9",
-    "setasign/fpdf": "^1.8"
+    "setasign/fpdf": "^1.8",
+    "minishlink/web-push": "^10.1",
+    "web-auth/webauthn-lib": "^5.3"
   },
   "autoload": {
     "psr-4": {

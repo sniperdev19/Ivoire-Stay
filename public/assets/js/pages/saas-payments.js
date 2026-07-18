@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page SaaS : Paiements (src/templates/saas/payments.php)
+   Afristay — Page SaaS : Paiements (src/templates/saas/payments.php)
    ============================================================ */
 
 function paymentsPage(baseUrl) {

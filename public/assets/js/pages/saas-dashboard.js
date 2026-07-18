@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page SaaS : Tableau de bord (saas/dashboard.php)
+   Afristay — Page SaaS : Tableau de bord (saas/dashboard.php)
    ============================================================ */
 
 function dashboardPage(baseUrl) {
@@ -20,9 +20,13 @@ function dashboardPage(baseUrl) {
       return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
     },
 
-    /* statusLabel dashboard : clés checkin/checkout (planning API) */
+    /* statusLabel : statuts réservation (recent_bookings) + clés checkin/checkout (planning API) */
     statusLabel(s) {
-      return { confirmed:'Confirmée', pending:'En attente', cancelled:'Annulée', checkin:'Arrivée', checkout:'Départ' }[s] ?? s;
+      return {
+        confirmed: 'Confirmée', pending: 'En attente', cancelled: 'Annulée',
+        checked_in: 'Arrivée', checked_out: 'Départ',
+        checkin: 'Arrivée', checkout: 'Départ',
+      }[s] ?? s;
     },
 
     async init() {
@@ -69,12 +73,18 @@ function dashboardPage(baseUrl) {
     statusStyle(s) {
       const base = 'display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:9999px;font-size:11px;font-weight:700;';
       return ({
-        confirmed: base + 'background:rgba(16,185,129,0.12);color:#047857;',
-        pending:   base + 'background:rgba(251,191,36,0.12);color:#92400E;',
-        cancelled: base + 'background:rgba(239,68,68,0.12);color:#B91C1C;',
-        checkin:   base + 'background:rgba(56,189,248,0.12);color:#0369A1;',
-        checkout:  base + 'background:rgba(249,115,22,0.12);color:#B45309;',
+        confirmed:  base + 'background:rgba(16,185,129,0.12);color:#047857;',
+        pending:    base + 'background:rgba(251,191,36,0.12);color:#92400E;',
+        cancelled:  base + 'background:rgba(239,68,68,0.12);color:#B91C1C;',
+        checked_in: base + 'background:rgba(56,189,248,0.12);color:#0369A1;',
+        checked_out:base + 'background:rgba(249,115,22,0.12);color:#B45309;',
+        checkin:    base + 'background:rgba(56,189,248,0.12);color:#0369A1;',
+        checkout:   base + 'background:rgba(249,115,22,0.12);color:#B45309;',
       }[s]) ?? base + 'background:rgba(148,163,184,0.12);color:#334155;';
+    },
+
+    get recentBookings() {
+      return this.stats?.recent_bookings ?? [];
     },
 
     get occupancyPct() {

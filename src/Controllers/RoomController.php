@@ -38,6 +38,9 @@ class RoomController
             'name'               => $data['name'],
             'description'        => $data['description'] ?? null,
             'capacity'           => (int) $data['capacity'],
+            'bed_type'           => $data['bed_type'] ?? null,
+            'beds_count'         => isset($data['beds_count']) ? (int)$data['beds_count'] : 1,
+            'amenities'          => isset($data['amenities']) && is_array($data['amenities']) ? json_encode(array_values($data['amenities'])) : null,
             'base_price'         => (float) $data['base_price'],
             'weekend_price'  => isset($data['weekend_price']) ? (float)$data['weekend_price'] : null,
             'passage_price'  => isset($data['passage_price']) ? (float)$data['passage_price'] : null,
@@ -52,8 +55,11 @@ class RoomController
         $data = $req->all();
         Guard::requireRoomType($id);
 
-        $allowed = ['name','description','capacity','base_price','weekend_price','passage_price'];
+        $allowed = ['name','description','capacity','bed_type','beds_count','base_price','weekend_price','passage_price'];
         $update  = array_intersect_key($data, array_flip($allowed));
+        if (isset($data['amenities']) && is_array($data['amenities'])) {
+            $update['amenities'] = json_encode(array_values($data['amenities']));
+        }
 
         RoomType::update($id, $update);
         Response::success(RoomType::find($id), 'Type mis à jour');
@@ -96,7 +102,15 @@ class RoomController
         if (!$estabId) Response::error('establishment_id requis');
 
         // Plan gate: room limit for starter
-        $estab       = Establishment::find($estabId);
+        $estab = Establishment::find($estabId);
+
+        // Établissement en excédent par rapport à la limite d'établissements du
+        // plan effectif (voir EstablishmentFreezeService) — plus d'ajout tant que
+        // le owner n'a pas remis son abonnement à niveau.
+        if (PlanGate::isFrozen($estab ?? [])) {
+            Response::error("Cet établissement dépasse la limite d'établissements de votre plan actuel — impossible d'ajouter une nouvelle chambre. Mettez à niveau votre abonnement pour le réactiver.", 403);
+        }
+
         $currentCount = (int) Database::query("SELECT COUNT(*) FROM rooms WHERE establishment_id = ?", [$estabId])->fetchColumn();
         if (!PlanGate::canAddRoom($estab ?? [], $currentCount)) {
             $max = PlanGate::maxRooms($estab ?? []);
@@ -128,6 +142,8 @@ class RoomController
             'status'           => $data['status'] ?? 'available',
             'notes'            => $data['notes'] ?? null,
         ]);
+
+        Room::update($id, ['slug' => Room::generateSlug($type['name'], $data['number'], $id)]);
 
         // Save amenities
         if (!empty($data['amenities']) && is_array($data['amenities'])) {
@@ -215,12 +231,17 @@ class RoomController
         $id   = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
         $room = Guard::requireRoom($id);
 
+        $count = (int) Database::query(
+            "SELECT COUNT(*) FROM room_photos WHERE room_id = ?", [$id]
+        )->fetchColumn();
+        if ($count >= 3) Response::error('Maximum 3 photos par chambre');
+
         $file = $req->file('photo');
         if (!$file) Response::error('Aucun fichier envoyé');
 
         try {
             $path    = UploadService::uploadRoomPhoto($file, $id);
-            $isCover = (int) ($req->input('is_cover', 0) == '1');
+            $isCover = (int) ($req->input('is_cover', 0) == '1') || $count === 0;
 
             if ($isCover) {
                 Database::query("UPDATE room_photos SET is_cover = 0 WHERE room_id = ?", [$id]);
@@ -228,7 +249,7 @@ class RoomController
 
             Database::query(
                 "INSERT INTO room_photos (room_id, file_path, is_cover, sort_order) VALUES (?, ?, ?, ?)",
-                [$id, $path, $isCover, 0]
+                [$id, $path, $isCover, $count]
             );
 
             Response::success(['path' => $path], 'Photo ajoutée', 201);

@@ -6,8 +6,10 @@
 .env.local
 .env.*.local
 
-# Fichiers uploadés
-/public/uploads/
+# Fichiers uploadés (le contenu est exclu, mais le .htaccess de durcissement
+# doit rester versionné pour être déployé)
+/public/assets/uploads/*
+!/public/assets/uploads/.htaccess
 /storage/
 
 # Logs
@@ -42,9 +44,14 @@ test_report.html
 
 #database
 database.sql
-
+*.sql
 # Sauvegarde des templates avant refactor CSS/JS (copie de sécurité locale)
 /_backup_templates/
 
 # Binaire Tailwind CLI autonome (40 Mo) — à retélécharger si besoin
 /tailwindcss.exe
+*.md
+
+
+# Dossier de staging pour l'hébergement (copie prête à téléverser, contient vendor/)
+/copy/

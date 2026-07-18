@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page d'accueil (vitrine/home.php)
+   Afristay — Page d'accueil (vitrine/home.php)
    Carrousel "Destinations phares".
    Les données (items) sont injectées depuis PHP via x-data.
    ============================================================ */

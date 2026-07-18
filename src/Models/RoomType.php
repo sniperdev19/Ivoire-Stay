@@ -15,7 +15,7 @@ class RoomType extends BaseModel
 
     public static function withRoomCount(int $estabId): array
     {
-        return Database::query(
+        $rows = Database::query(
             "SELECT rt.*, COUNT(r.id) as room_count
              FROM room_types rt
              LEFT JOIN rooms r ON r.room_type_id = rt.id
@@ -24,5 +24,18 @@ class RoomType extends BaseModel
              ORDER BY rt.name",
             [$estabId]
         )->fetchAll();
+        return array_map([self::class, 'decorate'], $rows);
+    }
+
+    public static function find(int $id): ?array
+    {
+        $row = parent::find($id);
+        return $row ? self::decorate($row) : null;
+    }
+
+    private static function decorate(array $row): array
+    {
+        $row['amenities'] = $row['amenities'] ? json_decode($row['amenities'], true) : [];
+        return $row;
     }
 }

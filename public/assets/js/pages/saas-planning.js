@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page SaaS : Planning
+   Afristay — Page SaaS : Planning
    ============================================================ */
 
 function planningPage(baseUrl) {
@@ -14,14 +14,26 @@ function planningPage(baseUrl) {
   selectedBooking: null,
   _dayMap: {},
 
+  viewMode: 'week',
+  weekStart: null,
+
   async init() {
     this.currentMonth = this._firstOfMonth();
+    this.weekStart    = this._mondayOf(new Date());
     await this.loadData();
   },
 
   _firstOfMonth() {
     const t = new Date();
     return new Date(t.getFullYear(), t.getMonth(), 1);
+  },
+
+  _mondayOf(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const dow = d.getDay();
+    d.setDate(d.getDate() + (dow === 0 ? -6 : 1 - dow));
+    return d;
   },
 
   _ymd(date) {
@@ -97,6 +109,95 @@ function planningPage(baseUrl) {
   get monthLabel() {
     if (!this.currentMonth) return '';
     return this.currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  },
+
+  get weekDays() {
+    if (!this.weekStart) return [];
+    const todayYmd = this._ymd(new Date());
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(this.weekStart);
+      d.setDate(d.getDate() + i);
+      const ymd = this._ymd(d);
+      days.push({
+        ymd,
+        dow:     d.toLocaleDateString('fr-FR', { weekday: 'short' }).toUpperCase().replace('.', ''),
+        dayNum:  d.getDate(),
+        isToday: ymd === todayYmd,
+      });
+    }
+    return days;
+  },
+
+  get weekLabel() {
+    const days = this.weekDays;
+    if (!days.length) return '';
+    const start = new Date(this.weekStart);
+    const end   = new Date(this.weekStart);
+    end.setDate(end.getDate() + 6);
+    const fmt = (d) => d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+    return fmt(start) + ' — ' + fmt(end);
+  },
+
+  /* Barres de séjour pour une chambre, positionnées sur la grille (colonnes 2 à 8 = jours). */
+  getRoomWeekBars(roomId) {
+    const days = this.weekDays;
+    if (!days.length) return [];
+    const weekStartTs = new Date(days[0].ymd).getTime();
+    const weekEndTs   = new Date(days[6].ymd).getTime() + 86_400_000;
+
+    const bars = [];
+    for (const b of this.bookings) {
+      if (b.room_id != roomId || b.status === 'cancelled') continue;
+
+      const ci = new Date(b.check_in.replace(' ', 'T'));
+      ci.setHours(0, 0, 0, 0);
+      let co = new Date(b.check_out.replace(' ', 'T'));
+      co.setHours(0, 0, 0, 0);
+      if (co.getTime() === ci.getTime()) co = new Date(ci.getTime() + 86_400_000);
+
+      if (co.getTime() <= weekStartTs || ci.getTime() >= weekEndTs) continue;
+
+      const clampedStart = Math.max(ci.getTime(), weekStartTs);
+      const clampedEnd   = Math.min(co.getTime(), weekEndTs);
+      const colStart = Math.round((clampedStart - weekStartTs) / 86_400_000) + 2;
+      const colEnd   = Math.round((clampedEnd   - weekStartTs) / 86_400_000) + 2;
+
+      bars.push({ booking: b, colStart, colEnd });
+    }
+    return bars;
+  },
+
+  /* Bloc de statut (ménage/maintenance) affiché sur la colonne du jour courant, si la chambre est dans cet état. */
+  getRoomStatusBlock(room) {
+    if (!['cleaning', 'maintenance'].includes(room.status)) return null;
+    const days = this.weekDays;
+    const idx  = days.findIndex(d => d.isToday);
+    if (idx === -1) return null;
+
+    const isCleaning = room.status === 'cleaning';
+    return {
+      col:   idx + 2,
+      label: isCleaning ? 'Ménage' : 'Maintenance',
+      kind:  isCleaning ? 'cleaning' : 'maintenance', // icône rendue en SVG dans planning.php, plus en x-html
+    };
+  },
+
+  async shiftWeek(delta) {
+    const d = new Date(this.weekStart);
+    d.setDate(d.getDate() + delta * 7);
+    this.weekStart = d;
+    if (d.getMonth() !== this.currentMonth.getMonth() || d.getFullYear() !== this.currentMonth.getFullYear()) {
+      this.currentMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+      await this.loadData();
+    }
+  },
+  async prevWeek()  { await this.shiftWeek(-1); },
+  async nextWeek()  { await this.shiftWeek(1); },
+  async goTodayWeek() {
+    this.weekStart    = this._mondayOf(new Date());
+    this.currentMonth = this._firstOfMonth();
+    await this.loadData();
   },
 
   get showDetail() { return this.selectedBooking !== null; },

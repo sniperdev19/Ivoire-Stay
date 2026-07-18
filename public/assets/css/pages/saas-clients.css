@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page SaaS : clients (saas/clients.php)
+   Afristay — Page SaaS : clients (saas/clients.php)
    ============================================================ */
 
 /* Ligne client cliquable */
@@ -19,3 +19,8 @@
 .client-stat { background: #FAFAFA; border-radius: 12px; padding: 14px; text-align:center; }
 .client-stat-value { font-size:20px; font-weight:800; color:#111827; line-height:1; margin-bottom:4px; }
 .client-stat-label { font-size:11px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.05em; }
+
+/* KPI en tête de page : reste en 2 colonnes sur mobile au lieu de s'empiler
+   en une seule colonne (évite le scroll inutile pour 3 chiffres). */
+.client-kpi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
+@media(max-width:640px) { .client-kpi-grid { grid-template-columns:repeat(2, minmax(0,1fr)); } }

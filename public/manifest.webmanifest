@@ -1,7 +1,7 @@
 {
-  "name": "Ivoire Stay — Espace Hôtelier",
-  "short_name": "Ivoire Stay",
-  "description": "Application de gestion hôtelière Ivoire Stay (réservations, chambres, facturation).",
+  "name": "Afristay Espace Hôtelier",
+  "short_name": "Afristay",
+  "description": "Application de gestion hôtelière Afristay (réservations, chambres, facturation).",
   "lang": "fr",
   "dir": "ltr",
   "start_url": "login",

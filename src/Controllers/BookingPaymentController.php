@@ -2,8 +2,8 @@
 
 namespace Controllers;
 
-use Core\{Request, Response, Database};
-use Models\Booking;
+use Core\{Request, Response, Database, PlanGate};
+use Models\{Booking, Invoice};
 use Services\{GeniusPayService, MailService};
 
 class BookingPaymentController
@@ -22,6 +22,26 @@ class BookingPaymentController
             Response::error('Cette réservation ne peut plus être payée en ligne.');
         }
 
+        // Bloquer la double initiation de paiement
+        if (!empty($booking['pay_token']) && $booking['pay_status'] === 'pending') {
+            Response::error('Un paiement est déjà en cours pour cette réservation. Vérifiez votre téléphone ou contactez l\'établissement.');
+        }
+
+        // Le paiement en ligne est une fonctionnalité Premium (plans Pro/Business),
+        // et peut en plus être désactivé par l'établissement lui-même
+        $estabRow = Database::query(
+            "SELECT e.plan, e.plan_expires_at, e.online_payment_enabled
+             FROM rooms r JOIN establishments e ON e.id = r.establishment_id
+             WHERE r.id = ?",
+            [$booking['room_id']]
+        )->fetch();
+        $onlinePaymentAllowed = $estabRow
+            && PlanGate::can(['plan' => $estabRow['plan'], 'plan_expires_at' => $estabRow['plan_expires_at']], 'online_payment_control')
+            && (bool) $estabRow['online_payment_enabled'];
+        if (!$onlinePaymentAllowed) {
+            Response::error("Le paiement en ligne n'est pas disponible pour cet établissement. Merci de choisir le paiement sur place.");
+        }
+
         $reference = 'BK-' . $bookingId . '-' . time();
         $amount    = (float) ($booking['total_amount'] ?? 0);
         if ($amount <= 0) Response::error('Montant invalide pour cette réservation.');
@@ -37,8 +57,10 @@ class BookingPaymentController
                 'description'    => 'Réservation chambre ' . ($booking['room_number'] ?? $bookingId),
                 'reference'      => $reference,
                 'pay_method'     => $payMethod,
-                'success_url'    => APP_URL . '/booking/' . $bookingId . '?payment=success&ref=' . urlencode($reference),
-                'error_url'      => APP_URL . '/booking/' . $bookingId . '?payment=error&ref='  . urlencode($reference),
+                // '/booking/{slug}' attend le slug de la CHAMBRE (pour recharger la page de réservation),
+                // pas l'ID de la réservation — sinon la page se rouvre sur la mauvaise chambre au retour.
+                'success_url'    => APP_URL . '/booking/' . ($booking['room_slug'] ?? $booking['room_id']) . '?payment=success&ref=' . urlencode($reference),
+                'error_url'      => APP_URL . '/booking/' . ($booking['room_slug'] ?? $booking['room_id']) . '?payment=error&ref='  . urlencode($reference),
                 'customer_name'  => $booking['client_name']  ?? 'Client',
                 'customer_email' => $booking['client_email'] ?? '',
             ]);
@@ -58,7 +80,8 @@ class BookingPaymentController
                 "UPDATE bookings SET pay_status = 'failed' WHERE id = ?",
                 [$bookingId]
             );
-            Response::error('Erreur GeniusPay : ' . $e->getMessage());
+            error_log('[GeniusPay initiate] booking=' . $bookingId . ' — ' . $e->getMessage());
+            Response::error('Le service de paiement est temporairement indisponible. Veuillez réessayer ou choisir le paiement sur place.');
         }
     }
 
@@ -101,10 +124,7 @@ class BookingPaymentController
                 "UPDATE bookings SET status = 'confirmed', pay_status = 'paid', paid_at = NOW() WHERE id = ?",
                 [$booking['id']]
             );
-            Database::query(
-                "UPDATE invoices SET status = 'paid', paid_at = NOW() WHERE booking_id = ?",
-                [$booking['id']]
-            );
+            $this->recordOnlinePayment((int) $booking['id']);
             // Email confirmation paiement
             $full = Booking::findWithDetails($booking['id']);
             if ($full) MailService::bookingPaid($full);
@@ -135,9 +155,24 @@ class BookingPaymentController
 
         if (!$booking) Response::notFound('Réservation introuvable');
 
+        // Détails renvoyés au client pour reconstituer l'écran de confirmation
+        // (le retour depuis GeniusPay est un rechargement complet de la page : le formulaire est vide)
+        $details = [
+            'booking_id'         => $booking['id'],
+            'reference'          => $booking['pay_reference'],
+            'room_number'        => $booking['room_number'],
+            'establishment_name' => $booking['establishment_name'],
+            'booking_type'       => $booking['booking_type'],
+            'check_in'           => $booking['check_in'],
+            'check_out'          => $booking['check_out'],
+            'hours'              => $booking['hours'],
+            'total_amount'       => $booking['total_amount'],
+            'guest_token'        => $booking['guest_token'],
+        ];
+
         // Déjà confirmé
         if ($booking['pay_status'] === 'paid' || $booking['status'] === 'confirmed') {
-            Response::success(['status' => 'paid', 'booking_status' => $booking['status']]);
+            Response::success(['status' => 'paid', 'booking_status' => $booking['status']] + $details);
         }
 
         $token = $booking['pay_token'] ?? $ref;
@@ -147,21 +182,21 @@ class BookingPaymentController
 
             if ($internalStatus === 'active') {
                 $this->confirmAndNotify($booking);
-                Response::success(['status' => 'paid', 'booking_status' => 'confirmed']);
+                Response::success(['status' => 'paid', 'booking_status' => 'confirmed'] + $details);
             } elseif ($internalStatus === 'failed') {
-                Response::success(['status' => 'failed', 'booking_status' => $booking['status']]);
+                Response::success(['status' => 'failed', 'booking_status' => $booking['status']] + $details);
             } else {
                 // Sandbox workaround : TRANSACTION_NOT_FOUND → faire confiance au success_url
                 $isNotFound = ($result['raw']['error']['code'] ?? '') === 'TRANSACTION_NOT_FOUND';
                 if ($isNotFound && APP_ENV === 'development') {
                     $this->confirmAndNotify($booking);
-                    Response::success(['status' => 'paid', 'booking_status' => 'confirmed']);
+                    Response::success(['status' => 'paid', 'booking_status' => 'confirmed'] + $details);
                 }
-                Response::success(['status' => 'pending', 'booking_status' => $booking['status']]);
+                Response::success(['status' => 'pending', 'booking_status' => $booking['status']] + $details);
             }
         } catch (\Exception $e) {
             error_log('[BookingPayment verify] ' . $e->getMessage());
-            Response::success(['status' => 'pending', 'booking_status' => $booking['status']]);
+            Response::success(['status' => 'pending', 'booking_status' => $booking['status']] + $details);
         }
     }
 
@@ -172,10 +207,35 @@ class BookingPaymentController
             "UPDATE bookings SET status = 'confirmed', pay_status = 'paid', paid_at = NOW() WHERE id = ?",
             [$booking['id']]
         );
-        Database::query(
-            "UPDATE invoices SET status = 'paid', paid_at = NOW() WHERE booking_id = ?",
-            [$booking['id']]
-        );
+        $this->recordOnlinePayment((int) $booking['id']);
         MailService::bookingPaid($booking);
+    }
+
+    /**
+     * Enregistre le paiement en ligne dans la table `payments` (Invoice::registerPayment
+     * met aussi à jour le statut de la facture à 'paid'). Sans ça, un paiement GeniusPay
+     * confirmait la facture mais n'apparaissait jamais dans le CA du dashboard ni dans
+     * l'onglet Paiements de la Comptabilité (qui ne lisent que la table `payments`).
+     * Idempotent : webhook et vérification manuelle peuvent toutes deux appeler ceci
+     * pour la même réservation.
+     */
+    private function recordOnlinePayment(int $bookingId): void
+    {
+        $invoice = Invoice::first(['booking_id' => $bookingId]);
+        if (!$invoice) return;
+        if (Invoice::paidAmount((int) $invoice['id']) > 0) return;
+
+        $payMethod = (string) Database::query(
+            "SELECT pay_method FROM bookings WHERE id = ?", [$bookingId]
+        )->fetchColumn();
+
+        Invoice::registerPayment(
+            $bookingId,
+            (int) $invoice['id'],
+            (float) $invoice['amount_ttc'],
+            'mobile_money',
+            'full',
+            'Paiement en ligne GeniusPay' . ($payMethod ? " ($payMethod)" : '')
+        );
     }
 }

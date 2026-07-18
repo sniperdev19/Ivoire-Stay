@@ -1,5 +1,5 @@
 /* ============================================================
-   Ivoire Stay — Page SaaS : Factures (src/templates/saas/invoices.php)
+   Afristay — Page SaaS : Factures (src/templates/saas/invoices.php)
    ============================================================ */
 
 function invoicesPage(baseUrl) {
