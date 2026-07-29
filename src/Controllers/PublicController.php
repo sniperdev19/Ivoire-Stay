@@ -3,8 +3,8 @@
 namespace Controllers;
 
 use Core\{Request, Response, Database, PlanGate, RateLimiter};
-use Models\{Establishment, Room, Booking, PublicClient};
-use Services\{CalendarService, MailService, NotificationService};
+use Models\{Establishment, Room, Booking, PublicClient, ContactMessage, NewsletterSubscriber, Announcement};
+use Services\{CalendarService, MailService, NotificationService, PdfService};
 
 class PublicController
 {
@@ -290,9 +290,12 @@ class PublicController
 
         // Le paiement en ligne est une fonctionnalité Premium (plans Pro/Business) :
         // même si le flag est activé en base, il reste sans effet sur un plan Starter
-        // (protège aussi contre un flag resté à 1 après un downgrade de plan)
+        // (protège aussi contre un flag resté à 1 après un downgrade de plan).
+        // ONLINE_PAYMENTS_ENABLED (verrou v1, config.php) passe outre tout le reste :
+        // fonctionnalité en développement, désactivée pour tout le monde pour l'instant.
         $estabForGate = ['plan' => $room['establishment_plan'], 'plan_expires_at' => $room['plan_expires_at']];
-        $room['online_payment_enabled'] = PlanGate::can($estabForGate, 'online_payment_control')
+        $room['online_payment_enabled'] = ONLINE_PAYMENTS_ENABLED
+            && PlanGate::can($estabForGate, 'online_payment_control')
             && (bool) $room['online_payment_enabled'];
 
         Response::success($room);
@@ -307,6 +310,95 @@ class PublicController
              ORDER BY count DESC"
         )->fetchAll();
         Response::success($results);
+    }
+
+    // ─── Consultation/téléchargement d'une réservation par le voyageur (sans compte) ──
+
+    /**
+     * Preuve de propriété d'une réservation : connaître le guest_token (jeton
+     * opaque renvoyé une seule fois à la création, cf. Models\Booking::create).
+     * Même mécanique que PushController::subscribeGuest().
+     */
+    private function verifyGuestBooking(int $id, string $token): array
+    {
+        $booking = $id ? Booking::findWithDetails($id) : null;
+        if (!$booking || empty($booking['guest_token']) || !hash_equals($booking['guest_token'], $token)) {
+            Response::error('Réservation ou jeton invalide', 403);
+        }
+        return $booking;
+    }
+
+    public function bookingShow(Request $req, array $params = []): void
+    {
+        $id    = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+        $token = (string) $req->get('token', '');
+        if (!$token) Response::error('Jeton requis', 403);
+
+        $booking = $this->verifyGuestBooking($id, $token);
+        unset($booking['guest_token']);
+        Response::success($booking);
+    }
+
+    public function bookingPdf(Request $req, array $params = []): void
+    {
+        $id    = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+        $token = (string) $req->get('token', '');
+        if (!$token) Response::error('Jeton requis', 403);
+
+        $booking = $this->verifyGuestBooking($id, $token);
+
+        $pdfPath = PdfService::generateBookingConfirmation($booking);
+        $absPath = BASE_PATH . '/' . $pdfPath;
+        if (file_exists($absPath) && str_ends_with($absPath, '.pdf')) {
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: attachment; filename="reservation-' . $id . '.pdf"');
+            readfile($absPath);
+            exit;
+        }
+        Response::error('Impossible de générer le document', 500);
+    }
+
+    /**
+     * "Retrouver ma réservation" : le voyageur prouve son identité en saisissant
+     * l'email ET/OU le téléphone déjà fournis à la réservation (pas de mot de
+     * passe, pas de code envoyé par email — c'est justement le canal qu'il ne
+     * consulte pas). Le guest_token de chaque réservation trouvée est renvoyé
+     * pour permettre ensuite le téléchargement PDF via bookingPdf(). Un seul
+     * des deux champs suffit — accepter la recherche par téléphone seul (ou
+     * email seul) affaiblit un peu la vérification d'identité par rapport à
+     * exiger les deux, compensé par le rate-limit IP ci-dessous.
+     * Une recherche sans résultat n'est pas une erreur (200, tableau vide) :
+     * c'est un résultat de recherche normal, pas un problème serveur.
+     */
+    public function bookingFind(Request $req, array $params = []): void
+    {
+        $ip  = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $key = 'public-booking-find:' . $ip;
+        if (RateLimiter::tooManyAttempts($key, 10, 3600)) {
+            Response::error('Trop de tentatives. Réessayez plus tard.', 429);
+        }
+        RateLimiter::hit($key, 3600);
+
+        $data  = $req->all();
+        $email = trim((string) ($data['email'] ?? ''));
+        $phone = trim((string) ($data['phone'] ?? ''));
+
+        if (!$email && !$phone) {
+            Response::error('Indiquez un email ou un numéro de téléphone.');
+        }
+        if ($email && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            Response::error('Email invalide');
+        }
+
+        $clients = PublicClient::findAllByEmailOrPhone($email ?: null, $phone ?: null);
+
+        $bookings = [];
+        foreach ($clients as $client) {
+            $bookings = array_merge($bookings, Booking::publicHistoryForClient((int) $client['id']));
+        }
+        usort($bookings, fn($a, $b) => strtotime((string) $b['created_at']) <=> strtotime((string) $a['created_at']));
+
+        Response::success($bookings);
     }
 
     public function sendContact(Request $req, array $params = []): void
@@ -327,6 +419,17 @@ class PublicController
             Response::error('Email invalide');
         }
 
+        // Stocké AVANT toute tentative d'email : source de vérité consultable dans
+        // l'admin (/admin/contact-messages), l'email n'est qu'un canal best-effort
+        // en plus (un échec SMTP ne doit jamais faire perdre le message du visiteur).
+        ContactMessage::create([
+            'name'    => $data['name'],
+            'email'   => $data['email'],
+            'phone'   => $data['phone'] ?? null,
+            'subject' => $data['subject'] ?? null,
+            'message' => $data['message'],
+        ]);
+
         try {
             MailService::sendContact([
                 'name'    => $data['name'],
@@ -335,10 +438,59 @@ class PublicController
                 'subject' => $data['subject'] ?? 'Contact vitrine',
                 'message' => $data['message'],
             ]);
-            Response::success([], 'Message envoyé avec succès');
         } catch (\Exception $e) {
             error_log('[Contact] ' . $e->getMessage());
-            Response::error('Impossible d\'envoyer le message. Veuillez réessayer.');
         }
+
+        Response::success([], 'Message envoyé avec succès');
+    }
+
+    /** GET /api/public/announcements — bandeau d'annonce affiché sur la vitrine (vitrine/layout.php). */
+    public function announcements(Request $req, array $params = []): void
+    {
+        Response::success(Announcement::activeOne());
+    }
+
+    /** POST /api/public/newsletter/subscribe — formulaire footer vitrine. */
+    public function newsletterSubscribe(Request $req, array $params = []): void
+    {
+        $ip  = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $key = 'newsletter-subscribe:' . $ip;
+        if (RateLimiter::tooManyAttempts($key, 5, 3600)) {
+            Response::error('Trop de tentatives. Réessayez plus tard.', 429);
+        }
+        RateLimiter::hit($key, 3600);
+
+        $email = trim((string) $req->input('email', ''));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            Response::error('Email invalide');
+        }
+
+        $existing = NewsletterSubscriber::findByEmail($email);
+        if ($existing) {
+            if ($existing['unsubscribed_at']) {
+                // Réabonnement après désabonnement : même ligne, jeton conservé.
+                NewsletterSubscriber::update((int) $existing['id'], ['unsubscribed_at' => null]);
+            }
+            Response::success([], 'Vous êtes déjà abonné(e) à la newsletter');
+        }
+
+        NewsletterSubscriber::create([
+            'email'             => $email,
+            'unsubscribe_token' => bin2hex(random_bytes(32)),
+        ]);
+
+        Response::success([], 'Merci de votre inscription à la newsletter !');
+    }
+
+    /** GET /api/public/newsletter/unsubscribe?token=... — lien présent dans chaque campagne. */
+    public function newsletterUnsubscribe(Request $req, array $params = []): void
+    {
+        $token = (string) $req->get('token', '');
+        $sub   = $token ? NewsletterSubscriber::findByToken($token) : null;
+        if (!$sub) Response::notFound('Lien de désabonnement invalide');
+
+        NewsletterSubscriber::update((int) $sub['id'], ['unsubscribed_at' => date('Y-m-d H:i:s')]);
+        Response::success([], 'Vous avez été désabonné(e) de la newsletter');
     }
 }

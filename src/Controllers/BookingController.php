@@ -231,6 +231,12 @@ class BookingController
         $booking = Guard::requireBooking($id);
         $this->requireNotHardFrozen((int) $booking['establishment_id']);
 
+        // Précondition de statut : protège le double-clic (ou deux appareils
+        // agissant sur la même réservation, ex. annulée entre-temps ailleurs).
+        if ($booking['status'] !== 'confirmed') {
+            Response::error('Cette réservation ne peut plus être check-in (statut actuel : ' . $booking['status'] . ').', 409);
+        }
+
         Booking::update($id, ['status' => 'checked_in']);
         Room::updateStatus($booking['room_id'], 'occupied');
         Response::success(null, 'Check-in effectué');
@@ -241,6 +247,10 @@ class BookingController
         $id      = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
         $booking = Guard::requireBooking($id);
         $this->requireNotHardFrozen((int) $booking['establishment_id']);
+
+        if ($booking['status'] !== 'checked_in') {
+            Response::error('Cette réservation ne peut plus être check-out (statut actuel : ' . $booking['status'] . ').', 409);
+        }
 
         Booking::update($id, ['status' => 'checked_out']);
         Room::updateStatus($booking['room_id'], 'available');

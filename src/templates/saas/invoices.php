@@ -24,7 +24,7 @@
       </div>
 
       <!-- KPI -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
+      <div class="saas-kpi-grid">
         <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Total factures</div><div style="font-size:20px;font-weight:800;" x-text="invoices.length"></div></div>
         <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Montant total TTC</div><div style="font-size:18px;font-weight:800;color:#1B4332;" x-text="formatPrice(invoices.reduce((s,i)=> s + (i.amount_ttc||0),0))"></div></div>
         <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Payées</div><div style="font-size:18px;font-weight:800;color:#16a34a;" x-text="invoices.filter(i=>i.status==='paid').length"></div></div>
@@ -125,6 +125,7 @@
     <div class="saas-modal" style="max-width:560px;" @click.stop>
       <div class="saas-modal-header">
         <h2 x-text="editing ? 'Modifier la facture' : 'Nouvelle facture'"></h2>
+        <button type="button" class="saas-modal-close" @click="showModal=false"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
       </div>
       <div class="saas-modal-body">
         <div style="display:grid;gap:12px;">

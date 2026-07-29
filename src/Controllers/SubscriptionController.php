@@ -4,7 +4,7 @@ namespace Controllers;
 
 use Core\{Request, Response, Database, PlanGate, Guard};
 use Models\Establishment;
-use Services\{GeniusPayService, MailService, NotificationService, EstablishmentFreezeService};
+use Services\{GeniusPayService, MailService, NotificationService, EstablishmentFreezeService, CommissionService};
 
 class SubscriptionController
 {
@@ -18,7 +18,12 @@ class SubscriptionController
     public function status(Request $req, array $params = []): void
     {
         $user  = $_REQUEST['_user'];
-        $estab = Establishment::find($user['establishment_id'] ?? 0);
+        // Guard::resolveEstabId($req) et non $user['establishment_id'] directement :
+        // ce dernier est figé sur le PREMIER établissement du owner à
+        // l'inscription — un owner multi-établissements (plan Business) ne
+        // pouvait jamais consulter/gérer l'abonnement d'un second établissement,
+        // ces actions retombaient toujours (silencieusement) sur le premier.
+        $estab = Establishment::find(Guard::resolveEstabId($req));
         if (!$estab) Response::notFound('Établissement introuvable');
 
         $plan       = PlanGate::getPlan($estab);
@@ -45,7 +50,7 @@ class SubscriptionController
     public function history(Request $req, array $params = []): void
     {
         $user  = $_REQUEST['_user'];
-        $estab = Establishment::find($user['establishment_id'] ?? 0);
+        $estab = Establishment::find(Guard::resolveEstabId($req)); // cf. status() ci-dessus
         if (!$estab) Response::notFound('Établissement introuvable');
 
         $rows = Database::query(
@@ -60,7 +65,7 @@ class SubscriptionController
     public function cancel(Request $req, array $params = []): void
     {
         $user  = $_REQUEST['_user'];
-        $estab = Establishment::find($user['establishment_id'] ?? 0);
+        $estab = Establishment::find(Guard::resolveEstabId($req)); // cf. status() ci-dessus
         if (!$estab) Response::notFound('Établissement introuvable');
 
         $currentPlan = PlanGate::getPlan($estab);
@@ -88,7 +93,7 @@ class SubscriptionController
     public function downgrade(Request $req, array $params = []): void
     {
         $user  = $_REQUEST['_user'];
-        $estab = Establishment::find($user['establishment_id'] ?? 0);
+        $estab = Establishment::find(Guard::resolveEstabId($req)); // cf. status() ci-dessus
         if (!$estab) Response::notFound('Établissement introuvable');
 
         $target      = $req->all()['plan'] ?? '';
@@ -179,7 +184,7 @@ class SubscriptionController
     public function initiate(Request $req, array $params = []): void
     {
         $user  = $_REQUEST['_user'];
-        $estab = Establishment::find($user['establishment_id'] ?? 0);
+        $estab = Establishment::find(Guard::resolveEstabId($req)); // cf. status() ci-dessus
         if (!$estab) Response::notFound('Établissement introuvable');
 
         $data    = $req->all();
@@ -226,6 +231,9 @@ class SubscriptionController
             $owner = Database::query("SELECT name, email FROM users WHERE id = ?", [$estab['owner_id']])->fetch();
             if ($owner) MailService::subscriptionActivated($owner['email'], $owner['name'], $plan, $expiresAt);
             NotificationService::subscriptionActivated($estab['name'] ?? ('#' . $estab['id']), $plans[$plan]['name'] ?? $plan, (int) $estab['id']);
+            if (($estab['plan'] ?? 'starter') === 'starter') {
+                CommissionService::recordFirstSubscription((int) $estab['id'], $plan);
+            }
             EstablishmentFreezeService::recompute((int) $estab['owner_id']);
 
             Response::success(['activated' => true], 'Abonnement activé — entièrement couvert par votre crédit de prorata');
@@ -319,10 +327,18 @@ class SubscriptionController
                 [$startedAt, $expiresAt, $sub['id']]
             );
 
+            $prevPlan = Database::query(
+                "SELECT plan FROM establishments WHERE id = ?", [$sub['establishment_id']]
+            )->fetchColumn();
+
             Database::query(
                 "UPDATE establishments SET plan = ?, plan_expires_at = ? WHERE id = ?",
                 [$sub['plan'], $expiresAt, $sub['establishment_id']]
             );
+
+            if (($prevPlan ?: 'starter') === 'starter') {
+                CommissionService::recordFirstSubscription((int) $sub['establishment_id'], $sub['plan']);
+            }
 
             // Email de confirmation d'abonnement
             $owner = Database::query(
@@ -405,10 +421,19 @@ class SubscriptionController
                     "UPDATE subscriptions SET status = 'active', started_at = ?, expires_at = ? WHERE id = ?",
                     [$startedAt, $expiresAt, $sub['id']]
                 );
+
+                $prevPlan = Database::query(
+                    "SELECT plan FROM establishments WHERE id = ?", [$sub['establishment_id']]
+                )->fetchColumn();
+
                 Database::query(
                     "UPDATE establishments SET plan = ?, plan_expires_at = ? WHERE id = ?",
                     [$sub['plan'], $expiresAt, $sub['establishment_id']]
                 );
+
+                if (($prevPlan ?: 'starter') === 'starter') {
+                    CommissionService::recordFirstSubscription((int) $sub['establishment_id'], $sub['plan']);
+                }
 
                 // Email activation (si pas encore envoyé via webhook)
                 $owner = Database::query(

@@ -3,22 +3,32 @@
 namespace Controllers;
 
 use Core\{Request, Response, Guard};
-use Models\PublicClient;
+use Models\{PublicClient, Booking};
 
 class ClientController
 {
     public function index(Request $req, array $params = []): void
     {
-        // Ne lister que les clients ayant une réservation dans le périmètre
-        $estabIds = Guard::isSuperadmin() ? null : Guard::establishmentIds();
-        Response::success(PublicClient::allWithBookingCount($estabIds));
+        // Scope à l'établissement actif (sélecteur front-end), pas à tous les
+        // établissements de l'owner — cf. Guard::resolveEstabId(), même
+        // pattern que BookingController::index(). Sans ça, un owner
+        // multi-établissements voyait les clients de tous ses établissements
+        // mélangés, quel que soit celui sélectionné dans l'interface.
+        $estabId = Guard::resolveEstabId($req);
+        if (!$estabId) Response::error('establishment_id requis');
+        Response::success(PublicClient::allWithBookingCount([$estabId]));
     }
 
     public function show(Request $req, array $params = []): void
     {
-        $id     = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
-        $client = Guard::requireClient($id);
-        Response::success($client);
+        $id = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+        Guard::requireClient($id);
+
+        $estabIds = Guard::isSuperadmin() ? null : Guard::establishmentIds();
+        $client   = PublicClient::withStats($id, $estabIds);
+        $bookings = Booking::historyForClient($id, $estabIds);
+
+        Response::success(['client' => $client, 'bookings' => $bookings]);
     }
 
     public function update(Request $req, array $params = []): void

@@ -22,14 +22,6 @@
           </template>
         </select>
       </div>
-      <div class="sr-sb-field">
-        <label class="sr-sb-label">Arrivée</label>
-        <input type="date" class="sr-sb-input" x-model="filters.check_in">
-      </div>
-      <div class="sr-sb-field">
-        <label class="sr-sb-label">Départ</label>
-        <input type="date" class="sr-sb-input" x-model="filters.check_out">
-      </div>
       <button class="sr-sb-btn" @click="search()">Rechercher</button>
     </div>
   </div>

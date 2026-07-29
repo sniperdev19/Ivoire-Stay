@@ -125,7 +125,9 @@
                   </template>
                 </td>
                 <td style="font-weight:700;color:#111827;text-align:right;" x-text="formatPrice(b.total_price)"></td>
-                <td><span :class="statusConfig(b.status).badge" x-text="statusConfig(b.status).label"></span></td>
+                <td>
+                  <span :class="statusConfig(b.status).badge" x-text="statusConfig(b.status).label"></span>
+                </td>
                 <td style="text-align:right;">
                   <div style="display:flex;gap:6px;justify-content:flex-end;">
                     <button type="button" class="booking-action-btn" @click.stop="openDetail(b)" title="Modifier">
@@ -155,15 +157,15 @@
 
   <!-- ═══ MODAL DÉTAIL ═══ -->
   <div x-cloak x-show="showDetail" class="saas-modal-bg" @click.self="showDetail=false" @keydown.escape.window="showDetail=false">
-    <div class="saas-modal" style="max-width:640px;" role="dialog" aria-modal="true">
+    <div class="saas-modal booking-detail-modal" style="max-width:640px;" role="dialog" aria-modal="true">
       <div class="saas-modal-header">
-        <div>
-          <p style="font-size:12px;color:#6B7280;margin:0;">Réservation #<span x-text="selectedBooking?.id"></span></p>
-          <h2 style="font-size:18px;font-weight:700;margin:6px 0 0;color:#111827;" x-text="selectedBooking?.client_name"></h2>
+        <div class="modal-header-info">
+          <p class="modal-eyebrow">Réservation #<span x-text="selectedBooking?.id"></span></p>
+          <h2 class="modal-title-lg" x-text="selectedBooking?.client_name"></h2>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
           <span x-show="selectedBooking" :class="statusConfig(selectedBooking?.status).badge" x-text="statusConfig(selectedBooking?.status).label"></span>
-          <button type="button" style="background:none;border:none;color:#6B7280;cursor:pointer;font-size:22px;line-height:1;" @click="showDetail=false">×</button>
+          <button type="button" class="saas-modal-close" @click="showDetail=false"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         </div>
       </div>
 
@@ -172,59 +174,58 @@
           <svg class="spinner" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:28px;height:28px;stroke:#C9A84C;" fill="none"><circle cx="12" cy="12" r="10" stroke-width="4" stroke-opacity="0.25"></circle><path d="M22 12a10 10 0 00-10-10" stroke-width="4" stroke-linecap="round"></path></svg>
         </div>
 
-        <div x-show="!detailLoading" style="display:grid;gap:22px;">
+        <div x-show="!detailLoading" style="display:grid;gap:18px;">
 
-          <!-- Client -->
-          <div style="background:#F9FAFB;border-radius:12px;padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <!-- Client / Chambre -->
+          <div class="booking-detail-card booking-detail-grid">
             <div>
-              <p class="saas-label" style="margin-bottom:4px;">Client</p>
-              <p style="margin:0;font-weight:600;color:#111827;" x-text="selectedBooking?.client_name"></p>
-              <p style="margin:4px 0 0;font-size:13px;color:#6B7280;" x-text="selectedBooking?.client_phone"></p>
-              <p x-show="selectedBooking?.client_email" style="margin:3px 0 0;font-size:13px;color:#6B7280;" x-text="selectedBooking?.client_email"></p>
+              <p class="booking-detail-label">Client</p>
+              <p class="booking-detail-value" x-text="selectedBooking?.client_name"></p>
+              <p class="booking-detail-meta" x-text="selectedBooking?.client_phone"></p>
+              <p x-show="selectedBooking?.client_email" class="booking-detail-meta" x-text="selectedBooking?.client_email"></p>
             </div>
             <div>
-              <p class="saas-label" style="margin-bottom:4px;">Chambre</p>
-              <p style="margin:0;font-weight:600;color:#111827;" x-text="'Chambre ' + selectedBooking?.room_number + (selectedBooking?.floor ? ' (étage ' + selectedBooking.floor + ')' : '')"></p>
-              <p style="margin:4px 0 0;font-size:13px;color:#6B7280;" x-text="selectedBooking?.room_type"></p>
-              <p style="margin:3px 0 0;font-size:13px;color:#6B7280;" x-text="(selectedBooking?.guests_count ?? 1) + ' voyageur' + ((selectedBooking?.guests_count ?? 1) > 1 ? 's' : '')"></p>
+              <p class="booking-detail-label">Chambre</p>
+              <p class="booking-detail-value" x-text="'Chambre ' + selectedBooking?.room_number + (selectedBooking?.floor ? ' (étage ' + selectedBooking.floor + ')' : '')"></p>
+              <p class="booking-detail-meta" x-text="selectedBooking?.room_type"></p>
+              <p class="booking-detail-meta" x-text="(selectedBooking?.guests_count ?? 1) + ' voyageur' + ((selectedBooking?.guests_count ?? 1) > 1 ? 's' : '')"></p>
             </div>
           </div>
 
           <!-- Dates / durée -->
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
-            <div>
-              <p class="saas-label" style="margin-bottom:4px;">Arrivée</p>
-              <p style="margin:0;font-weight:600;color:#111827;" x-text="formatDate(selectedBooking?.check_in)"></p>
+          <div class="booking-detail-stay">
+            <div class="booking-detail-stay-dates">
+              <div>
+                <p class="booking-detail-label">Arrivée</p>
+                <p class="booking-detail-value" x-text="formatDate(selectedBooking?.check_in)"></p>
+              </div>
+              <span class="booking-detail-stay-arrow" x-show="selectedBooking?.booking_type !== 'passage'">→</span>
+              <div x-show="selectedBooking?.booking_type !== 'passage'">
+                <p class="booking-detail-label">Départ</p>
+                <p class="booking-detail-value" x-text="formatDate(selectedBooking?.check_out)"></p>
+              </div>
             </div>
-            <div x-show="selectedBooking?.booking_type !== 'passage'">
-              <p class="saas-label" style="margin-bottom:4px;">Départ</p>
-              <p style="margin:0;font-weight:600;color:#111827;" x-text="formatDate(selectedBooking?.check_out)"></p>
-            </div>
-            <div>
-              <p class="saas-label" style="margin-bottom:4px;" x-text="selectedBooking?.booking_type === 'passage' ? 'Durée' : 'Nuits'"></p>
-              <p style="margin:0;font-weight:600;color:#111827;"
+            <div class="booking-detail-stay-chips">
+              <span class="booking-detail-chip"
                 x-text="selectedBooking?.booking_type === 'passage'
                   ? (selectedBooking?.hours + ' heure' + (selectedBooking?.hours > 1 ? 's' : ''))
                   : (selectedBooking?.nights + ' nuit' + (selectedBooking?.nights > 1 ? 's' : ''))">
-              </p>
-            </div>
-            <div>
-              <p class="saas-label" style="margin-bottom:4px;">Type de séjour</p>
+              </span>
               <span class="badge" :style="typeBadgeStyle(selectedBooking?.booking_type)" x-text="typeLabel(selectedBooking?.booking_type)"></span>
             </div>
           </div>
 
           <!-- Montant + facture -->
-          <div style="background:#F9FAFB;border-radius:12px;padding:16px;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="booking-detail-card">
+            <div class="booking-detail-grid">
               <div>
-                <p class="saas-label" style="margin-bottom:4px;">Montant total</p>
-                <p style="margin:0;font-size:20px;font-weight:700;color:#111827;" x-text="formatPrice(selectedBooking?.total_amount ?? selectedBooking?.total_price)"></p>
+                <p class="booking-detail-label">Montant total</p>
+                <p class="booking-detail-amount" x-text="formatPrice(selectedBooking?.total_amount ?? selectedBooking?.total_price)"></p>
               </div>
               <div x-show="selectedBooking?.invoice_number">
-                <p class="saas-label" style="margin-bottom:4px;">Facture</p>
-                <p style="margin:0;font-weight:600;color:#111827;" x-text="selectedBooking?.invoice_number"></p>
-                <span :class="invoiceStatus(selectedBooking?.invoice_status).badge" style="margin-top:4px;" x-text="invoiceStatus(selectedBooking?.invoice_status).label"></span>
+                <p class="booking-detail-label">Facture</p>
+                <p class="booking-detail-invoice-number" x-text="selectedBooking?.invoice_number"></p>
+                <span :class="invoiceStatus(selectedBooking?.invoice_status).badge" style="margin-top:6px;" x-text="invoiceStatus(selectedBooking?.invoice_status).label"></span>
               </div>
             </div>
 

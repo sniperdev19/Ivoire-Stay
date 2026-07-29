@@ -26,7 +26,7 @@ $defaultTab = $defaultTab ?? 'invoices';
       </div>
 
       <!-- KPI BAR -->
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;">
+      <div class="saas-kpi-grid">
         <div class="kpi-card saas-card">
           <div style="font-size:11px;color:#9CA3AF;margin-bottom:4px;">Total factures</div>
           <div style="font-size:20px;font-weight:800;color:#111827;" x-text="invoices.length"></div>
@@ -289,8 +289,8 @@ $defaultTab = $defaultTab ?? 'invoices';
     <div class="saas-modal" style="max-width:540px;" @click.stop>
       <div class="saas-modal-header">
         <h2 x-text="editing ? 'Modifier la facture' : 'Nouvelle facture'"></h2>
-        <button @click="showModal=false" style="background:none;border:none;cursor:pointer;color:#6B7280;">
-          <svg xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        <button type="button" class="saas-modal-close" @click="showModal=false">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="saas-modal-body">
@@ -349,8 +349,8 @@ $defaultTab = $defaultTab ?? 'invoices';
     <div class="saas-modal" style="max-width:520px;" @click.stop>
       <div class="saas-modal-header">
         <h2 x-text="editing ? 'Modifier le paiement' : 'Enregistrer un paiement'"></h2>
-        <button @click="showModal=false" style="background:none;border:none;cursor:pointer;color:#6B7280;">
-          <svg xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        <button type="button" class="saas-modal-close" @click="showModal=false">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="saas-modal-body">
@@ -368,18 +368,18 @@ $defaultTab = $defaultTab ?? 'invoices';
           </template>
           <!-- Récap restant si facture sélectionnée -->
           <template x-if="payRemaining && !editing">
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-              <div style="background:#F9FAFB;border-radius:8px;padding:10px 12px;">
-                <div style="font-size:10px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.05em;">Total facture</div>
-                <div style="font-size:13px;font-weight:700;color:#111827;" x-text="formatPrice(payRemaining.ttc)"></div>
+            <div class="modal-grid" style="grid-template-columns:1fr 1fr 1fr;gap:8px;">
+              <div class="modal-card" style="padding:10px 12px;">
+                <p class="modal-label" style="margin-bottom:2px;">Total facture</p>
+                <p class="modal-value" x-text="formatPrice(payRemaining.ttc)"></p>
               </div>
-              <div style="background:#F0FDF4;border-radius:8px;padding:10px 12px;">
-                <div style="font-size:10px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.05em;">Déjà payé</div>
-                <div style="font-size:13px;font-weight:700;color:#16a34a;" x-text="formatPrice(payRemaining.paid)"></div>
+              <div class="modal-card" style="padding:10px 12px;background:#F0FDF4;">
+                <p class="modal-label" style="margin-bottom:2px;">Déjà payé</p>
+                <p class="modal-value" style="color:#16a34a;" x-text="formatPrice(payRemaining.paid)"></p>
               </div>
-              <div style="background:#FEF3C7;border-radius:8px;padding:10px 12px;">
-                <div style="font-size:10px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.05em;">Restant</div>
-                <div style="font-size:13px;font-weight:700;color:#D97706;" x-text="formatPrice(payRemaining.remaining)"></div>
+              <div class="modal-card" style="padding:10px 12px;background:#FEF3C7;">
+                <p class="modal-label" style="margin-bottom:2px;">Restant</p>
+                <p class="modal-value" style="color:#D97706;" x-text="formatPrice(payRemaining.remaining)"></p>
               </div>
             </div>
           </template>
@@ -445,7 +445,9 @@ $defaultTab = $defaultTab ?? 'invoices';
           <svg xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           Envoyer la facture par email
         </h2>
-        <button class="saas-modal-close" @click="showModal=false">✕</button>
+        <button type="button" class="saas-modal-close" @click="showModal=false">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
       </div>
 
       <!-- Succès -->
@@ -462,15 +464,13 @@ $defaultTab = $defaultTab ?? 'invoices';
           <div class="saas-modal-body" style="display:flex;flex-direction:column;gap:16px;">
             <!-- Récap facture -->
             <template x-if="sendEmailTarget">
-              <div style="background:#F9FAFB;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;">
-                <div style="font-size:13px;font-weight:700;color:#111827;" x-text="sendEmailTarget.invoice_number"></div>
-                <div style="font-size:12px;color:#6B7280;">
+              <div class="modal-card" style="display:flex;flex-direction:column;gap:4px;">
+                <p class="modal-mono" x-text="sendEmailTarget.invoice_number"></p>
+                <p class="modal-meta" style="margin-top:0;">
                   <span x-text="sendEmailTarget.client_name"></span> ·
                   <span style="font-weight:600;color:#1B4332;" x-text="formatPrice(sendEmailTarget.amount_ttc)"></span>
-                </div>
-                <div style="font-size:11px;margin-top:2px;">
-                  <span :class="invStatusCfg(sendEmailTarget.status).badge" x-text="invStatusCfg(sendEmailTarget.status).label"></span>
-                </div>
+                </p>
+                <span :class="invStatusCfg(sendEmailTarget.status).badge" style="align-self:flex-start;" x-text="invStatusCfg(sendEmailTarget.status).label"></span>
               </div>
             </template>
 

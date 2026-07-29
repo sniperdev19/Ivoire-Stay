@@ -3,11 +3,11 @@
 <div class="home-page">
 
 <!-- SECTION 1 - HERO -->
-<section class="hm-hero" style="background-image:url('<?= $base ?>/assets/bg_home.jpg')">
+<section class="hm-hero" style="background-image:url('<?= $base ?>/assets/img/vitrine/bg-home.jpg')">
   <div class="hm-hero-overlay"></div>
   <div class="hm-hero-grid">
     <div class="hm-hero-left">
-      <div class="hm-hero-ghost">IS</div>
+      <div class="hm-hero-ghost">AS</div>
       <div class="hm-hero-eyebrow"><span class="hm-pill">Nouveauté partagée</span></div>
       <h1 class="hm-hero-title">Réservez des séjours<br><em>mémorables</em><br>en Côte d'Ivoire</h1>
       <div class="hm-hero-rule"></div>
@@ -22,32 +22,20 @@
       <div class="hm-search-card">
         <div class="hm-search-header">
           <div class="hm-search-title">Trouvez votre séjour</div>
-          <p class="hm-search-sub">Destination, type d'hébergement et dates.</p>
+          <p class="hm-search-sub">Destination et type d'hébergement.</p>
           <div class="hm-search-rule"></div>
         </div>
         <form class="hm-search-form"
-              x-data="{ city:'', check_in:'', check_out:'', type:'' }"
+              x-data="{ city:'', type:'' }"
               @submit.prevent="
                 const p = new URLSearchParams();
-                if (city)      p.set('city', city);
-                if (check_in)  p.set('check_in', check_in);
-                if (check_out) p.set('check_out', check_out);
-                if (type)      p.set('type', type);
+                if (city) p.set('city', city);
+                if (type) p.set('type', type);
                 window.location.href = '<?= $base ?>/search' + (p.toString() ? '?' + p.toString() : '');
               ">
           <div class="hm-field">
             <label class="hm-label">Destination</label>
             <input type="text" class="hm-input" placeholder="Abidjan, Yamoussoukro…" x-model="city">
-          </div>
-          <div class="hm-field-row">
-            <div class="hm-field">
-              <label class="hm-label">Arrivée</label>
-              <input type="date" class="hm-input" x-model="check_in">
-            </div>
-            <div class="hm-field">
-              <label class="hm-label">Départ</label>
-              <input type="date" class="hm-input" x-model="check_out">
-            </div>
           </div>
           <div class="hm-field">
             <label class="hm-label">Type</label>
@@ -109,7 +97,7 @@
 </section>
 
 <!-- SECTION 3 - DESTINATIONS -->
-<section class="hm-dest" style="background-image:url('<?= $base ?>/assets/back_destination.jpg')">
+<section class="hm-dest" style="background-image:url('<?= $base ?>/assets/img/vitrine/back-destination.jpg')">
   <div class="hm-dest-header">
     <div class="hm-dest-header-top">
       <div class="hm-dest-rule"></div>
@@ -122,11 +110,11 @@
 
   <div style="position:relative;z-index:2; padding:60px 0 100px 0;">
     <div x-data="homeCarousel([
-        { name:'Abidjan', region:'District Autonome', count:142, tag:'Ville & Affaires', desc:'Capitale économique entre lagune, gratte-ciels et vie nocturne trépidante. Hub incontournable de l\'Afrique de l\'Ouest.', img:'<?= $base ?>/assets/carrouss1.jpg' },
-        { name:'Yamoussoukro', region:'Centre', count:38, tag:'Culture & Histoire', desc:'Capitale politique, terre de la Basilique Notre-Dame de la Paix et de sérénité ivoirienne.', img:'<?= $base ?>/assets/carrouss2.jpg' },
-        { name:'Grand-Bassam', region:'Sud-Comoé', count:27, tag:'Plage & Patrimoine', desc:'Ancienne capitale coloniale classée UNESCO, plages dorées, galeries d\'art et fruits de mer.', img:'<?= $base ?>/assets/carrouss3.jpg' },
-        { name:'San-Pédro', region:'Bas-Sassandra', count:19, tag:'Nature & Évasion', desc:'Port moderne, forêt tropicale et eaux turquoise du Sud-Ouest ivoirien.', img:'<?= $base ?>/assets/carrouss4.jpg' },
-        { name:'Assinie', region:'Sud-Comoé', count:31, tag:'Plage & Détente', desc:'Station balnéaire prisée entre océan Atlantique et lagune Aby. Cocotiers et sable blanc.', img:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800' }
+        { name:'Abidjan', region:'District Autonome', count:142, tag:'Ville & Affaires', desc:'Capitale économique entre lagune, gratte-ciels et vie nocturne trépidante. Hub incontournable de l\'Afrique de l\'Ouest.', img:'<?= $base ?>/assets/img/vitrine/destination-abidjan.jpg' },
+        { name:'Yamoussoukro', region:'Centre', count:38, tag:'Culture & Histoire', desc:'Capitale politique, terre de la Basilique Notre-Dame de la Paix et de sérénité ivoirienne.', img:'<?= $base ?>/assets/img/vitrine/destination-yamoussoukro.jpg' },
+        { name:'Grand-Bassam', region:'Sud-Comoé', count:27, tag:'Plage & Patrimoine', desc:'Ancienne capitale coloniale classée UNESCO, plages dorées, galeries d\'art et fruits de mer.', img:'<?= $base ?>/assets/img/vitrine/destination-grand-bassam.jpg' },
+        { name:'San-Pédro', region:'Bas-Sassandra', count:19, tag:'Nature & Évasion', desc:'Port moderne, forêt tropicale et eaux turquoise du Sud-Ouest ivoirien.', img:'<?= $base ?>/assets/img/vitrine/destination-san-pedro.jpg' },
+        { name:'Assinie', region:'Sud-Comoé', count:31, tag:'Plage & Détente', desc:'Station balnéaire prisée entre océan Atlantique et lagune Aby. Cocotiers et sable blanc.', img:'<?= $base ?>/assets/img/vitrine/destination-assinie.jpg' }
     ])" x-init="startAuto()">
 
       <div class="dest-carousel-track">
@@ -247,7 +235,7 @@
 <section class="hm-cta">
   <div class="hm-cta-bar"></div>
   <div class="hm-cta-body">
-    <div class="hm-cta-deco">IS</div>
+    <div class="hm-cta-deco">AS</div>
     <div class="hm-cta-eyebrow"><div class="hm-cta-dot"></div><span>Rejoignez Afristay</span></div>
     <h2 class="hm-cta-title">Transformez votre<br>établissement <em>dès aujourd'hui.</em></h2>
     <p class="hm-cta-sub">Gérez réservations, clients et paiements depuis une interface conçue pour le marché ivoirien. Gratuit pour commencer.</p>

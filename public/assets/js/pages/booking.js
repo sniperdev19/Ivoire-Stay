@@ -290,7 +290,7 @@ function bookingPage(apiBase, roomId) {
         if (data.success) {
           this.room = data.data?.room ?? data.data ?? null;
           this.photoIdx = 0;
-          // Établissement sans paiement en ligne (option Premium désactivée) → paiement sur place uniquement
+          // Paiement en ligne indisponible (verrou v1 global, plan Starter, ou désactivé par l'hôte) → paiement sur place uniquement
           if (this.room?.online_payment_enabled === false) this.payMode = 'onsite';
         } else {
           this.error = data.message || 'Chambre introuvable.';
@@ -379,6 +379,15 @@ function bookingPage(apiBase, roomId) {
       return p == null ? '' : new Intl.NumberFormat('fr-FR').format(p) + ' FCFA';
     },
 
+    /* Téléchargement direct (pas de fetch+blob nécessaire : l'auth passe par le
+       guest_token en query string, pas par un header Authorization). */
+    bookingPdfUrl() {
+      const id    = this.booking?.booking_id ?? this.booking?.id;
+      const token = this.booking?.guest_token;
+      if (!id || !token) return null;
+      return `${this.apiBase}/api/public/booking/${id}/pdf?token=${encodeURIComponent(token)}`;
+    },
+
     formatDate(value) {
       if (!value) return '';
       const date = new Date(value);
@@ -417,6 +426,7 @@ function bookingPage(apiBase, roomId) {
         // 2a. Paiement sur place → afficher la confirmation directement
         if (this.payMode === 'onsite') {
           this.booking = data.data ?? data;
+          window.AfristayMyBookings?.add(this.booking);
           return;
         }
 
@@ -497,6 +507,7 @@ function bookingPage(apiBase, roomId) {
           this.form.check_in  = data.data.check_in  ?? this.form.check_in;
           this.form.check_out = data.data.check_out ?? this.form.check_out;
           this.form.hours     = data.data.hours      ?? this.form.hours;
+          window.AfristayMyBookings?.add(this.booking);
         } else {
           this.bookingError = 'Paiement en cours de vérification. Si vous avez été débité, contactez l\'hôtel.';
           this.step = 3;

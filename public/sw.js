@@ -4,7 +4,36 @@
    Stratégie : network-first (toujours frais si en ligne), repli cache hors-ligne.
    N'intercepte que les GET same-origin ; les API/POST passent direct au réseau.
    ============================================================ */
-const CACHE = 'afristay-v6';
+const CACHE = 'afristay-v8';
+
+// URL absolue de la page login (résolue une fois, sert de comparaison exacte
+// dans le fallback navigation ci-dessous — ne pas la servir pour n'importe
+// quelle page non mise en cache, sinon un utilisateur déjà connecté qui
+// navigue hors ligne vers une page jamais visitée voit le formulaire de
+// connexion s'afficher à la place : ça ressemble à une déconnexion
+// automatique alors que le token en localStorage n'a pas bougé.
+const LOGIN_URL = new URL('login', self.location).href;
+
+// Page neutre servie pour une navigation hors ligne vers une page jamais
+// mise en cache (hors /login) — volontairement sans formulaire de connexion.
+const OFFLINE_HTML = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hors ligne — Afristay</title>
+<style>
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:#0F2B20;color:#fff;font-family:Arial,Helvetica,sans-serif;text-align:center;padding:24px;}
+.box{max-width:360px;}
+h1{font-size:20px;margin:0 0 10px;color:#C9A84C;}
+p{font-size:14px;line-height:1.5;color:rgba(255,255,255,0.85);margin:0 0 20px;}
+button{background:#C9A84C;color:#0F2B20;border:none;border-radius:8px;padding:10px 20px;
+  font-weight:700;font-size:14px;cursor:pointer;}
+</style></head><body>
+<div class="box">
+<h1>Vous êtes hors ligne</h1>
+<p>Cette page n'a pas encore été chargée pendant que vous étiez connecté. Votre session reste active — reconnectez-vous au réseau puis réessayez.</p>
+<button onclick="location.reload()">Réessayer</button>
+</div>
+</body></html>`;
 
 // URLs relatives au scope du SW (= racine de l'app)
 const SHELL = [
@@ -92,12 +121,27 @@ self.addEventListener('fetch', (event) => {
     } catch (e) {
       const cached = await caches.match(req);
       if (cached) return cached;
-      // Repli navigation : la page login en cache
       if (req.mode === 'navigate') {
-        const fallback = await caches.match('login');
-        if (fallback) return fallback;
+        // Repli navigation vers /login précisément : page en cache.
+        if (req.url.split('?')[0] === LOGIN_URL) {
+          const fallback = await caches.match('login');
+          if (fallback) return fallback;
+        }
+        // Toute autre page jamais mise en cache (ex. première visite hors
+        // ligne d'une page SaaS) : ne PAS servir le shell login — un
+        // utilisateur déjà connecté croirait avoir été déconnecté. On sert
+        // une page neutre invitant à réessayer une fois reconnecté.
+        return new Response(OFFLINE_HTML, {
+          status: 200,
+          headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        });
       }
-      throw e;
+      // Ne jamais rejeter la promesse de respondWith() (Chrome logue alors un
+      // "Uncaught (in promise)" bruyant en console pour chaque requête
+      // échouée) : on résout avec une Response de type erreur réseau, qui
+      // fait échouer le fetch() côté page exactement pareil (TypeError),
+      // sans le bruit console côté Service Worker.
+      return Response.error();
     }
   })());
 });

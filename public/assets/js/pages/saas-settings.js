@@ -2,9 +2,13 @@
    Afristay — Page SaaS : Paramètres (src/templates/saas/settings.php)
    ============================================================ */
 
-function settingsPage(baseUrl) {
+function settingsPage(baseUrl, onlinePaymentsEnabled) {
   return {
   ...saasHelpers,
+
+  // Verrou v1 global (ONLINE_PAYMENTS_ENABLED, config.php) : paiement en ligne
+  // en cours de développement, indépendant du plan de l'établissement.
+  onlinePaymentsEnabled: !!onlinePaymentsEnabled,
 
   establishment: null,
   loading: true,
@@ -27,6 +31,33 @@ function settingsPage(baseUrl) {
   isNewEstab: false,
   addingEstab: false,
   get creatingEstab() { return this.isNewEstab || this.addingEstab; },
+
+  /* Navigation "carrousel" entre les cartes de l'onglet Général — une carte
+     visible à la fois, boutons Précédent/Suivant. La liste dépend du mode
+     (Photos n'existe qu'en édition, l'étape finale "Créer" n'existe qu'en
+     création — cf. cartes correspondantes dans settings.php). */
+  generalCardIndex: 0,
+  get generalSections() {
+    const base = ['identity', 'location', 'contact', 'payment', 'visibility', 'presentation', 'hours'];
+    return this.creatingEstab ? [...base, 'create'] : [...base, 'photos'];
+  },
+  generalSectionLabels: {
+    identity: 'Identité', location: 'Localisation', contact: 'Contact',
+    payment: 'Paiement en ligne', visibility: 'Visibilité', presentation: 'Présentation',
+    hours: 'Horaires', photos: 'Photos', create: 'Créer l\'établissement',
+  },
+  generalPrev() { if (this.generalCardIndex > 0) this.generalCardIndex--; },
+  generalNext() { if (this.generalCardIndex < this.generalSections.length - 1) this.generalCardIndex++; },
+
+  /* Onglets Général/Membres/Abonnement réservés owner/superadmin — un
+     receptionist n'a que "Compte". Recalculé depuis le cache localStorage
+     (pas depuis le scope Alpine parent saasLayout, séparé de ce composant)
+     pour rester fiable même en arrivant directement sur cette page. */
+  get canSeeSettings() {
+    let user = null;
+    try { user = JSON.parse(localStorage.getItem('user') || 'null'); } catch (_) {}
+    return ['owner', 'superadmin'].includes(user?.role ?? 'staff');
+  },
 
   form: { name: '', type: 'hotel', address: '', city: '', phone: '', email: '', description: '', website: '', latitude: null, longitude: null, online_payment_enabled: true, is_boosted: false, check_in_time: '14:00', check_out_time: '12:00' },
 
@@ -97,9 +128,11 @@ function settingsPage(baseUrl) {
 
   /* Le contrôle du paiement en ligne est réservé aux plans Premium (config/plans.php: online_payment_control) */
   get onlinePaymentLocked() { return planUpgradeRequired('online_payment_control'); },
+  /* Fonctionnalité en développement pour tout le monde, indépendamment du plan (v1) */
+  get onlinePaymentComingSoon() { return !this.onlinePaymentsEnabled; },
 
   async toggleOnlinePayment() {
-    if (this.onlinePaymentLocked || this.creatingEstab || this.savingPayment) return;
+    if (this.onlinePaymentComingSoon || this.onlinePaymentLocked || this.creatingEstab || this.savingPayment) return;
     const previous = this.form.online_payment_enabled;
     this.form.online_payment_enabled = !previous;
     this.savingPayment = true;
@@ -248,6 +281,8 @@ function settingsPage(baseUrl) {
     this.loading = true;
     this.initPush();       // indépendant de l'établissement, ne bloque pas le reste
     this.loadNotifPrefs(); // idem
+    this.loadSessions();   // idem
+    this.profileForm = { name: this.currentUser.name || '', phone: this.currentUser.phone || '' };
     const id = this.estId();
 
     // Retour depuis GeniusPay après paiement
@@ -255,8 +290,11 @@ function settingsPage(baseUrl) {
 
     // Lien direct vers un onglet (ex : "Upgrader →" dans la sidebar)
     const tabParam = urlParams.get('tab');
-    if (['general', 'team', 'subscription', 'account'].includes(tabParam)) {
+    if (['general', 'team', 'subscription', 'account', 'notifications'].includes(tabParam)) {
       this.activeTab = tabParam;
+    }
+    if (!this.canSeeSettings) {
+      this.activeTab = 'account';
     }
 
     const payRef = urlParams.get('ref');
@@ -339,6 +377,7 @@ function settingsPage(baseUrl) {
   startAddEstablishment() {
     this.addingEstab = true;
     this.activeTab   = 'general';
+    this.generalCardIndex = 0;
     this.form = { name: '', type: 'hotel', address: '', city: '', phone: '', email: '', description: '', website: '', latitude: null, longitude: null, online_payment_enabled: true, is_boosted: false, check_in_time: '14:00', check_out_time: '12:00' };
     this.photos = [];
   },
@@ -447,6 +486,174 @@ function settingsPage(baseUrl) {
       this.notifMutedTypes = previous;
     } finally {
       this.notifPrefsSaving = false;
+    }
+  },
+
+  // ── Profil (onglet Compte) ─────────────────────────────────────────────
+  get currentUser() {
+    try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch (e) { return {}; }
+  },
+  get userAvatarUrl() {
+    const path = this.currentUser.avatar_path;
+    return path ? this.photoUrl(path) : null;
+  },
+  profileForm: { name: '', phone: '' },
+  profileSaving: false,
+  profileError: null,
+  avatarUploading: false,
+  avatarError: null,
+
+  async saveProfile() {
+    this.profileError = null;
+    const name = this.profileForm.name.trim();
+    if (!name) { this.profileError = 'Le nom est requis'; return; }
+
+    this.profileSaving = true;
+    try {
+      const res  = await fetch(baseUrl + '/api/auth/profile', {
+        method: 'PUT',
+        headers: this.apiHeaders(),
+        body: JSON.stringify({ name, phone: this.profileForm.phone.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('user', JSON.stringify(data.data));
+        this.showToast('Profil mis à jour.', 'success');
+      } else {
+        this.profileError = data.message || 'Erreur lors de la mise à jour.';
+      }
+    } catch (e) {
+      this.profileError = 'Erreur réseau.';
+    } finally {
+      this.profileSaving = false;
+    }
+  },
+
+  async uploadAvatar(evt) {
+    const file = evt.target.files?.[0];
+    evt.target.value = '';
+    if (!file) return;
+
+    this.avatarError = null;
+    this.avatarUploading = true;
+    try {
+      const fd = new FormData();
+      fd.append('avatar', file);
+      const res  = await fetch(baseUrl + '/api/auth/avatar', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+        body: fd,
+      });
+      const data = await res.json();
+      if (data.success) {
+        const user = this.currentUser;
+        user.avatar_path = data.data.avatar_path;
+        localStorage.setItem('user', JSON.stringify(user));
+        this.showToast('Photo de profil mise à jour.', 'success');
+      } else {
+        this.avatarError = data.message || "Échec de l'envoi de la photo.";
+      }
+    } catch (e) {
+      this.avatarError = 'Erreur réseau.';
+    } finally {
+      this.avatarUploading = false;
+    }
+  },
+
+  async removeAvatar() {
+    try {
+      const res  = await fetch(baseUrl + '/api/auth/avatar', { method: 'DELETE', headers: this.apiHeaders() });
+      const data = await res.json();
+      if (data.success) {
+        const user = this.currentUser;
+        user.avatar_path = null;
+        localStorage.setItem('user', JSON.stringify(user));
+        this.showToast('Photo de profil supprimée.', 'success');
+      }
+    } catch (e) {
+      this.showToast('Erreur réseau.', 'error');
+    }
+  },
+
+  // ── Appareils connectés (sessions actives + historique) ────────────────
+  sessions: [],
+  sessionsLoading: false,
+  sessionsActionLoading: false,
+  get activeSessionsCount() { return this.sessions.filter(s => s.is_active).length; },
+
+  async loadSessions() {
+    this.sessionsLoading = true;
+    try {
+      const res  = await fetch(baseUrl + '/api/auth/sessions', { headers: this.apiHeaders() });
+      const data = await res.json();
+      if (data.success) this.sessions = data.data ?? [];
+    } catch (e) { /* liste vide si hors-ligne */ }
+    finally { this.sessionsLoading = false; }
+  },
+
+  async revokeSession(id) {
+    this.sessionsActionLoading = true;
+    try {
+      const res  = await fetch(baseUrl + '/api/auth/sessions/' + id + '/revoke', { method: 'POST', headers: this.apiHeaders() });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast('Appareil déconnecté.', 'success');
+        await this.loadSessions();
+      }
+    } catch (e) {
+      this.showToast('Erreur réseau.', 'error');
+    } finally {
+      this.sessionsActionLoading = false;
+    }
+  },
+
+  async revokeOtherSessions() {
+    this.sessionsActionLoading = true;
+    try {
+      const res  = await fetch(baseUrl + '/api/auth/sessions/revoke-others', { method: 'POST', headers: this.apiHeaders() });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast(data.message || 'Appareils déconnectés.', 'success');
+        await this.loadSessions();
+      }
+    } catch (e) {
+      this.showToast('Erreur réseau.', 'error');
+    } finally {
+      this.sessionsActionLoading = false;
+    }
+  },
+
+  // ── Mon QR code (agents commerciaux, fonctionnalité temporaire) ───────
+  showQrModal: false,
+  qrCodeToken: '',
+  qrCodeLoading: false,
+  qrAgentLinked: false,
+
+  async openMyQrCode() {
+    this.showQrModal   = true;
+    this.qrCodeLoading = true;
+    this.qrCodeToken   = '';
+    this.qrAgentLinked = false;
+    document.getElementById('qr-code-canvas').innerHTML = '';
+    try {
+      const res  = await fetch(baseUrl + '/api/establishment/qr?establishment_id=' + this.estId(), { headers: this.apiHeaders() });
+      const data = await res.json();
+      if (data.success && data.data.agent_linked) {
+        // Premier scan gagne, jamais de réassignation (AgentController::scanQr) —
+        // le QR n'a plus aucune utilité une fois rattaché, on ne l'affiche plus
+        // comme actif pour ne pas laisser croire qu'un nouveau scan ferait quelque chose.
+        this.qrAgentLinked = true;
+      } else if (data.success && data.data.qr_token) {
+        this.qrCodeToken = data.data.qr_token;
+        const qr = qrcode(0, 'M');
+        qr.addData(this.qrCodeToken);
+        qr.make();
+        document.getElementById('qr-code-canvas').innerHTML = qr.createImgTag(6, 8);
+      }
+    } catch (e) {
+      // silencieux : le modal affiche simplement un QR vide
+    } finally {
+      this.qrCodeLoading = false;
     }
   },
 
@@ -620,47 +827,44 @@ function settingsPage(baseUrl) {
     }
   },
 
+  // Uniquement la création (POST) : en édition, chaque carte du formulaire
+  // s'enregistre indépendamment (voir saveIdentity/saveContact/savePresentation/
+  // saveHours ci-dessous + Localisation/Paiement/Visibilité/Photos qui
+  // s'enregistrent déjà instantanément à l'action).
   async saveGeneral() {
+    if (!this.creatingEstab) return;
     this.saving = true; this.saveError = null; this.saveSuccess = false;
     try {
-      let url, method;
-      if (this.creatingEstab) {
-        if (!this.form.name?.trim()) { this.saveError = 'Le nom est requis.'; this.saving = false; return; }
-        if (!this.form.city?.trim()) { this.saveError = 'La ville est requise.'; this.saving = false; return; }
-        url    = baseUrl + '/api/establishments';
-        method = 'POST';
-      } else {
-        url    = baseUrl + '/api/establishments/' + this.estId();
-        method = 'PUT';
-      }
+      if (!this.form.name?.trim()) { this.saveError = 'Le nom est requis.'; this.saving = false; return; }
+      if (!this.form.city?.trim()) { this.saveError = 'La ville est requise.'; this.saving = false; return; }
 
-      const res  = await fetch(url, { method, headers: this.apiHeaders(), body: JSON.stringify(this.form) });
+      const res  = await fetch(baseUrl + '/api/establishments', {
+        method: 'POST', headers: this.apiHeaders(), body: JSON.stringify(this.form),
+      });
       const data = await res.json();
 
       if (data.success) {
         this.saveSuccess = true;
         setTimeout(() => this.saveSuccess = false, 3000);
 
-        if (this.creatingEstab) {
-          const estab = data.data?.establishment ?? data.data;
-          if (estab?.id) {
-            if (this.addingEstab) {
-              // Un établissement supplémentaire : recharger la liste complète pour ne pas
-              // écraser les établissements existants dans le localStorage.
-              try {
-                const listRes = await fetch(baseUrl + '/api/establishments', { headers: this.apiHeaders() }).then(r => r.json());
-                if (listRes.success) localStorage.setItem('establishments', JSON.stringify(listRes.data ?? []));
-              } catch (e) {}
-            } else {
-              localStorage.setItem('establishments', JSON.stringify([estab]));
-            }
-            localStorage.setItem('establishment_id', String(estab.id));
+        const estab = data.data?.establishment ?? data.data;
+        if (estab?.id) {
+          if (this.addingEstab) {
+            // Un établissement supplémentaire : recharger la liste complète pour ne pas
+            // écraser les établissements existants dans le localStorage.
+            try {
+              const listRes = await fetch(baseUrl + '/api/establishments', { headers: this.apiHeaders() }).then(r => r.json());
+              if (listRes.success) localStorage.setItem('establishments', JSON.stringify(listRes.data ?? []));
+            } catch (e) {}
+          } else {
+            localStorage.setItem('establishments', JSON.stringify([estab]));
           }
-          this.isNewEstab    = false;
-          this.addingEstab   = false;
-          this.establishment = estab;
-          setTimeout(() => window.location.href = baseUrl + '/saas/settings', 1200);
+          localStorage.setItem('establishment_id', String(estab.id));
         }
+        this.isNewEstab    = false;
+        this.addingEstab   = false;
+        this.establishment = estab;
+        setTimeout(() => window.location.href = baseUrl + '/saas/settings', 1200);
       } else {
         this.saveError = data.message ?? 'Erreur.';
       }
@@ -671,7 +875,117 @@ function settingsPage(baseUrl) {
     }
   },
 
+  /* Enregistrement indépendant par carte (mode édition uniquement) — chaque
+     carte du formulaire Général envoie juste ses propres champs en PUT
+     partiel (EstablishController::update n'écrase que les clés reçues). */
+  async _saveEstablishmentCard(payload, successMsg, savingFlag) {
+    if (this[savingFlag]) return;
+    this[savingFlag] = true;
+    try {
+      const res  = await fetch(baseUrl + '/api/establishments/' + this.estId(), {
+        method: 'PUT', headers: this.apiHeaders(), body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) this.showToast(successMsg, 'success');
+      else this.showToast(data.message ?? "Erreur lors de l'enregistrement.", 'error');
+    } catch (e) {
+      this.showToast('Erreur réseau.', 'error');
+    } finally {
+      this[savingFlag] = false;
+    }
+  },
+
+  savingIdentity: false,
+  saveIdentity() {
+    return this._saveEstablishmentCard(
+      { name: this.form.name, type: this.form.type, city: this.form.city, address: this.form.address },
+      'Identité enregistrée.', 'savingIdentity'
+    );
+  },
+
+  savingContact: false,
+  saveContact() {
+    return this._saveEstablishmentCard(
+      { phone: this.form.phone, email: this.form.email, website: this.form.website },
+      'Coordonnées enregistrées.', 'savingContact'
+    );
+  },
+
+  savingPresentation: false,
+  savePresentation() {
+    return this._saveEstablishmentCard(
+      { description: this.form.description },
+      'Description enregistrée.', 'savingPresentation'
+    );
+  },
+
+  savingHours: false,
+  saveHours() {
+    return this._saveEstablishmentCard(
+      { check_in_time: this.form.check_in_time, check_out_time: this.form.check_out_time },
+      'Horaires enregistrés.', 'savingHours'
+    );
+  },
+
   planLabel(p) { return { starter: 'Starter', pro: 'Pro', business: 'Business' }[p] ?? p; },
   planColor(p) { return { starter: 'badge-info', pro: 'badge-gold', business: 'badge-success' }[p] ?? 'badge'; },
+
+  // ── Changement de mot de passe (onglet Compte) ─────────────────────────
+  showPasswordModal: false,
+  passwordForm: { current: '', new: '', confirm: '' },
+  passwordError: null,
+  passwordSaving: false,
+
+  openPasswordModal() {
+    this.passwordForm  = { current: '', new: '', confirm: '' };
+    this.passwordError = null;
+    this.showPasswordModal = true;
+  },
+  closePasswordModal() {
+    if (this.passwordSaving) return;
+    this.showPasswordModal = false;
+  },
+  async changePassword() {
+    this.passwordError = null;
+    if (!this.passwordForm.current || !this.passwordForm.new) {
+      this.passwordError = 'Tous les champs sont requis.'; return;
+    }
+    if (this.passwordForm.new !== this.passwordForm.confirm) {
+      this.passwordError = 'Les nouveaux mots de passe ne correspondent pas.'; return;
+    }
+    if (this.passwordForm.new.length < 8) {
+      this.passwordError = 'Le nouveau mot de passe doit contenir au moins 8 caractères.'; return;
+    }
+
+    this.passwordSaving = true;
+    try {
+      const res  = await fetch(baseUrl + '/api/auth/change-password', {
+        method: 'POST', headers: this.apiHeaders(),
+        body: JSON.stringify({ current_password: this.passwordForm.current, new_password: this.passwordForm.new }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        this.showPasswordModal = false;
+        this.showToast('Mot de passe modifié.', 'success');
+      } else {
+        this.passwordError = data.message ?? 'Erreur lors du changement de mot de passe.';
+      }
+    } catch (e) {
+      this.passwordError = 'Erreur réseau.';
+    } finally {
+      this.passwordSaving = false;
+    }
+  },
+
+  // Zone de danger : la suppression de compte n'est pas libre-service (cascade
+  // établissements/réservations/paiements trop risquée pour un self-service) —
+  // le bouton ouvre juste un email pré-rempli vers le support.
+  get supportMailtoUrl() {
+    let email = '';
+    try { email = JSON.parse(localStorage.getItem('user') || '{}').email ?? ''; } catch (_) {}
+    const subject = 'Suppression de mon compte Afristay';
+    const body    = `Bonjour,\n\nJe souhaite supprimer définitivement mon compte Afristay (${email}) et toutes les données associées.\n\nMerci de me confirmer la marche à suivre.`;
+    return 'mailto:support@afristay.ci?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  },
   };
 }

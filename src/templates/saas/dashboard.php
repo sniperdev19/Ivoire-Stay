@@ -204,21 +204,31 @@
               ['label'=>'Nouvelle réservation','icon'=>'M12 4v16m8-8H4','href'=>'/saas/bookings','color'=>'#C9A84C','bg'=>'rgba(201,168,76,0.08)'],
               ['label'=>'Ajouter chambre','icon'=>'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5','href'=>'/saas/rooms','color'=>'#2563EB','bg'=>'rgba(37,99,235,0.08)'],
               ['label'=>'Voir le planning','icon'=>'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z','href'=>'/saas/planning','color'=>'#16A34A','bg'=>'rgba(22,163,74,0.08)'],
-              ['label'=>'Rapports','icon'=>'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z','href'=>'/saas/reports','color'=>'#7C3AED','bg'=>'rgba(124,58,237,0.08)'],
+              ['label'=>'Rapports','icon'=>'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z','href'=>'/saas/reports','color'=>'#7C3AED','bg'=>'rgba(124,58,237,0.08)','guard'=>'canSeeFinance'],
             ];
           ?>
           <?php foreach($actions as $a): ?>
-            <a href="<?= $base_url . $a['href'] ?>" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px 10px;background:#F9FAFB;border:1px solid rgba(0,0,0,0.06);border-radius:12px;text-decoration:none;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(201,168,76,0.06)';this.style.borderColor='rgba(201,168,76,0.25)'" onmouseout="this.style.background='#F9FAFB';this.style.borderColor='rgba(0,0,0,0.06)'">
+            <a href="<?= $base_url . $a['href'] ?>" style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px 10px;background:#F9FAFB;border:1px solid rgba(0,0,0,0.06);border-radius:12px;text-decoration:none;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(201,168,76,0.06)';this.style.borderColor='rgba(201,168,76,0.25)'" onmouseout="this.style.background='#F9FAFB';this.style.borderColor='rgba(0,0,0,0.06)'"
+              <?php if (!empty($a['guard'])): ?>
+              :class="{ 'saas-nav-locked': !<?= $a['guard'] ?> }"
+              @click="!<?= $a['guard'] ?> && $event.preventDefault()"
+              :title="!<?= $a['guard'] ?> ? 'Réservé au propriétaire' : ''"
+              <?php endif; ?>>
               <div style="width:38px;height:38px;border-radius:10px;background:<?= $a['bg'] ?>;display:grid;place-items:center;">
                 <svg xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;color:<?= $a['color'] ?>;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<?= $a['icon'] ?>"/></svg>
               </div>
               <span style="font-size:12px;font-weight:500;color:#374151;"><?= htmlspecialchars($a['label']) ?></span>
+              <?php if (!empty($a['guard'])): ?>
+              <svg x-show="!<?= $a['guard'] ?>" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="position:absolute;top:8px;right:8px;width:13px;height:13px;color:#9CA3AF;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <?php endif; ?>
             </a>
           <?php endforeach; ?>
         </div>
       </div>
 
-      <div class="saas-card">
+      <div class="saas-card" x-show="canSeeFinance">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
           <h3 style="font-size:15px;font-weight:700;color:#111827;margin:0;">Résumé financier</h3>
           <a href="<?= $base_url ?>/saas/invoices" style="font-size:12px;color:#C9A84C;font-weight:500;text-decoration:none;">Facturation →</a>

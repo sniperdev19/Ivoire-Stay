@@ -115,3 +115,48 @@
     .status-tabs-row::-webkit-scrollbar { display: none; }
     .status-tab { flex: 0 0 auto; }
   }
+
+  /* ── Modal détail réservation ─────────────────────────────── */
+  .booking-detail-card {
+    background: #F9FAFB; border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 14px; padding: 18px;
+  }
+  .booking-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .booking-detail-label {
+    margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .04em;
+    text-transform: uppercase; color: #9CA3AF;
+  }
+  .booking-detail-value { margin: 0; font-size: 14px; font-weight: 600; color: #111827; }
+  .booking-detail-meta { margin: 4px 0 0; font-size: 13px; color: #6B7280; }
+  .booking-detail-amount { margin: 0; font-size: 22px; font-weight: 700; color: var(--saas-gold); }
+  .booking-detail-invoice-number {
+    margin: 0; font-size: 13px; font-weight: 600; color: #111827;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  .booking-detail-stay {
+    background: #fff; border: 1px solid rgba(0,0,0,0.06); border-radius: 14px; padding: 16px 18px;
+  }
+  .booking-detail-stay-dates { display: flex; align-items: center; gap: 16px; }
+  .booking-detail-stay-dates > div { flex: 1; min-width: 0; }
+  .booking-detail-stay-arrow { flex-shrink: 0; color: #D1D5DB; font-size: 18px; }
+  .booking-detail-stay-chips {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    margin-top: 14px; padding-top: 14px; border-top: 1px dashed rgba(0,0,0,0.08);
+  }
+  .booking-detail-chip {
+    display: inline-flex; align-items: center; font-size: 12px; font-weight: 600;
+    color: #374151; background: #F3F4F6; padding: 4px 12px; border-radius: 50px;
+  }
+
+  @media (max-width: 560px) {
+    .booking-detail-card { padding: 14px; }
+    .booking-detail-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .booking-detail-stay { padding: 14px; }
+    .booking-detail-name { font-size: 17px; }
+    .booking-detail-amount { font-size: 19px; }
+  }
+  @media (max-width: 380px) {
+    .booking-detail-stay-dates { flex-wrap: wrap; row-gap: 10px; }
+    .booking-detail-stay-arrow { display: none; }
+  }

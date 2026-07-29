@@ -23,7 +23,7 @@
 
   <section class="ab-mission">
     <div class="ab-mission-visual">
-      <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800" alt="Bureau hôtelier" />
+      <img src="<?= $base_url ?>/assets/img/vitrine/apropos-bureau.jpg" alt="Bureau hôtelier" />
       <div class="ab-mission-img-badge">Fondé en 2026 · Yamoussoukro CI</div>
     </div>
     <div class="ab-mission-content">
@@ -131,7 +131,7 @@
         <a href="<?= $base_url ?>/contact" class="ab-btn-cta-o">Nous contacter</a>
       </div>
     </div>
-    <div class="ab-cta-deco">IS</div>
+    <div class="ab-cta-deco">AS</div>
   </section>
 
 </div>

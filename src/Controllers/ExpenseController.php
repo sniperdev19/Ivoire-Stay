@@ -13,18 +13,24 @@ class ExpenseController
         return Guard::resolveEstabId($req);
     }
 
-    private function gate(): void
+    // Prend l'établissement déjà résolu (Guard::resolveEstabId) et non
+    // $user['establishment_id'] : ce dernier est figé sur le PREMIER
+    // établissement du owner à l'inscription — pour un owner
+    // multi-établissements (plan Business), gater sur ce seul établissement
+    // permettait de contourner (ou déclenchait à tort) la limite plan
+    // 'expenses' d'un AUTRE de ses établissements que celui réellement ciblé
+    // par la requête.
+    private function gate(int $estabId): void
     {
-        $user  = $_REQUEST['_user'];
-        $estab = Establishment::find($user['establishment_id'] ?? 0) ?? [];
+        $estab = Establishment::find($estabId) ?? [];
         PlanGate::require($estab, 'expenses');
     }
 
     public function index(Request $req, array $params = []): void
     {
-        $this->gate();
         $estabId = $this->estabId($req);
         if (!$estabId) Response::error('establishment_id requis');
+        $this->gate($estabId);
         $filters = array_filter([
             'category' => $req->get('category'),
             'from'     => $req->get('from'),
@@ -35,10 +41,10 @@ class ExpenseController
 
     public function store(Request $req, array $params = []): void
     {
-        $this->gate();
         $data    = $req->all();
         $estabId = $this->estabId($req);
         if (!$estabId) Response::error('establishment_id requis');
+        $this->gate($estabId);
 
         $required = ['category', 'amount', 'expense_date'];
         foreach ($required as $f) {

@@ -11,6 +11,13 @@ class BookingPaymentController
     // ─── POST /api/public/booking-payment/initiate ───────────────────────────
     public function initiate(Request $req, array $_params = []): void
     {
+        // Verrou global v1 (config.php) : paiement en ligne en cours de développement.
+        // Vérifié en premier, avant toute lecture de plan/réglage établissement — même
+        // un appel API direct (bypass du frontend) ne peut pas déclencher GeniusPay.
+        if (!ONLINE_PAYMENTS_ENABLED) {
+            Response::error("Le paiement en ligne est en cours de développement et sera bientôt disponible. Merci de choisir le paiement sur place.");
+        }
+
         $data      = $req->all();
         $bookingId = (int) ($data['booking_id'] ?? 0);
         $payMethod = $data['pay_method'] ?? '';

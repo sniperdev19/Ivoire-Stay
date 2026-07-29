@@ -71,12 +71,20 @@
       <span x-text="payMode === 'online' ? '✓ Payé en ligne' : 'À régler sur place'" :style="payMode === 'online' ? 'color:#16A34A;font-weight:600;' : 'color:#6B7280;'"></span>
     </div>
   </div>
-  <div x-show="guestPushSupported && !guestPushEnabled" style="margin:4px 0 16px;">
-    <button type="button" class="bk-success-btn-o" style="width:100%;" @click="enableGuestPushReminder()">
-      🔔 Recevoir un rappel avant mon séjour
+  <div class="bk-success-actions">
+    <button type="button" class="bk-success-action" x-show="guestPushSupported && !guestPushEnabled" @click="enableGuestPushReminder()">
+      <span>🔔</span> Recevoir un rappel
     </button>
+    <p x-show="guestPushEnabled" style="color:#16A34A;font-size:13px;font-weight:600;margin:0;">✓ Rappel activé — vous serez notifié la veille</p>
+
+    <a :href="bookingPdfUrl()" x-show="bookingPdfUrl()" class="bk-success-action">
+      <span>📄</span> Télécharger le PDF
+    </a>
   </div>
-  <p x-show="guestPushEnabled" style="color:#16A34A;font-size:14px;font-weight:600;margin:4px 0 16px;">✓ Rappel activé — vous serez notifié la veille</p>
+  <p class="bk-success-hint">
+    Pas accès à vos emails ? Retrouvez cette réservation à tout moment depuis
+    <a href="<?= $base ?>/mes-reservations">Mes réservations</a>.
+  </p>
 
   <div class="bk-success-btns">
     <a href="<?= $base ?>/search" class="bk-success-btn-p">Découvrir d'autres séjours</a>
@@ -325,7 +333,7 @@
         </div>
       </template>
       <template x-if="room?.online_payment_enabled === false">
-        <div class="bk-label" style="margin-bottom:16px;">Cet établissement accepte uniquement le paiement sur place.</div>
+        <div class="bk-label" style="margin-bottom:16px;">Le paiement en ligne arrive bientôt — réglez votre séjour directement sur place pour l'instant.</div>
       </template>
 
       <!-- Méthode Mobile Money (uniquement si paiement en ligne) -->

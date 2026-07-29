@@ -79,7 +79,7 @@
       <template x-if="viewMode !== 'compare'">
       <div>
       <!-- ROW 1: 5 KPI -->
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px;">
+      <div class="saas-kpi-grid">
         <div class="saas-card"><div style="display:flex;align-items:center;gap:10px;"><svg xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17l6-6 4 4 8-8"/></svg><div><div style="font-size:13px;color:#9CA3AF;">CA {{period}}</div><div style="font-size:18px;font-weight:800;color:#111827;" x-text="formatPrice(revenue)"></div></div></div></div>
 
         <div class="saas-card"><div style="display:flex;align-items:center;gap:10px;"><svg xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;color:#DC2626;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2-1.343-2-3-2zM12 14v6"/></svg><div><div style="font-size:13px;color:#9CA3AF;">Dépenses</div><div style="font-size:18px;font-weight:800;color:#111827;" x-text="formatPrice(expTotal)"></div></div></div></div>

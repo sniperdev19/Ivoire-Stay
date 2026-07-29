@@ -161,6 +161,7 @@
       <span class="pr-compare-tag">Comparatif détaillé</span>
       <h2 class="pr-compare-title">Comparez les plans</h2>
     </div>
+    <div class="pr-table-wrap">
     <table class="pr-table">
       <thead>
         <tr>
@@ -257,6 +258,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
   </section>
 
   <!-- FAQ -->

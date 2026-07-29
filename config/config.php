@@ -46,6 +46,19 @@ define('GENIUS_PAY_SECRET',         env('GENIUS_PAY_SECRET', ''));
 define('GENIUS_PAY_URL',            env('GENIUS_PAY_URL',    'http://pay.genius.ci/api/v1/merchant'));
 define('GENIUS_PAY_WEBHOOK_SECRET', env('GENIUS_PAY_WEBHOOK_SECRET', ''));
 
+// Verrou global v1 : le paiement en ligne des réservations (GeniusPay) est en
+// cours de développement, désactivé partout (front ET back) tant que ce n'est
+// pas false→true explicitement. Ne pas confondre avec `online_payment_enabled`
+// (colonne establishments, réglage par hôte) ou le plan-gate
+// `online_payment_control` (config/plans.php) : les deux restent inopérants
+// tant que ce verrou global est fermé.
+define('ONLINE_PAYMENTS_ENABLED', filter_var(env('ONLINE_PAYMENTS_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN));
+
+// Fonctionnalité temporaire : espace agents commerciaux (inscription/scan QR/
+// commissions). Coupe les routes /agent/* et le bouton "Mon QR code" côté
+// établissement tant que false, sans supprimer le code.
+define('AGENTS_ENABLED', filter_var(env('AGENTS_ENABLED', 'true'), FILTER_VALIDATE_BOOLEAN));
+
 define('VAPID_PUBLIC_KEY',  env('VAPID_PUBLIC_KEY',  ''));
 define('VAPID_PRIVATE_KEY', env('VAPID_PRIVATE_KEY', ''));
 define('VAPID_SUBJECT',     env('VAPID_SUBJECT',     'mailto:contact@example.com'));

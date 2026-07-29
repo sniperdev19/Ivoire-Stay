@@ -5,10 +5,12 @@
    Chargé avant Alpine sur toutes les pages.
    ============================================================ */
 (function () {
-  // Déduit la base de l'app depuis le <link rel="manifest"> (gère le sous-dossier)
+  // Déduit la base de l'app depuis le <link rel="manifest"> (gère le sous-dossier).
+  // Générique sur le nom de fichier (manifest.webmanifest, manifest-agent.webmanifest, …) :
+  // on retire juste le dernier segment de chemin, pas un nom en dur.
   function appBase() {
     const m = document.querySelector('link[rel="manifest"]');
-    if (m) return m.href.replace(/manifest\.webmanifest.*$/, '');
+    if (m) return m.href.replace(/\/[^\/]*$/, '/');
     return location.href.replace(/\/[^\/]*$/, '/');
   }
 

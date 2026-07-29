@@ -86,6 +86,14 @@ function propertyPage(apiBase, propertyId) {
     },
 
     /* Carte Leaflet (OSM) — attribution minimale, sans la barre d'outils de l'embed OSM classique */
+    _map: null,
+    _hotelMarker: null,
+    _clientMarker: null,
+    _routeLine: null,
+    routeLoading: false,
+    routeError: null,
+    routeInfo: null, // { distanceKm, durationMin } une fois l'itinéraire tracé
+
     initMap() {
       if (typeof L === 'undefined') return;
       const el = document.getElementById('property-map');
@@ -100,7 +108,64 @@ function propertyPage(apiBase, propertyId) {
         attribution: '© OpenStreetMap',
         maxZoom: 19,
       }).addTo(map);
-      L.marker([lat, lng]).addTo(map);
+      this._map = map;
+      this._hotelMarker = L.marker([lat, lng]).addTo(map);
+    },
+
+    /* Géolocalise le visiteur puis trace l'itinéraire routier (OSRM, service
+       public gratuit sans clé) jusqu'à l'établissement. Déclenché uniquement
+       au clic — jamais de demande de permission géoloc au chargement de la
+       page. */
+    showRoute() {
+      if (!this._map) return;
+      if (!navigator.geolocation) {
+        this.routeError = "La géolocalisation n'est pas supportée par votre navigateur.";
+        return;
+      }
+      this.routeLoading = true;
+      this.routeError   = null;
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => this.drawRoute(pos.coords.latitude, pos.coords.longitude),
+        (err) => {
+          this.routeLoading = false;
+          this.routeError = err.code === err.PERMISSION_DENIED
+            ? "Vous avez refusé l'accès à votre position. Autorisez la géolocalisation puis réessayez."
+            : 'Impossible de récupérer votre position. Réessayez.';
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    },
+
+    async drawRoute(clientLat, clientLng) {
+      const hotelLat = Number(this.property?.latitude);
+      const hotelLng = Number(this.property?.longitude);
+      try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${clientLng},${clientLat};${hotelLng},${hotelLat}?overview=full&geometries=geojson`;
+        const res  = await fetch(url);
+        const data = await res.json();
+        if (data.code !== 'Ok' || !data.routes?.length) {
+          throw new Error('no route');
+        }
+        const route  = data.routes[0];
+        const coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+
+        if (this._routeLine)   this._map.removeLayer(this._routeLine);
+        if (this._clientMarker) this._map.removeLayer(this._clientMarker);
+
+        this._clientMarker = L.marker([clientLat, clientLng]).addTo(this._map);
+        this._routeLine = L.polyline(coords, { color: '#C9A84C', weight: 4 }).addTo(this._map);
+        this._map.fitBounds(this._routeLine.getBounds(), { padding: [24, 24] });
+
+        this.routeInfo = {
+          distanceKm:  (route.distance / 1000).toFixed(1),
+          durationMin: Math.round(route.duration / 60),
+        };
+      } catch (e) {
+        this.routeError = "Itinéraire indisponible pour le moment. Réessayez.";
+      } finally {
+        this.routeLoading = false;
+      }
     },
 
     photoUrl(path) {

@@ -19,7 +19,15 @@ $navItems = [
     ['key' => 'establishments', 'label' => 'Établissements', 'href' => '/admin/establishments','icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
     ['key' => 'owners',         'label' => 'Propriétaires',  'href' => '/admin/owners',        'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z'],
     ['key' => 'payouts',        'label' => 'Retraits',       'href' => '/admin/payouts',       'icon' => 'M17 9V7a4 4 0 00-8 0v2M5 9h14l1 11H4L5 9z'],
+    ['key' => 'backups',        'label' => 'Sauvegardes',    'href' => '/admin/backups',       'icon' => 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4'],
+    ['key' => 'notifications',    'label' => 'Notifications',       'href' => '/admin/notifications',    'icon' => 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'],
+    ['key' => 'contact-messages',  'label' => 'Messages de contact', 'href' => '/admin/contact-messages', 'icon' => 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
+    ['key' => 'newsletter',        'label' => 'Newsletter',          'href' => '/admin/newsletter',        'icon' => 'M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5'],
+    ['key' => 'announcements',     'label' => 'Annonces vitrine',    'href' => '/admin/announcements',     'icon' => 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z'],
 ];
+if (AGENTS_ENABLED) {
+    $navItems[] = ['key' => 'agents', 'label' => 'Agents commerciaux', 'href' => '/admin/agents', 'icon' => 'M4 4h4v4H4V4zm0 12h4v4H4v-4zm12-12h4v4h-4V4zm0 5h4v11h-4V9zM9 4h1v6H9V4zM4 11h6v1H4v-1zm5 3h1v6H9v-6zm-5 2h1v1H4v-1z'];
+}
 $currentPage = $page ?? 'dashboard';
 ?>
 <!DOCTYPE html>
@@ -40,6 +48,12 @@ $currentPage = $page ?? 'dashboard';
 
   <?php $responsivePath = BASE_PATH . '/public/assets/css/saas-responsive.css'; ?>
   <link rel="stylesheet" href="<?= $base ?>/assets/css/saas-responsive.css?v=<?= file_exists($responsivePath) ? filemtime($responsivePath) : 1 ?>">
+
+  <!-- Habillage commun de tous les modaux (en-tête, bouton fermer, cartes détail) —
+       manquait ici jusque-là, contrairement à saas/layout.php : les classes
+       .modal-card/.modal-list-item/etc. n'avaient donc aucun effet côté admin. -->
+  <?php $modalsCssPath = BASE_PATH . '/public/assets/css/saas-modals.css'; ?>
+  <link rel="stylesheet" href="<?= $base ?>/assets/css/saas-modals.css?v=<?= file_exists($modalsCssPath) ? filemtime($modalsCssPath) : 1 ?>">
 
   <!-- Identité visuelle distincte de l'espace hôtelier (indigo/slate) — chargé après saas.css -->
   <?php $adminCssPath = BASE_PATH . '/public/assets/css/admin.css'; ?>
@@ -248,9 +262,18 @@ $currentPage = $page ?? 'dashboard';
     <div x-show="sidebarOpen" @click="sidebarOpen = false" class="md:hidden"
       style="position:fixed;inset:0;z-index:39;background:rgba(0,0,0,0.5);backdrop-filter:blur(2px);"></div>
 
-    <!-- Barre d'onglets mobile : les 4 sections tiennent toutes en primaire, pas de "Menu" -->
-    <nav class="saas-mobile-tabbar">
-      <?php foreach ($navItems as $item): ?>
+    <?php
+      // Barre d'onglets mobile : 4 sections coeur en primaire, le reste (de plus
+      // en plus nombreux) derrière un bouton "Menu" — même pattern que
+      // saas/layout.php (primaryTabs/moreTabs), pour ne pas faire déborder la
+      // barre à mesure que l'espace admin s'étoffe.
+      $primaryKeys  = ['dashboard', 'establishments', 'owners', 'payouts'];
+      $primaryTabs  = array_values(array_filter($navItems, fn($i) => in_array($i['key'], $primaryKeys, true)));
+      $moreTabs     = array_values(array_filter($navItems, fn($i) => !in_array($i['key'], $primaryKeys, true)));
+      $onMoreTabPage = in_array($currentPage, array_column($moreTabs, 'key'), true);
+    ?>
+    <nav class="saas-mobile-tabbar" x-data="{ moreOpen: false }" @click.outside="moreOpen = false">
+      <?php foreach ($primaryTabs as $item): ?>
         <a href="<?= $base ?><?= $item['href'] ?>" class="saas-mobile-tabbar-item <?= $currentPage === $item['key'] ? 'active' : '' ?>">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<?= $item['icon'] ?>" />
@@ -258,6 +281,32 @@ $currentPage = $page ?? 'dashboard';
           <span><?= htmlspecialchars($item['label']) ?></span>
         </a>
       <?php endforeach; ?>
+
+      <button type="button" class="saas-mobile-tabbar-item <?= $onMoreTabPage ? 'active' : '' ?>" @click="moreOpen = !moreOpen">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <span>Menu</span>
+      </button>
+
+      <div x-show="moreOpen" x-cloak x-transition class="saas-mobile-more-panel">
+        <?php foreach ($moreTabs as $item): ?>
+          <a href="<?= $base ?><?= $item['href'] ?>" class="saas-mobile-more-item <?= $currentPage === $item['key'] ? 'active' : '' ?>">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<?= $item['icon'] ?>"/>
+            </svg>
+            <span><?= htmlspecialchars($item['label']) ?></span>
+          </a>
+        <?php endforeach; ?>
+        <button type="button" @click="logout()" class="saas-mobile-more-item"
+          style="width:100%;background:none;border:none;text-align:left;color:#DC2626;cursor:pointer;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span>Déconnexion</span>
+        </button>
+      </div>
     </nav>
   </div>
 </body>

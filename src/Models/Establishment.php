@@ -13,6 +13,18 @@ class Establishment extends BaseModel
         return self::where(['owner_id' => $ownerId]);
     }
 
+    public static function findByQrToken(string $qrToken): ?array
+    {
+        return self::first(['qr_token' => $qrToken]);
+    }
+
+    /** Génère systématiquement le qr_token ("Mon QR code") scanné par les agents commerciaux. */
+    public static function create(array $data): int
+    {
+        $data['qr_token'] ??= bin2hex(random_bytes(16));
+        return parent::create($data);
+    }
+
     public static function findBySlug(string $slug): ?array
     {
         return self::first(['slug' => $slug]);

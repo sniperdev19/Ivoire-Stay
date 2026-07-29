@@ -31,9 +31,9 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
     <!-- Brand -->
     <div class="ck-brand">
       <a class="ck-brand-inner" href="<?= $base_url ?>/">
-        <div class="ck-brand-sq">IS</div>
+        <div class="ck-brand-sq">AS</div>
         <div class="ck-brand-text">
-          <strong>Afristay</strong>
+          <strong>Afri <span style="color:#C9A84C;">Stay</span></strong>
           <span>SaaS Hôtelier</span>
         </div>
       </a>

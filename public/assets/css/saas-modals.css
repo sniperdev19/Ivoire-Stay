@@ -1,0 +1,86 @@
+/* ============================================================
+   Afristay — Habillage commun de tous les modaux SaaS (PWA).
+   Chargé sur toutes les pages via layout.php, après saas.css et
+   saas-responsive.css. Ne pas fusionner dans saas.css (généré par
+   le build Tailwind) — voir la même convention dans saas-responsive.css.
+   ============================================================ */
+
+/* ── En-tête : liseré doré + bouton fermer cohérents partout ──
+   S'applique automatiquement à .saas-modal-header sur toutes les
+   pages, sans avoir à toucher chaque template. */
+.saas-modal-header {
+  position: relative;
+}
+.saas-modal-header:before {
+  content: "";
+  position: absolute; left: 0; right: 0; top: 0; height: 3px;
+  background: linear-gradient(90deg, var(--saas-gold), #e8d5a3);
+}
+
+.saas-modal-close {
+  width: 32px; height: 32px; flex-shrink: 0;
+  border: none; border-radius: 8px;
+  background: rgba(0,0,0,0.05); color: #6B7280;
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.saas-modal-close svg { width: 16px; height: 16px; }
+.saas-modal-close:hover { background: rgba(0,0,0,0.09); color: #111827; }
+
+/* En-tête "Réservation #X / Nom du client" réutilisé par plusieurs pages */
+.modal-header-info { min-width: 0; }
+.modal-eyebrow {
+  margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: #9CA3AF;
+}
+.modal-title-lg {
+  margin: 5px 0 0; font-size: 19px; font-weight: 700; color: #111827;
+  overflow-wrap: anywhere;
+}
+
+/* ── Cartes / grilles génériques pour les vues "détail" (lecture
+   seule) : regroupent des champs par paires plutôt que de les
+   empiler un par un pleine largeur. ── */
+.modal-card {
+  background: #F9FAFB; border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 14px; padding: 16px;
+}
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.modal-label {
+  margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: #9CA3AF;
+}
+.modal-value { margin: 0; font-size: 14px; font-weight: 600; color: #111827; }
+.modal-meta { margin: 4px 0 0; font-size: 13px; color: #6B7280; }
+.modal-amount { margin: 0; font-size: 20px; font-weight: 700; color: var(--saas-gold); }
+.modal-mono {
+  margin: 0; font-size: 13px; font-weight: 600; color: #111827;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Bandeau "flux" (ex : arrivée → départ) avec puces en dessous */
+.modal-strip { background: #fff; border: 1px solid rgba(0,0,0,0.06); border-radius: 14px; padding: 16px 18px; }
+.modal-strip-row { display: flex; align-items: center; gap: 16px; }
+.modal-strip-row > div { flex: 1; min-width: 0; }
+.modal-strip-arrow { flex-shrink: 0; color: #D1D5DB; font-size: 18px; }
+.modal-strip-chips {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin-top: 14px; padding-top: 14px; border-top: 1px dashed rgba(0,0,0,0.08);
+}
+.modal-chip {
+  display: inline-flex; align-items: center; font-size: 12px; font-weight: 600;
+  color: #374151; background: #F3F4F6; padding: 4px 12px; border-radius: 50px;
+}
+
+/* Ligne d'item compacte (historique, listes récap dans un modal) */
+.modal-list-item {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; flex-wrap: wrap; padding: 12px 14px;
+  background: #FAFAFA; border: 1px solid rgba(0,0,0,0.05); border-radius: 10px;
+}
+
+@media (max-width: 560px) {
+  .modal-card, .modal-strip { padding: 14px; }
+  .modal-grid { gap: 12px; }
+  .modal-amount { font-size: 18px; }
+}

@@ -21,14 +21,14 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
 <body>
 
   <div class="lg-left">
-    <div class="lg-ghost">IS</div>
+    <div class="lg-ghost">AS</div>
     <div class="lg-radial"></div>
 
     <div class="lg-brand">
       <a class="lg-brand-inner" href="<?= $base_url ?>/">
-        <div class="lg-brand-sq">IS</div>
+        <div class="lg-brand-sq">AS</div>
         <div class="lg-brand-text">
-          <strong>Afristay</strong>
+          <strong>Afri <span style="color:#C9A84C;">Stay</span></strong>
           <span>SaaS Hôtelier</span>
         </div>
       </a>
@@ -41,7 +41,7 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
       <div class="lg-rule"></div>
       <p class="lg-desc">
         Votre compte est prêt. Installez Afristay sur cet appareil
-        pour accéder à votre tableau de bord hôtelier — c'est
+        pour accéder à votre tableau de bord hôtelier. C'est
         obligatoire, une seule fois par appareil.
       </p>
     </div>
@@ -108,7 +108,7 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
 
       <p class="lg-gate-desc">
         L'espace hôtelier n'est accessible que depuis l'application
-        installée sur votre appareil — Android, iPhone/iPad ou PC.
+        installée sur votre appareil (Android, iPhone/iPad ou PC).
       </p>
 
       <button class="lg-btn lg-btn-gold lg-gate-install-btn" type="button"

@@ -2,7 +2,11 @@
 <?php $pageJs  = 'saas-settings'; ?>
 <?php $pageCss = 'saas-settings'; ?>
 
-<div x-data="settingsPage('<?= $base_url ?>')" x-init="init()">
+<?php if (AGENTS_ENABLED): ?>
+<script src="<?= $base_url ?>/assets/vendor/qrcode/qrcode.min.js"></script>
+<?php endif; ?>
+
+<div x-data="settingsPage('<?= $base_url ?>', <?= ONLINE_PAYMENTS_ENABLED ? 'true' : 'false' ?>)" x-init="init()">
 
   <!-- En-tête -->
   <div style="margin-bottom:20px;">
@@ -14,19 +18,19 @@
 
     <!-- Navigation latérale -->
     <nav class="stg-side-nav">
-      <button @click="activeTab='general'"
+      <button x-show="canSeeSettings" @click="activeTab='general'"
               :class="activeTab==='general' ? 'stg-side-item-active' : ''"
               class="stg-side-item">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
         <span>Général</span>
       </button>
-      <button x-show="!creatingEstab" @click="activeTab='team'"
+      <button x-show="canSeeSettings && !creatingEstab" @click="activeTab='team'"
               :class="activeTab==='team' ? 'stg-side-item-active' : ''"
               class="stg-side-item">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-8a4 4 0 11-8 0 4 4 0 018 0zm6 3a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         <span>Membres</span>
       </button>
-      <button @click="activeTab='subscription'"
+      <button x-show="canSeeSettings" @click="activeTab='subscription'"
               :class="activeTab==='subscription' ? 'stg-side-item-active' : ''"
               class="stg-side-item">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
@@ -37,6 +41,12 @@
               class="stg-side-item">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
         <span>Compte</span>
+      </button>
+      <button @click="activeTab='notifications'"
+              :class="activeTab==='notifications' ? 'stg-side-item-active' : ''"
+              class="stg-side-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span>Notifications</span>
       </button>
     </nav>
 
@@ -65,21 +75,46 @@
          ONGLET : Général
          ════════════════════════════════════════════════════════ -->
     <div x-show="activeTab==='general'">
-      <div class="saas-card" style="padding:24px;">
 
-      <div class="stg-section-head">
+      <div class="stg-section-head" style="margin-bottom:16px;">
         <div class="stg-section-icon">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
         </div>
-        <div>
+        <div style="flex:1;">
           <h3 class="stg-section-title" x-text="creatingEstab ? 'Créer votre établissement' : 'Informations de l\'établissement'"></h3>
           <p class="stg-section-sub">Ces informations apparaissent sur votre vitrine publique</p>
         </div>
+        <?php if (AGENTS_ENABLED): ?>
+        <button type="button" class="btn-saas-secondary" x-show="!creatingEstab" @click="openMyQrCode()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h4v4H4V4zm0 12h4v4H4v-4zm12-12h4v4h-4V4zm0 5h4v11h-4V9zM9 4h1v6H9V4zM4 11h6v1H4v-1zm5 3h1v6H9v-6zm-5 2h1v1H4v-1z"/></svg>
+          Mon QR code
+        </button>
+        <?php endif; ?>
       </div>
 
-      <div class="stg-divider"></div>
+      <!-- Carrousel : navigation entre les cartes -->
+      <div class="stg-carousel-nav">
+        <button type="button" class="btn-saas-secondary stg-carousel-btn" @click="generalPrev()" :disabled="generalCardIndex === 0">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          <span>Précédent</span>
+        </button>
 
-      <div class="stg-group">
+        <div class="stg-carousel-dots">
+          <template x-for="(key, i) in generalSections" :key="key">
+            <button type="button" class="stg-carousel-dot" :class="i === generalCardIndex ? 'stg-carousel-dot-active' : ''"
+                    @click="generalCardIndex = i" :aria-label="generalSectionLabels[key]" :title="generalSectionLabels[key]"></button>
+          </template>
+        </div>
+
+        <button type="button" class="btn-saas-secondary stg-carousel-btn" @click="generalNext()" :disabled="generalCardIndex === generalSections.length - 1">
+          <span x-show="generalCardIndex < generalSections.length - 1">Suivant : <span x-text="generalSectionLabels[generalSections[generalCardIndex + 1]]"></span></span>
+          <span x-show="generalCardIndex === generalSections.length - 1">Dernière section</span>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <!-- Carte : Identité -->
+      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'identity'">
         <div class="stg-group-label">Identité</div>
         <div class="stg-form-grid">
           <div class="stg-col-2">
@@ -112,9 +147,16 @@
             </div>
           </div>
         </div>
+        <div class="stg-form-actions" x-show="!creatingEstab">
+          <button class="btn-saas-primary" @click="saveIdentity()" :disabled="savingIdentity">
+            <div x-show="savingIdentity" class="stg-btn-spinner"></div>
+            <span x-show="!savingIdentity">Enregistrer</span>
+          </button>
+        </div>
       </div>
 
-      <div class="stg-group">
+      <!-- Carte : Localisation (auto-enregistrée dès la localisation) -->
+      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'location'">
         <div class="stg-group-label">Localisation</div>
         <div class="stg-locate">
           <div class="stg-locate-info">
@@ -142,7 +184,8 @@
         <p x-show="locateError" x-text="locateError" class="stg-locate-error"></p>
       </div>
 
-      <div class="stg-group">
+      <!-- Carte : Contact -->
+      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'contact'">
         <div class="stg-group-label">Contact</div>
         <div class="stg-form-grid">
           <div>
@@ -167,35 +210,47 @@
             </div>
           </div>
         </div>
+        <div class="stg-form-actions" x-show="!creatingEstab">
+          <button class="btn-saas-primary" @click="saveContact()" :disabled="savingContact">
+            <div x-show="savingContact" class="stg-btn-spinner"></div>
+            <span x-show="!savingContact">Enregistrer</span>
+          </button>
+        </div>
       </div>
 
-      <div class="stg-group">
+      <!-- Carte : Paiement des réservations (auto-enregistré au clic) -->
+      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'payment'">
         <div class="stg-group-label">Paiement des réservations</div>
-        <div class="stg-payment-toggle" :class="onlinePaymentLocked ? 'stg-locked' : ''">
+        <div class="stg-payment-toggle" :class="(onlinePaymentComingSoon || onlinePaymentLocked) ? 'stg-locked' : ''">
           <div class="stg-payment-toggle-info">
             <div class="stg-payment-toggle-title">
               Paiement en ligne
-              <span x-show="onlinePaymentLocked" class="stg-pro-badge">PRO</span>
+              <span x-show="onlinePaymentComingSoon" class="stg-pro-badge">Bientôt</span>
+              <span x-show="!onlinePaymentComingSoon && onlinePaymentLocked" class="stg-pro-badge">PRO</span>
             </div>
-            <p class="stg-payment-toggle-desc" x-show="!onlinePaymentLocked && !creatingEstab">
+            <p class="stg-payment-toggle-desc" x-show="onlinePaymentComingSoon">
+              Fonctionnalité en cours de développement — disponible prochainement. Vos clients règlent pour l'instant sur place.
+            </p>
+            <p class="stg-payment-toggle-desc" x-show="!onlinePaymentComingSoon && !onlinePaymentLocked && !creatingEstab">
               Désactivez pour n'accepter que le paiement sur place : vos clients devront régler directement à l'arrivée, sans option de paiement en ligne sur votre vitrine.
             </p>
-            <p class="stg-payment-toggle-desc" x-show="onlinePaymentLocked">
+            <p class="stg-payment-toggle-desc" x-show="!onlinePaymentComingSoon && onlinePaymentLocked">
               Réservé aux plans Premium. Passez à niveau pour proposer le paiement en ligne à vos clients.
             </p>
-            <p class="stg-payment-toggle-desc" x-show="!onlinePaymentLocked && creatingEstab">
+            <p class="stg-payment-toggle-desc" x-show="!onlinePaymentComingSoon && !onlinePaymentLocked && creatingEstab">
               Disponible une fois votre établissement créé.
             </p>
           </div>
-          <button type="button" class="stg-switch" :class="(!onlinePaymentLocked && form.online_payment_enabled) ? 'stg-switch-on' : ''"
-                  @click="toggleOnlinePayment()" :disabled="onlinePaymentLocked || creatingEstab || savingPayment"
-                  :aria-pressed="(!onlinePaymentLocked && form.online_payment_enabled) ? 'true' : 'false'" aria-label="Activer ou désactiver le paiement en ligne">
+          <button type="button" class="stg-switch" :class="(!onlinePaymentComingSoon && !onlinePaymentLocked && form.online_payment_enabled) ? 'stg-switch-on' : ''"
+                  @click="toggleOnlinePayment()" :disabled="onlinePaymentComingSoon || onlinePaymentLocked || creatingEstab || savingPayment"
+                  :aria-pressed="(!onlinePaymentComingSoon && !onlinePaymentLocked && form.online_payment_enabled) ? 'true' : 'false'" aria-label="Activer ou désactiver le paiement en ligne">
             <span class="stg-switch-dot"></span>
           </button>
         </div>
       </div>
 
-      <div class="stg-group">
+      <!-- Carte : Visibilité (auto-enregistrée au clic) -->
+      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'visibility'">
         <div class="stg-group-label">Visibilité</div>
         <div class="stg-payment-toggle" :class="boostLocked ? 'stg-locked' : ''">
           <div class="stg-payment-toggle-info">
@@ -221,7 +276,8 @@
         </div>
       </div>
 
-      <div class="stg-group">
+      <!-- Carte : Présentation -->
+      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'presentation'">
         <div class="stg-group-label">Présentation</div>
         <div class="stg-form-grid">
           <div class="stg-col-2">
@@ -229,9 +285,16 @@
             <textarea class="saas-input" rows="4" x-model="form.description" placeholder="Décrivez votre établissement en quelques phrases…"></textarea>
           </div>
         </div>
+        <div class="stg-form-actions" x-show="!creatingEstab">
+          <button class="btn-saas-primary" @click="savePresentation()" :disabled="savingPresentation">
+            <div x-show="savingPresentation" class="stg-btn-spinner"></div>
+            <span x-show="!savingPresentation">Enregistrer</span>
+          </button>
+        </div>
       </div>
 
-      <div class="stg-group">
+      <!-- Carte : Horaires -->
+      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'hours'">
         <div class="stg-group-label">Horaires</div>
         <div class="stg-form-grid">
           <div>
@@ -244,9 +307,16 @@
           </div>
         </div>
         <p style="font-size:12px;color:#9CA3AF;margin:8px 0 0;">Affichés dans « Informations pratiques » sur la fiche publique de l'établissement.</p>
+        <div class="stg-form-actions" x-show="!creatingEstab">
+          <button class="btn-saas-primary" @click="saveHours()" :disabled="savingHours">
+            <div x-show="savingHours" class="stg-btn-spinner"></div>
+            <span x-show="!savingHours">Enregistrer</span>
+          </button>
+        </div>
       </div>
 
-      <div class="stg-group" x-show="!creatingEstab">
+      <!-- Carte : Photos (auto-enregistrées à l'ajout/suppression) -->
+      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'photos'">
         <div class="stg-group-label">Photos <span class="stg-label-optional">(3 maximum)</span></div>
         <div class="stg-photo-grid">
           <template x-for="photo in photos" :key="photo.id">
@@ -272,30 +342,32 @@
         <p x-show="photoError" x-text="photoError" class="stg-locate-error"></p>
       </div>
 
-      <div class="stg-feedback">
-        <template x-if="saveSuccess">
-          <div class="stg-alert stg-alert-success">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-            Modifications enregistrées avec succès !
-          </div>
-        </template>
-        <template x-if="saveError">
-          <div class="stg-alert stg-alert-error">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span x-text="saveError"></span>
-          </div>
-        </template>
-      </div>
+      <!-- Carte : création de l'établissement (uniquement en mode création) -->
+      <div class="saas-card" style="padding:24px;" x-show="generalSections[generalCardIndex] === 'create'" x-cloak>
+        <div class="stg-feedback">
+          <template x-if="saveSuccess">
+            <div class="stg-alert stg-alert-success">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              Établissement créé avec succès !
+            </div>
+          </template>
+          <template x-if="saveError">
+            <div class="stg-alert stg-alert-error">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span x-text="saveError"></span>
+            </div>
+          </template>
+        </div>
 
-      <div class="stg-form-actions">
-        <button type="button" class="btn-saas-secondary" x-show="addingEstab" @click="cancelAddEstablishment()" :disabled="saving">Annuler</button>
-        <button class="btn-saas-primary" @click="saveGeneral()" :disabled="saving">
-          <div x-show="saving" class="stg-btn-spinner"></div>
-          <span x-show="!saving" x-text="creatingEstab ? 'Créer l\'établissement' : 'Enregistrer les modifications'"></span>
-        </button>
+        <div class="stg-form-actions">
+          <button type="button" class="btn-saas-secondary" x-show="addingEstab" @click="cancelAddEstablishment()" :disabled="saving">Annuler</button>
+          <button class="btn-saas-primary" @click="saveGeneral()" :disabled="saving">
+            <div x-show="saving" class="stg-btn-spinner"></div>
+            <span x-show="!saving">Créer l'établissement</span>
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
   <!-- ════════════════════════════════════════════════════════
        ONGLET : Membres
@@ -479,23 +551,122 @@
        ONGLET : Compte
        ════════════════════════════════════════════════════════ -->
   <div x-show="activeTab==='account'">
-    <div class="saas-card" style="padding:24px;">
+    <div class="saas-card" style="padding:24px;margin-bottom:16px;">
 
       <!-- Avatar + infos utilisateur -->
       <div class="stg-account-hero">
-        <div class="stg-avatar">
-          <span x-text="(JSON.parse(localStorage.getItem('user')||'{}').name||'U').split(' ').map(s=>s[0]).slice(0,2).join('')"></span>
+        <div class="stg-avatar-wrap">
+          <div class="stg-avatar" :style="userAvatarUrl ? ('background-image:url(\'' + userAvatarUrl + '\')') : ''">
+            <span x-show="!userAvatarUrl" x-text="(currentUser.name||'U').split(' ').map(s=>s[0]).slice(0,2).join('')"></span>
+          </div>
+          <label class="stg-avatar-edit" :class="avatarUploading ? 'stg-avatar-edit-loading' : ''" title="Changer la photo">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <input type="file" accept="image/png,image/jpeg,image/webp" style="display:none" :disabled="avatarUploading" @change="uploadAvatar($event)">
+          </label>
+          <button type="button" class="stg-avatar-remove" x-show="userAvatarUrl" @click="removeAvatar()" title="Supprimer la photo">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
         </div>
         <div>
-          <div class="stg-account-name"  x-text="JSON.parse(localStorage.getItem('user')||'{}').name"></div>
-          <div class="stg-account-email" x-text="JSON.parse(localStorage.getItem('user')||'{}').email"></div>
+          <div class="stg-account-name"  x-text="currentUser.name"></div>
+          <div class="stg-account-email" x-text="currentUser.email"></div>
           <div class="stg-account-role">
-            <span class="badge" :class="planColor(JSON.parse(localStorage.getItem('user')||'{}').role)">
-              <span x-text="JSON.parse(localStorage.getItem('user')||'{}').role"></span>
+            <span class="badge" :class="planColor(currentUser.role)">
+              <span x-text="currentUser.role"></span>
             </span>
           </div>
         </div>
       </div>
+      <p x-show="avatarError" class="stg-payment-toggle-desc" style="color:#DC2626;margin-top:10px;" x-text="avatarError"></p>
+
+      <!-- Formulaire profil -->
+      <div style="display:grid;gap:14px;grid-template-columns:1fr 1fr;margin-top:22px;">
+        <div>
+          <label class="saas-label">Nom complet</label>
+          <input class="saas-input" x-model="profileForm.name" placeholder="Votre nom">
+        </div>
+        <div>
+          <label class="saas-label">Téléphone <span class="stg-label-optional">(optionnel)</span></label>
+          <input class="saas-input" x-model="profileForm.phone" placeholder="+225 07 00 00 00 00">
+        </div>
+      </div>
+      <div x-show="profileError" class="stg-alert stg-alert-error" style="margin-top:14px;">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span x-text="profileError"></span>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+        <button class="btn-saas-primary" @click="saveProfile()" :disabled="profileSaving">
+          <span x-show="!profileSaving">Enregistrer le profil</span>
+          <span x-show="profileSaving">Enregistrement…</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Panneaux sécurité / danger -->
+    <div class="stg-panels" style="margin-bottom:16px;">
+      <div class="stg-panel stg-panel-security">
+        <div class="stg-panel-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+        <div class="stg-panel-title">Sécurité</div>
+        <div class="stg-panel-desc">Modifiez votre mot de passe pour sécuriser l'accès à votre compte.</div>
+        <button class="btn-saas-secondary" @click="openPasswordModal()">Changer le mot de passe</button>
+      </div>
+
+      <div class="stg-panel stg-panel-danger">
+        <div class="stg-panel-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <div class="stg-panel-title">Zone de danger</div>
+        <div class="stg-panel-desc">Supprimer définitivement votre compte et toutes les données associées. Cette action n'est pas libre-service : notre support la traite manuellement pour confirmer votre identité.</div>
+        <a class="btn-saas-danger" style="font-size:12px;" :href="supportMailtoUrl">Contacter le support</a>
+      </div>
+    </div>
+
+    <!-- Appareils connectés (sessions actives + historique de connexion) -->
+    <div class="saas-card" style="padding:24px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div class="stg-panel-title" style="margin-bottom:2px;">Appareils connectés</div>
+          <p class="stg-payment-toggle-desc">Sessions actives et historique de connexion sur votre compte.</p>
+        </div>
+        <button type="button" class="btn-saas-secondary" style="font-size:12px;" x-show="activeSessionsCount > 1"
+                @click="revokeOtherSessions()" :disabled="sessionsActionLoading">
+          Déconnecter les autres appareils
+        </button>
+      </div>
+
+      <div style="margin-top:14px;">
+        <template x-for="s in sessions" :key="s.id">
+          <div class="stg-session-row">
+            <div class="stg-session-info">
+              <div class="stg-session-device">
+                <span x-text="s.device_label || 'Appareil inconnu'"></span>
+                <span class="badge badge-gold"    x-show="s.is_current"              style="margin-left:6px;">Cet appareil</span>
+                <span class="badge badge-success" x-show="s.is_active && !s.is_current" style="margin-left:6px;">Active</span>
+                <span class="badge stg-badge-muted" x-show="!s.is_active"            style="margin-left:6px;">Expirée</span>
+              </div>
+              <div class="stg-session-meta">
+                <span x-text="formatDate(s.created_at)"></span>
+                <span x-show="s.ip_address">&nbsp;·&nbsp;<span x-text="s.ip_address"></span></span>
+              </div>
+            </div>
+            <button type="button" class="btn-saas-secondary" style="font-size:12px;" x-show="s.is_active && !s.is_current"
+                    @click="revokeSession(s.id)" :disabled="sessionsActionLoading">
+              Déconnecter
+            </button>
+          </div>
+        </template>
+        <p x-show="!sessionsLoading && sessions.length===0" style="font-size:13px;color:#9CA3AF;">Aucune connexion enregistrée.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════
+       ONGLET : Notifications
+       ════════════════════════════════════════════════════════ -->
+  <div x-show="activeTab==='notifications'">
+    <div class="saas-card" style="padding:24px;">
 
       <!-- Notifications push (hors application) -->
       <div class="stg-payment-toggle" style="margin-bottom:20px;">
@@ -517,7 +688,7 @@
       </div>
 
       <!-- Types de notification -->
-      <div class="stg-payment-toggle" style="margin-bottom:20px;flex-direction:column;align-items:stretch;">
+      <div class="stg-payment-toggle" style="flex-direction:column;align-items:stretch;">
         <div class="stg-payment-toggle-info" style="margin-bottom:12px;">
           <div class="stg-payment-toggle-title">Types de notification</div>
           <p class="stg-payment-toggle-desc">Désactivez les notifications que vous ne souhaitez pas recevoir (centre de notifications + push).</p>
@@ -535,30 +706,43 @@
           </template>
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- Panneaux sécurité / danger -->
-      <div class="stg-panels">
-        <div class="stg-panel stg-panel-security">
-          <div class="stg-panel-icon">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+  <!-- ═══ MODAL : Changer le mot de passe ═══ -->
+  <div x-cloak x-show="showPasswordModal" class="saas-modal-bg" @click.self="closePasswordModal()" @keydown.escape.window="closePasswordModal()">
+    <div class="saas-modal" style="max-width:420px;" role="dialog" aria-modal="true">
+      <div class="saas-modal-header">
+        <h2 style="font-size:16px;font-weight:700;margin:0;">Changer le mot de passe</h2>
+        <button type="button" class="saas-modal-close" @click="closePasswordModal()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </div>
+      <div class="saas-modal-body">
+        <div style="display:grid;gap:14px;">
+          <div>
+            <label class="saas-label">Mot de passe actuel</label>
+            <input class="saas-input" type="password" x-model="passwordForm.current" placeholder="••••••••" autocomplete="current-password">
           </div>
-          <div class="stg-panel-title">Sécurité</div>
-          <div class="stg-panel-desc">La modification du mot de passe sera disponible dans une prochaine mise à jour.</div>
-          <button class="btn-saas-secondary" disabled style="opacity:0.5;cursor:not-allowed;">Changer le mot de passe</button>
-        </div>
-
-        <div class="stg-panel stg-panel-danger">
-          <div class="stg-panel-icon">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          <div>
+            <label class="saas-label">Nouveau mot de passe</label>
+            <input class="saas-input" type="password" x-model="passwordForm.new" placeholder="Min. 8 caractères, avec une lettre et un chiffre" autocomplete="new-password">
           </div>
-          <div class="stg-panel-title">Zone de danger</div>
-          <div class="stg-panel-desc">Supprimer définitivement votre compte et toutes les données associées.</div>
-          <button class="btn-saas-danger" disabled style="opacity:0.5;cursor:not-allowed;font-size:12px;">Contacter le support</button>
+          <div>
+            <label class="saas-label">Confirmer le nouveau mot de passe</label>
+            <input class="saas-input" type="password" x-model="passwordForm.confirm" placeholder="••••••••" autocomplete="new-password">
+          </div>
+          <div x-show="passwordError" class="stg-alert stg-alert-error">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span x-text="passwordError"></span>
+          </div>
         </div>
       </div>
-    </div>
-    </div>
-
+      <div class="saas-modal-footer">
+        <button type="button" class="btn-saas-secondary" @click="closePasswordModal()" :disabled="passwordSaving">Annuler</button>
+        <button type="button" class="btn-saas-primary" @click="changePassword()" :disabled="passwordSaving">
+          <span x-show="!passwordSaving">Enregistrer</span>
+          <span x-show="passwordSaving">Enregistrement…</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -567,7 +751,7 @@
     <div class="saas-modal" style="max-width:440px;" role="dialog" aria-modal="true">
       <div class="saas-modal-header">
         <h2 style="font-size:16px;font-weight:700;margin:0;" x-text="teamEditing ? 'Modifier le membre' : 'Ajouter un membre'"></h2>
-        <button type="button" style="background:none;border:none;color:#6B7280;cursor:pointer;font-size:22px;line-height:1;" @click="showTeamModal=false">×</button>
+        <button type="button" class="saas-modal-close" @click="showTeamModal=false"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
       </div>
       <div class="saas-modal-body">
         <div style="display:grid;gap:14px;">
@@ -611,5 +795,36 @@
       </div>
     </div>
   </div>
+
+  <?php if (AGENTS_ENABLED): ?>
+  <!-- ═══ MODAL : Mon QR code (scanné par un agent commercial) ═══ -->
+  <div x-cloak x-show="showQrModal" class="saas-modal-bg" @click.self="showQrModal=false" @keydown.escape.window="showQrModal=false">
+    <div class="saas-modal" style="max-width:380px;text-align:center;" role="dialog" aria-modal="true">
+      <div class="saas-modal-header">
+        <h2 style="font-size:16px;font-weight:700;margin:0;">Mon QR code</h2>
+        <button type="button" class="saas-modal-close" @click="showQrModal=false"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </div>
+      <div class="saas-modal-body">
+        <template x-if="!qrAgentLinked">
+          <div>
+            <p style="font-size:13px;color:#6B7280;margin-bottom:16px;">
+              Un agent commercial Afristay peut scanner ce code pour être identifié comme celui qui vous a fait inscrire.
+            </p>
+            <div id="qr-code-canvas" style="display:flex;justify-content:center;margin-bottom:12px;"></div>
+            <p x-show="qrCodeToken" style="font-size:11px;color:#9CA3AF;word-break:break-all;">Code : <span x-text="qrCodeToken"></span></p>
+          </div>
+        </template>
+        <template x-if="qrAgentLinked">
+          <div style="padding:12px 0;">
+            <div style="font-size:32px;margin-bottom:10px;">✅</div>
+            <p style="font-size:13px;color:#374151;font-weight:600;margin-bottom:4px;">Ce QR code est désactivé</p>
+            <p style="font-size:12px;color:#9CA3AF;">Votre établissement est déjà rattaché à un agent commercial, un nouveau scan n'aurait plus aucun effet.</p>
+          </div>
+        </template>
+        <p x-show="qrCodeLoading" style="font-size:13px;color:#6B7280;">Chargement…</p>
+      </div>
+    </div>
+  </div>
+  <?php endif; ?>
 
 </div>

@@ -14,6 +14,8 @@ elseif (preg_match('#/booking#',  $uri)) $pageName = 'booking';
 elseif (preg_match('#/apropos#',  $uri)) $pageName = 'apropos';
 elseif (preg_match('#/tarifs#',   $uri)) $pageName = 'pricing';
 elseif (preg_match('#/contact#',  $uri)) $pageName = 'contact';
+elseif (preg_match('#/mes-reservations#', $uri)) $pageName = 'mes-reservations';
+elseif (preg_match('#/newsletter/desabonnement#', $uri)) $pageName = 'newsletter-unsubscribe';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -41,6 +43,11 @@ elseif (preg_match('#/contact#',  $uri)) $pageName = 'contact';
   <link rel="stylesheet" href="<?= $base ?>/assets/vendor/leaflet/leaflet.css">
   <?php endif; ?>
 
+  <!-- Historique local des réservations voyageur (booking.js à la confirmation, mes-reservations.js à la lecture) -->
+  <?php $myBookingsJsPath = BASE_PATH . '/public/assets/js/my-bookings-store.js'; ?>
+  <script src="<?= $base ?>/assets/js/my-bookings-store.js?v=<?= file_exists($myBookingsJsPath) ? filemtime($myBookingsJsPath) : 1 ?>"
+    defer></script>
+
   <!-- Alpine.js — vitrineNav() doit être déclaré avant -->
   <?php $vitrineJsPath = BASE_PATH . '/public/assets/js/vitrine.js'; ?>
   <script src="<?= $base ?>/assets/js/vitrine.js?v=<?= file_exists($vitrineJsPath) ? filemtime($vitrineJsPath) : 1 ?>"
@@ -55,6 +62,7 @@ elseif (preg_match('#/contact#',  $uri)) $pageName = 'contact';
   <script defer src="<?= $base ?>/assets/vendor/leaflet/leaflet.js"></script>
   <?php endif; ?>
   <script defer src="<?= $base ?>/assets/js/alpine.min.js"></script>
+  <script defer src="<?= $base ?>/assets/js/anti-inspect.js"></script>
 
   <style>
   /* ── Navigation vitrine ── */
@@ -377,11 +385,23 @@ elseif (preg_match('#/contact#',  $uri)) $pageName = 'contact';
   ];
   $activePath = $activeMap[$pageName] ?? '/';
   ?>
+  <!-- Bandeau d'annonce plateforme (Announcement::activeOne()) — sa hauteur réelle
+       (mesurée, pas devinée) décale le "top" de la nav flottante fixe ci-dessous
+       via $store.vitrineChrome, pour ne jamais se superposer à elle. -->
+  <div x-data="vitrineAnnouncementBanner('<?= $base ?>')" x-init="init()"
+    x-show="announcement && !dismissed" x-cloak
+    style="position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 40px;background:#1B4332;color:#F6EFE6;font-size:13px;">
+    <strong x-text="announcement?.title"></strong>
+    <span style="opacity:0.85;" x-text="announcement?.message"></span>
+    <button type="button" @click="dismiss()" aria-label="Fermer"
+      style="margin-left:auto;background:none;border:none;color:#F6EFE6;opacity:0.7;cursor:pointer;font-size:16px;line-height:1;">✕</button>
+  </div>
+
   <header x-data="vitrineNav()" x-init="init()" @keydown.escape.window="mobileOpen = false">
     <nav style="position:fixed;top:0;left:0;right:0;width:100%;background:transparent;padding:18px 40px;z-index:50;"
       :style="scrolled
-      ? 'position:fixed;top:16px;left:50%;transform:translateX(-50%);width:calc(100% - 48px);max-width:1100px;background:rgba(250,247,242,0.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(201,168,76,0.2);border-radius:60px;box-shadow:0 8px 32px rgba(27,67,50,0.12);padding:8px 24px;z-index:50;transition:all 0.4s cubic-bezier(0.4,0,0.2,1);'
-      : 'position:fixed;top:0;left:0;right:0;width:100%;background:transparent;border:none;border-radius:0;box-shadow:none;padding:18px 40px;z-index:50;transition:all 0.4s cubic-bezier(0.4,0,0.2,1);'">
+      ? 'position:fixed;top:' + (16 + $store.vitrineChrome.bannerHeight) + 'px;left:50%;transform:translateX(-50%);width:calc(100% - 48px);max-width:1100px;background:rgba(250,247,242,0.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(201,168,76,0.2);border-radius:60px;box-shadow:0 8px 32px rgba(27,67,50,0.12);padding:8px 24px;z-index:50;transition:all 0.4s cubic-bezier(0.4,0,0.2,1);'
+      : 'position:fixed;top:' + $store.vitrineChrome.bannerHeight + 'px;left:0;right:0;width:100%;background:transparent;border:none;border-radius:0;box-shadow:none;padding:18px 40px;z-index:50;transition:all 0.4s cubic-bezier(0.4,0,0.2,1);'">
       <div class="v-nav-inner">
 
         <!-- Logo -->
@@ -464,7 +484,22 @@ elseif (preg_match('#/contact#',  $uri)) $pageName = 'contact';
             <span style="color:#F6EFE6;">Afri</span> <span style="color:#C9A84C;">Stay</span>
           </a>
           <p style="font-size:14px;max-width:240px;color:rgba(246,239,230,0.65);line-height:1.75;">La plateforme
-            hôtelière pensée pour la Côte d'Ivoire.</p>
+            hôtelière pensée pour l'Afrique.</p>
+
+          <!-- Inscription newsletter -->
+          <div x-data="newsletterFooterForm('<?= $base ?>')" style="max-width:260px;">
+            <p style="font-size:13px;font-weight:600;color:#F6EFE6;margin-bottom:8px;">Newsletter</p>
+            <form @submit.prevent="subscribe()" style="display:flex;gap:6px;">
+              <input type="email" x-model="email" required placeholder="Votre email"
+                style="flex:1;min-width:0;padding:9px 12px;border-radius:8px;border:1px solid rgba(246,239,230,0.2);background:rgba(246,239,230,0.06);color:#F6EFE6;font-size:13px;">
+              <button type="submit" :disabled="sending"
+                style="flex-shrink:0;padding:9px 14px;border-radius:8px;border:none;background:#C9A84C;color:#1B4332;font-weight:700;font-size:13px;cursor:pointer;">
+                <span x-show="!sending">OK</span>
+                <span x-show="sending">…</span>
+              </button>
+            </form>
+            <p x-show="message" :style="'font-size:12px;margin-top:6px;color:' + (msgOk ? '#8FD9A8' : '#F0A0A0')" x-text="message"></p>
+          </div>
         </div>
         <div>
           <h4 class="font-display" style="font-size:20px;margin-bottom:14px;font-weight:400;">Navigation</h4>
@@ -473,6 +508,7 @@ elseif (preg_match('#/contact#',  $uri)) $pageName = 'contact';
             <li><a href="<?= $base ?>/search">Destinations</a></li>
             <li><a href="<?= $base ?>/tarifs">Tarifs</a></li>
             <li><a href="<?= $base ?>/apropos">À propos</a></li>
+            <li><a href="<?= $base ?>/mes-reservations">Mes réservations</a></li>
           </ul>
         </div>
         <div>

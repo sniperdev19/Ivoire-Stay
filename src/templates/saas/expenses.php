@@ -19,7 +19,7 @@
       </div>
 
       <!-- KPIs -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;">
+      <div class="saas-kpi-grid">
         <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Total dépenses</div><div style="font-size:18px;font-weight:800;" x-text="formatPrice(totalExpenses)"></div></div>
         <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Ce mois</div><div style="font-size:18px;font-weight:800;" x-text="formatPrice(expenses.filter(e=> new Date(e.expense_date ?? e.date).getMonth() === new Date().getMonth() && new Date(e.expense_date ?? e.date).getFullYear()=== new Date().getFullYear()).reduce((s,e)=>s+(e.amount||0),0))"></div></div>
         <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Catégorie principale</div><div style="font-size:18px;font-weight:800;" x-text="byCategory[0]?.cat ?? '-' "></div></div>
@@ -104,7 +104,10 @@
   <!-- Modal (hors du blur) -->
   <div x-cloak x-show="showModal" class="saas-modal-bg" @keydown.escape.window="showModal=false" @click.self="showModal=false">
     <div class="saas-modal" style="max-width:620px;" @click.stop>
-      <div class="saas-modal-header"><h2 x-text="editing? 'Modifier la dépense':'Nouvelle dépense'"></h2></div>
+      <div class="saas-modal-header">
+        <h2 x-text="editing? 'Modifier la dépense':'Nouvelle dépense'"></h2>
+        <button type="button" class="saas-modal-close" @click="showModal=false"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </div>
       <div class="saas-modal-body">
         <div style="display:grid;gap:12px;grid-template-columns:1fr 1fr;">
           <div style="grid-column:span 2;"><label class="saas-label">Libellé</label><input class="saas-input" x-model="form.description" /></div>

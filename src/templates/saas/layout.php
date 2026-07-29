@@ -43,6 +43,10 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
   <?php $responsivePath = BASE_PATH . '/public/assets/css/saas-responsive.css'; ?>
   <link rel="stylesheet" href="<?= $base ?>/assets/css/saas-responsive.css?v=<?= file_exists($responsivePath) ? filemtime($responsivePath) : 1 ?>">
 
+  <!-- Habillage commun de tous les modaux (en-tête, bouton fermer, cartes détail) -->
+  <?php $modalsCssPath = BASE_PATH . '/public/assets/css/saas-modals.css'; ?>
+  <link rel="stylesheet" href="<?= $base ?>/assets/css/saas-modals.css?v=<?= file_exists($modalsCssPath) ? filemtime($modalsCssPath) : 1 ?>">
+
   <style>
   /* Sidebar : hauteur fixe pour que le <nav> interne puisse scroller */
   .saas-sidebar {
@@ -231,23 +235,6 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
             <span x-show="canSeeFinance && !canFeature('expenses')"
-              style="margin-left:auto;font-size:10px;font-weight:700;color:#C9A84C;background:rgba(201,168,76,0.15);padding:1px 5px;border-radius:4px;flex-shrink:0;">PRO</span>
-          </a>
-
-          <a href="<?= $base_url ?? '' ?>/saas/payouts"
-            class="saas-nav-item <?= ($page ?? '') === 'payouts' ? 'active' : '' ?>"
-            :class="{ 'saas-nav-locked': !canSeeFinance }"
-            @click="!canSeeFinance && $event.preventDefault()"
-            :title="!canSeeFinance ? 'Réservé au propriétaire' : ''">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M17 9V7a4 4 0 00-8 0v2M5 9h14l1 11H4L5 9z" />
-            </svg>
-            Retraits
-            <svg x-show="!canSeeFinance" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="saas-nav-lock-icon">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <span x-show="canSeeFinance && !canFeature('online_payment_control')"
               style="margin-left:auto;font-size:10px;font-weight:700;color:#C9A84C;background:rgba(201,168,76,0.15);padding:1px 5px;border-radius:4px;flex-shrink:0;">PRO</span>
           </a>
 
@@ -595,7 +582,7 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
           <div x-show="open" x-transition @click.away="open=false" class="saas-anchored-dropdown"
             style="position:absolute;top:100%;right:0;margin-top:8px;width:200px;background:white;border-radius:14px;box-shadow:0 16px 48px rgba(0,0,0,0.12);border:1px solid rgba(0,0,0,0.06);overflow:hidden;z-index:50;">
             <div style="padding:8px;">
-              <a href="<?= $base_url ?? '' ?>/saas/settings"
+              <a href="<?= $base_url ?? '' ?>/saas/settings?tab=account"
                 style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;color:#374151;text-decoration:none;font-size:13px;transition:background 0.2s;"
                 @mouseover="($event.currentTarget.style.background='#F9FAFB')"
                 @mouseout="($event.currentTarget.style.background='transparent')">
@@ -606,7 +593,7 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
                 </svg>
                 Mon profil
               </a>
-              <a href="<?= $base_url ?? '' ?>/saas/settings"
+              <a x-show="canSeeSettings" href="<?= $base_url ?? '' ?>/saas/settings"
                 style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;color:#374151;text-decoration:none;font-size:13px;transition:background 0.2s;"
                 @mouseover="($event.currentTarget.style.background='#F9FAFB')"
                 @mouseout="($event.currentTarget.style.background='transparent')">
@@ -638,6 +625,21 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
       </div>
     </header>
 
+    <div x-show="showEmailVerifyBanner" x-cloak class="saas-verify-banner"
+      style="display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px;padding:10px 24px;background:#FEF3C7;border-bottom:1px solid rgba(146,64,14,0.15);font-family:'Inter',sans-serif;font-size:13px;color:#92400E;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:16px;height:16px;flex-shrink:0;">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+      <span style="flex:1;min-width:260px;">Votre adresse email n'est pas encore confirmée. Cela ne bloque pas l'accès à votre compte, mais elle est nécessaire pour réinitialiser votre mot de passe en cas d'oubli. Vérifiez votre boîte de réception (lien valable 24h).<span x-show="!verificationResent"> Vous pouvez demander un nouvel envoi jusqu'à 3 fois par heure.</span></span>
+      <button type="button" @click="resendVerificationEmail()" :disabled="resendingVerification || verificationResent"
+        style="border:1px solid rgba(146,64,14,0.3);background:transparent;color:#92400E;font-size:12px;font-weight:600;padding:5px 12px;border-radius:8px;cursor:pointer;white-space:nowrap;">
+        <span x-show="!resendingVerification && !verificationResent">Renvoyer le lien</span>
+        <span x-show="resendingVerification">Envoi…</span>
+        <span x-show="!resendingVerification && verificationResent">✓ Email envoyé</span>
+      </button>
+      <span x-show="verificationError" style="width:100%;font-size:12px;font-weight:600;color:#B45309;" x-text="verificationError"></span>
+    </div>
+
     <main class="saas-content">
       <?= $content ?? '' ?>
     </main>
@@ -657,7 +659,6 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
       $moreTabs = [
         ['key'=>'invoices','label'=>'Comptabilité','href'=>'/saas/invoices','icon'=>'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z','guard'=>'canSeeFinance','feature'=>'invoices'],
         ['key'=>'expenses','label'=>'Dépenses','href'=>'/saas/expenses','icon'=>'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z','guard'=>'canSeeFinance','feature'=>'expenses'],
-        ['key'=>'payouts','label'=>'Retraits','href'=>'/saas/payouts','icon'=>'M17 9V7a4 4 0 00-8 0v2M5 9h14l1 11H4L5 9z','guard'=>'canSeeFinance','feature'=>'online_payment_control'],
         ['key'=>'reports','label'=>'Rapports','href'=>'/saas/reports','icon'=>'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z','guard'=>'canSeeFinance','feature'=>'reports'],
         ['key'=>'settings','label'=>'Paramètres','href'=>'/saas/settings','icon'=>'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z','guard'=>'canSeeSettings'],
       ];
@@ -707,6 +708,14 @@ $pageJs  = isset($pageJs)  ? (array) $pageJs  : [];
             <?php endif; ?>
           </a>
         <?php endforeach; ?>
+        <button type="button" @click="logout()" class="saas-mobile-more-item"
+          style="width:100%;background:none;border:none;text-align:left;color:#DC2626;cursor:pointer;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span>Déconnexion</span>
+        </button>
       </div>
     </nav>
   </div>

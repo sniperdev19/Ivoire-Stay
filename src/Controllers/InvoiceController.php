@@ -13,29 +13,35 @@ class InvoiceController
         return Guard::resolveEstabId($req);
     }
 
-    private function gate(string $feature = 'invoices'): void
+    // Prend l'établissement déjà résolu (Guard::resolveEstabId) et non
+    // $user['establishment_id'] : ce dernier est figé sur le PREMIER
+    // établissement du owner à l'inscription — pour un owner
+    // multi-établissements (plan Business), gater sur ce seul établissement
+    // permettait de contourner (ou déclenchait à tort) la limite plan
+    // 'invoices'/'payments' d'un AUTRE de ses établissements que celui
+    // réellement ciblé par la requête.
+    private function gate(int $estabId, string $feature = 'invoices'): void
     {
-        $user  = $_REQUEST['_user'];
-        $estab = Establishment::find($user['establishment_id'] ?? 0) ?? [];
+        $estab = Establishment::find($estabId) ?? [];
         PlanGate::require($estab, $feature);
     }
 
     public function index(Request $req, array $params = []): void
     {
-        $this->gate();
         $estabId = $this->estabId($req);
         if (!$estabId) Response::error('establishment_id requis');
+        $this->gate($estabId);
         $filters = array_filter(['status' => $req->get('status')]);
         Response::success(Invoice::allWithDetails($estabId, $filters));
     }
 
     public function store(Request $req, array $params = []): void
     {
-        $this->gate();
         $data = $req->all();
         if (empty($data['booking_id'])) Response::error('booking_id requis');
 
         $booking = Guard::requireBooking((int) $data['booking_id']);
+        $this->gate((int) $booking['establishment_id']);
 
         $existing = Invoice::first(['booking_id' => $data['booking_id']]);
         if ($existing) Response::error('Facture déjà existante pour cette réservation', 409);
@@ -71,9 +77,9 @@ class InvoiceController
 
     public function pdf(Request $req, array $params = []): void
     {
-        $this->gate();
-        $id  = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
-        Guard::requireInvoice($id);
+        $id      = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+        $guarded = Guard::requireInvoice($id);
+        $this->gate((int) $guarded['establishment_id']);
         $inv = Invoice::findWithDetails($id);
         if (!$inv) Response::notFound('Facture introuvable');
 
@@ -98,9 +104,10 @@ class InvoiceController
 
     public function sendByMail(Request $req, array $params = []): void
     {
-        $this->gate();
-        $id  = (int) ($params['id'] ?? 0);
-        Guard::requireInvoice($id);
+        $id      = (int) ($params['id'] ?? 0);
+        $guarded = Guard::requireInvoice($id);
+        $estabId = (int) $guarded['establishment_id'];
+        $this->gate($estabId);
         $inv = Invoice::findWithDetails($id);
         if (!$inv) Response::notFound('Facture introuvable');
 
@@ -117,7 +124,6 @@ class InvoiceController
             $inv['client_email'] = $email;
             MailService::invoiceMail($inv, $pdfAbsPath);
 
-            $estabId = (int) ($_REQUEST['_user']['establishment_id'] ?? 0);
             NotificationService::invoiceSent($estabId, $inv['invoice_number'] ?? '#' . $id, $email, $id);
 
             Response::success(['sent_to' => $email], 'Facture envoyée par email');
@@ -130,9 +136,9 @@ class InvoiceController
 
     public function payments(Request $req, array $params = []): void
     {
-        $this->gate('payments');
         $estabId = $this->estabId($req);
         if (!$estabId) Response::error('establishment_id requis');
+        $this->gate($estabId, 'payments');
         $filters = array_filter([
             'method' => $req->get('method'),
             'status' => $req->get('status'),
@@ -172,7 +178,7 @@ class InvoiceController
             $data['notes'] ?? null
         );
 
-        $estabId = (int) ($_REQUEST['_user']['establishment_id'] ?? 0);
+        $estabId = (int) $inv['establishment_id'];
         $inv     = Invoice::find($invoiceId);
 
         if ($inv && $inv['status'] === 'paid') {
@@ -185,9 +191,9 @@ class InvoiceController
 
     public function updatePayment(Request $req, array $params = []): void
     {
-        $this->gate('payments');
         $id      = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
         $payment = Guard::requirePayment($id);
+        $this->gate((int) $payment['establishment_id'], 'payments');
 
         $data    = $req->all();
         $allowed = ['amount', 'method', 'type', 'status', 'notes'];

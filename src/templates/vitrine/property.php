@@ -148,6 +148,20 @@ $pid  = (int) ($property_id ?? 0);
           <template x-if="property.latitude && property.longitude">
             <div id="property-map" x-init="$nextTick(() => initMap())" style="width:100%;height:160px;border-radius:10px;overflow:hidden;"></div>
           </template>
+          <template x-if="property.latitude && property.longitude">
+            <div style="margin-top:10px;">
+              <button type="button" @click="showRoute()" :disabled="routeLoading"
+                      style="display:inline-flex;align-items:center;gap:6px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#1B4332;background:rgba(27,67,50,0.06);border:1px solid rgba(27,67,50,0.12);border-radius:8px;padding:7px 12px;cursor:pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                <span x-show="!routeLoading">Itinéraire depuis ma position</span>
+                <span x-show="routeLoading">Localisation…</span>
+              </button>
+              <p x-show="routeError" style="margin:8px 0 0;font-family:'Inter',sans-serif;font-size:12px;color:#B45309;" x-text="routeError"></p>
+              <p x-show="routeInfo" style="margin:8px 0 0;font-family:'Inter',sans-serif;font-size:12px;color:rgba(27,67,50,0.7);">
+                <strong x-text="routeInfo?.distanceKm + ' km'"></strong> · environ <strong x-text="routeInfo?.durationMin + ' min'"></strong> en voiture
+              </p>
+            </div>
+          </template>
           <template x-if="!property.latitude || !property.longitude">
             <div style="width:100%;height:110px;background:rgba(27,67,50,0.05);border-radius:10px;display:flex;align-items:center;justify-content:center;color:rgba(27,67,50,0.35);font-family:'Inter',sans-serif;font-size:12px;text-align:center;padding:0 14px;">Localisation non renseignée par l'hôte</div>
           </template>
@@ -218,7 +232,7 @@ $pid  = (int) ($property_id ?? 0);
               </div>
             </div>
             <div class="prop-room-body">
-              <div class="prop-room-name" x-text="room.type_name + (room.number ? ' — Chambre ' + room.number : '')"></div>
+              <div class="prop-room-name" x-text="room.type_name + (room.number ? ' Chambre ' + room.number : '')"></div>
               <p class="prop-room-desc">
                 <template x-if="room.capacity">
                   <span>Jusqu'à <strong x-text="room.capacity"></strong> pers.</span>

@@ -4,6 +4,7 @@ namespace Controllers;
 
 use Core\{Request, Response, Database};
 use Models\{Establishment, User};
+use Services\NotificationService;
 
 /**
  * Vue d'ensemble plateforme réservée au superadmin (propriétaire d'AfriStay).
@@ -36,5 +37,20 @@ class AdminController
     public function owners(Request $req, array $params = []): void
     {
         Response::success(User::allOwners());
+    }
+
+    /** POST /api/admin/notifications/broadcast — annonce envoyée à tous les propriétaires. */
+    public function broadcastNotification(Request $req, array $params = []): void
+    {
+        $title   = trim((string) $req->input('title', ''));
+        $message = trim((string) $req->input('message', ''));
+
+        if ($title === '') Response::error('Le titre est requis');
+        if (mb_strlen($title) > 150) Response::error('Titre trop long (150 caractères max)');
+        if (mb_strlen($message) > 1000) Response::error('Message trop long (1000 caractères max)');
+
+        $count = NotificationService::broadcastToOwners($title, $message);
+
+        Response::success(['recipients' => $count], "Notification envoyée à {$count} propriétaire(s)");
     }
 }

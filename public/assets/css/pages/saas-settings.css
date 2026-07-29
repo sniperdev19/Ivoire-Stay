@@ -189,6 +189,37 @@
 .stg-alert-success { background: rgba(16,185,129,0.08); color: #065f46; border: 1px solid rgba(16,185,129,0.2); }
 .stg-alert-error   { background: rgba(220,38,38,0.06);  color: #DC2626; border: 1px solid rgba(220,38,38,0.15); }
 
+/* ── Carrousel de navigation (onglet Général) ─────────────── */
+.stg-carousel-nav {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 16px;
+}
+/* min-width:0 nécessaire pour que le texte puisse rétrécir sous sa largeur de
+   contenu dans un flex item (sinon le bouton "Suivant : <section>" pousse le
+   reste hors du conteneur au lieu de tronquer). */
+.stg-carousel-btn { display: inline-flex; align-items: center; gap: 6px; min-width: 0; flex: 0 1 auto; }
+.stg-carousel-btn > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.stg-carousel-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+.stg-carousel-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.stg-carousel-dots { display: flex; align-items: center; gap: 6px; flex-shrink: 0; justify-content: center; }
+.stg-carousel-dot {
+  width: 8px; height: 8px; border-radius: 50%; padding: 0;
+  border: none; background: rgba(0,0,0,0.12); cursor: pointer; transition: all 0.2s ease;
+}
+.stg-carousel-dot:hover { background: rgba(0,0,0,0.25); }
+.stg-carousel-dot-active { background: var(--saas-gold); width: 20px; border-radius: 4px; }
+
+/* Sous ~560px : les 3 blocs (Précédent / points / Suivant) ne tiennent plus
+   sur une ligne — on empile les points au-dessus, puis les deux boutons
+   côte à côte (chacun tronque son propre texte si besoin, cf. ellipsis
+   ci-dessus, au lieu de faire déborder tout le bandeau). */
+@media (max-width: 560px) {
+  .stg-carousel-nav { flex-wrap: wrap; }
+  .stg-carousel-dots { order: -1; width: 100%; }
+  .stg-carousel-btn { flex: 1 1 0; max-width: calc(50% - 6px); }
+  .stg-carousel-btn:last-child { justify-content: flex-end; }
+}
+
 /* ── Pied de formulaire ───────────────────────────────────── */
 .stg-form-actions {
   margin-top: 20px;
@@ -326,12 +357,42 @@
 .stg-avatar {
   width: 60px; height: 60px; border-radius: 16px;
   background: linear-gradient(135deg, #C9A84C, #A67C2E);
+  background-size: cover; background-position: center;
   display: grid; place-items: center;
   font-size: 20px; font-weight: 800; color: white; flex-shrink: 0;
 }
+.stg-avatar-wrap { position: relative; flex-shrink: 0; }
+.stg-avatar-edit {
+  position: absolute; right: -4px; bottom: -4px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #fff; border: 1px solid rgba(0,0,0,0.1);
+  display: grid; place-items: center; cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  color: #6B7280; transition: color 0.15s, border-color 0.15s;
+}
+.stg-avatar-edit:hover { color: #A67C2E; border-color: rgba(201,168,76,0.4); }
+.stg-avatar-edit svg { width: 13px; height: 13px; }
+.stg-avatar-edit-loading { opacity: 0.5; pointer-events: none; }
+.stg-avatar-remove {
+  position: absolute; left: -4px; bottom: -4px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; border: 1px solid rgba(220,38,38,0.2);
+  display: grid; place-items: center; cursor: pointer; padding: 0;
+  color: #DC2626; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.stg-avatar-remove svg { width: 11px; height: 11px; }
 .stg-account-name  { font-size: 17px; font-weight: 700; color: #111827; }
 .stg-account-email { font-size: 13px; color: #9CA3AF; margin-top: 3px; }
 .stg-account-role  { margin-top: 8px; }
+
+/* ── Appareils connectés ──────────────────────────────────── */
+.stg-session-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 0; border-top: 1px solid rgba(0,0,0,0.05);
+}
+.stg-session-device { font-size: 13px; font-weight: 600; color: #374151; }
+.stg-session-meta   { font-size: 12px; color: #9CA3AF; margin-top: 2px; }
+.stg-badge-muted    { background: #F3F4F6; color: #9CA3AF; }
 
 .stg-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media(max-width:640px) { .stg-panels { grid-template-columns: 1fr; } }

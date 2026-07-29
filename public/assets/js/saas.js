@@ -11,6 +11,9 @@ function saasLayout(baseUrl) {
     establishment: null,
     establishments: [],
     pendingBookingsCount: 0,
+    resendingVerification: false,
+    verificationResent: false,
+    verificationError: null,
 
     async init() {
       /* ── 1. Accès réservé à l'app installée (mode standalone) ── */
@@ -70,7 +73,7 @@ function saasLayout(baseUrl) {
           localStorage.setItem('user', JSON.stringify(data.data));
         }
       } catch {
-        /* Mode hors-ligne : on conserve le cache localStorage comme fallback.
+        /* Erreur réseau : on conserve le cache localStorage comme fallback.
            Les vraies données protégées restent inaccessibles (API calls échouent). */
       }
 
@@ -97,7 +100,7 @@ function saasLayout(baseUrl) {
               ?? null;
           }
         } catch {
-          /* hors-ligne — le cache affiché à l'étape 3 reste en place */
+          /* erreur réseau — le cache affiché à l'étape 3 reste en place */
         }
       }
 
@@ -115,7 +118,7 @@ function saasLayout(baseUrl) {
         const data = await res.json();
         this.pendingBookingsCount = data.success ? (data.data?.length ?? 0) : 0;
       } catch {
-        /* hors-ligne — laisse le badge à 0 plutôt que d'afficher une valeur fictive */
+        /* erreur réseau — laisse le badge à 0 plutôt que d'afficher une valeur fictive */
       }
     },
 
@@ -142,6 +145,38 @@ function saasLayout(baseUrl) {
        Le rôle vient du serveur (JWT vérifié), pas du localStorage manipulable. */
     get canSeeFinance()  { return ['owner', 'superadmin'].includes(this.userRole); },
     get canSeeSettings() { return ['owner', 'superadmin'].includes(this.userRole); },
+
+    /* Bandeau de rappel — uniquement les comptes auto-inscrits (owner) :
+       les comptes équipe (receptionist) sont créés par leur employeur, pas
+       par eux-mêmes, donc leur demander de "vérifier leur email" n'a pas de
+       sens. Ne bloque jamais l'accès (cf. migration_email_verification.sql). */
+    get showEmailVerifyBanner() {
+      return this.userRole === 'owner' && this.user && !this.user.email_verified_at;
+    },
+    async resendVerificationEmail() {
+      if (this.resendingVerification) return;
+      this.resendingVerification = true;
+      this.verificationResent = false;
+      this.verificationError   = null;
+      try {
+        const res  = await fetch(this.baseUrl + '/api/auth/resend-verification', {
+          method:  'POST',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.verificationResent = true;
+        } else {
+          // Ex. limite de 3 renvois/heure atteinte (AuthController::resendVerification) —
+          // sans ce message, un clic au-delà de la limite ne faisait rien de visible.
+          this.verificationError = data.message || "Impossible d'envoyer l'email pour le moment.";
+        }
+      } catch {
+        this.verificationError = 'Erreur réseau — réessayez.';
+      } finally {
+        this.resendingVerification = false;
+      }
+    },
 
     /* Matrice des fonctionnalités par plan (miroir de config/plans.php) */
     planMatrix: {
@@ -271,7 +306,7 @@ function notificationsPanel(baseUrl) {
           this.notifications = data.data?.notifications ?? [];
           this.unread        = data.data?.unread        ?? 0;
         }
-      } catch { /* hors-ligne — conserve l'état précédent */ }
+      } catch { /* erreur réseau — conserve l'état précédent */ }
       finally { this.loading = false; }
     },
 
@@ -315,6 +350,7 @@ function notificationsPanel(baseUrl) {
         subscription_activated: { icon: '⭐', color: '#16a34a', bg: '#F0FDF4' },
         establishment_frozen:   { icon: '🧊', color: '#DC2626', bg: '#FEF2F2' },
         establishment_unfrozen: { icon: '🔓', color: '#16a34a', bg: '#F0FDF4' },
+        platform_announcement:  { icon: '📢', color: '#6366F1', bg: '#EEF2FF' },
       }[type] ?? { icon: '🔔', color: '#6B7280', bg: '#F9FAFB' };
     },
 

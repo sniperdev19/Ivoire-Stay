@@ -2,7 +2,7 @@
 
 namespace Controllers;
 
-use Core\{Request, Response};
+use Core\{Request, Response, Guard};
 use Core\Database;
 use Models\{Booking, Expense, Payment, Room};
 use Services\CalendarService;
@@ -15,6 +15,13 @@ class DashboardController
         $estabId = (int) ($req->get('establishment_id') ?? $user['establishment_id'] ?? 0);
 
         if (!$estabId) Response::error('establishment_id requis');
+        // Faille : establishment_id venait directement de la requête sans
+        // jamais vérifier qu'il appartenait à l'appelant — n'importe quel
+        // utilisateur authentifié pouvait lire le CA/dépenses/net profit et
+        // l'historique de réservations d'un établissement qui n'était pas
+        // le sien en changeant simplement ce paramètre. Même classe de faille
+        // que celle déjà corrigée sur ReportController::summary().
+        Guard::requireEstablishment($estabId);
 
         $month = $req->get('month') ?? date('Y-m');
 
@@ -122,18 +129,25 @@ class DashboardController
         // Recent bookings
         $recent = Booking::recentByEstablishment($estabId, 5);
 
+        // Chiffres financiers réservés owner/superadmin (même périmètre que
+        // canSeeFinance côté client) — un receptionist a besoin de
+        // l'occupation/réservations pour son travail, pas du CA ou du
+        // bénéfice net. Filtré ici et pas seulement côté UI : ces valeurs ne
+        // doivent pas apparaître dans la réponse réseau non plus.
+        $canSeeFinance = in_array($user['role'] ?? '', ['owner', 'superadmin'], true);
+
         Response::success([
-            'revenue'            => $revenue,
+            'revenue'            => $canSeeFinance ? $revenue : null,
             'occupancy_rate'     => $occupancy,
             'active_bookings'    => $activeBookings,
             'new_bookings'       => $newBookings,
             'available_rooms'    => $availableRooms,
             'total_rooms'        => $totalRooms,
             'occupied_rooms'     => $occupiedRooms,
-            'expenses'           => $expenses,
-            'payments_received'  => $paymentsReceived,
-            'payments_pending'   => $paymentsPending,
-            'net_profit'         => $paymentsReceived - $expenses,
+            'expenses'           => $canSeeFinance ? $expenses : null,
+            'payments_received'  => $canSeeFinance ? $paymentsReceived : null,
+            'payments_pending'   => $canSeeFinance ? $paymentsPending : null,
+            'net_profit'         => $canSeeFinance ? ($paymentsReceived - $expenses) : null,
             'distribution'       => $distribution,
             'type_distribution'  => $typeDistribution,
             'recent_bookings'    => $recent,
@@ -149,6 +163,7 @@ class DashboardController
         $to      = $req->get('to')   ?? date('Y-m-d', strtotime('+7 days'));
 
         if (!$estabId) Response::error('establishment_id requis');
+        Guard::requireEstablishment($estabId);
 
         $rooms    = Room::allWithDetails($estabId);
         $bookings = Booking::forPlanning($estabId, $from, $to);

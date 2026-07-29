@@ -140,6 +140,15 @@
 .bk-success-btn-p { padding: 12px 28px; background: #1B4332; color: white; border-radius: 999px; font-family: 'Inter', sans-serif; font-size: 14px; text-decoration: none; }
 .bk-success-btn-o { padding: 12px 28px; border: 1px solid rgba(27,67,50,0.2); color: #1B4332; border-radius: 999px; font-family: 'Inter', sans-serif; font-size: 14px; text-decoration: none; }
 
+/* Actions secondaires (rappel push, téléchargement PDF) : rectangles arrondis
+   empilés en une seule ligne chacun — un vrai pill (border-radius:999px) avec
+   du texte qui passe sur 2 lignes déforme le bouton en ovale disproportionné. */
+.bk-success-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 340px; }
+.bk-success-action { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px 20px; border: 1px solid rgba(27,67,50,0.18); border-radius: 14px; background: transparent; color: #1B4332; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; white-space: nowrap; cursor: pointer; box-sizing: border-box; transition: background 0.2s, border-color 0.2s; }
+.bk-success-action:hover { background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.4); }
+.bk-success-hint { font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(27,67,50,0.5); max-width: 380px; line-height: 1.6; }
+.bk-success-hint a { color: #A67C2E; font-weight: 600; }
+
 /* ── PASSAGE ── */
 .bk-passage-block { margin-top: 4px; padding: 20px; background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.22); border-radius: 14px; display: flex; flex-direction: column; gap: 14px; }
 .bk-passage-badge { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #B8860B; background: rgba(201,168,76,0.12); padding: 5px 12px; border-radius: 999px; width: fit-content; }

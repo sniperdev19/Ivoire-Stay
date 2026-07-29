@@ -69,11 +69,22 @@ class GeniusPayService
     {
         $ch = curl_init(self::baseUrl() . $endpoint);
         curl_setopt_array($ch, self::curlBase());
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $response  = curl_exec($ch);
+        $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+
+        if ($response === false) {
+            error_log('[GeniusPay] curl error: ' . $curlError . ' — url: ' . self::baseUrl() . $endpoint);
+            throw new \RuntimeException('Erreur réseau: ' . $curlError);
+        }
 
         $data = json_decode($response, true);
-        return ['code' => $httpCode, 'data' => $data ?? []];
+        if (!is_array($data)) {
+            error_log('[GeniusPay get] réponse non-JSON (HTTP ' . $httpCode . '): ' . self::redact(substr($response, 0, 150)));
+            throw new \RuntimeException('Réponse invalide (HTTP ' . $httpCode . ')');
+        }
+
+        return ['code' => $httpCode, 'data' => $data];
     }
 
     /**

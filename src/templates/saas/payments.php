@@ -19,7 +19,7 @@
       </div>
 
       <!-- KPI row -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;">
+      <div class="saas-kpi-grid">
         <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Total paiements</div><div style="font-size:18px;font-weight:800;" x-text="payments.length"></div></div>
         <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Complétés</div><div style="font-size:18px;font-weight:800;color:#16a34a;" x-text="payments.filter(p=>p.status==='completed').length"></div></div>
         <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">En attente</div><div style="font-size:18px;font-weight:800;color:#D97706;" x-text="payments.filter(p=>p.status==='pending').length"></div></div>
@@ -103,7 +103,10 @@
   <!-- Modal (hors du blur) -->
   <div x-cloak x-show="showModal" class="saas-modal-bg" @keydown.escape.window="showModal=false" @click.self="showModal=false">
     <div class="saas-modal" style="max-width:540px;" @click.stop>
-      <div class="saas-modal-header"><h2 x-text="editing? 'Modifier paiement':'Nouveau paiement'"></h2></div>
+      <div class="saas-modal-header">
+        <h2 x-text="editing? 'Modifier paiement':'Nouveau paiement'"></h2>
+        <button type="button" class="saas-modal-close" @click="showModal=false"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </div>
       <div class="saas-modal-body">
         <div style="display:grid;gap:12px;">
           <!-- Création : sélection facture (auto-remplit booking_id) -->

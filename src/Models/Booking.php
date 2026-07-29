@@ -62,9 +62,11 @@ class Booking extends BaseModel
     {
         return Database::query(
             "SELECT b.*, b.booking_type, b.hours,
+                GREATEST(DATEDIFF(b.check_out, b.check_in), 1) as nights,
                 r.number as room_number, r.floor, r.slug as room_slug,
                 rt.name as room_type, rt.base_price, rt.weekend_price, rt.passage_price,
-                e.name as establishment_name,
+                e.name as establishment_name, e.phone as establishment_phone,
+                e.address as establishment_address, e.city as establishment_city,
                 COALESCE(CONCAT(pc.first_name, ' ', pc.last_name), u.name) as client_name,
                 COALESCE(pc.email, u.email) as client_email,
                 COALESCE(pc.phone, u.phone) as client_phone,
@@ -179,6 +181,62 @@ class Booking extends BaseModel
             }
         }
         return $total;
+    }
+
+    /**
+     * Historique des séjours d'un client pour le modal détail (saas/clients.php).
+     * $estabIds = null pour un superadmin (aucune restriction), [] impossible
+     * en pratique ici (Guard::requireClient l'aurait déjà rejeté en amont).
+     */
+    public static function historyForClient(int $clientId, ?array $estabIds = null): array
+    {
+        $where  = ['b.public_client_id = ?'];
+        $params = [$clientId];
+
+        if ($estabIds !== null) {
+            if (!$estabIds) return [];
+            $in = implode(',', array_fill(0, count($estabIds), '?'));
+            $where[] = "r.establishment_id IN ($in)";
+            $params  = array_merge($params, $estabIds);
+        }
+
+        return Database::query(
+            "SELECT b.id, b.check_in, b.check_out, b.status, b.total_amount as total_price,
+                    GREATEST(DATEDIFF(b.check_out, b.check_in), 1) as nights,
+                    CONCAT(rt.name, ' · ', r.number) as room_name
+             FROM bookings b
+             JOIN rooms r ON r.id = b.room_id
+             JOIN room_types rt ON rt.id = r.room_type_id
+             WHERE " . implode(' AND ', $where) . "
+             ORDER BY b.check_in DESC",
+            $params
+        )->fetchAll();
+    }
+
+    /**
+     * Historique public d'un voyageur, exposé via /api/public/booking/find après
+     * vérification email+téléphone (Guard côté PublicController) — pas de notion
+     * d'établissement ici, contrairement à historyForClient() qui sert le staff.
+     * Inclut guest_token : l'identité du voyageur ayant déjà été prouvée par le
+     * contrôleur appelant, ce jeton lui permet ensuite le téléchargement PDF
+     * (même mécanique que PushController::subscribeGuest).
+     */
+    public static function publicHistoryForClient(int $clientId): array
+    {
+        return Database::query(
+            "SELECT b.id, b.guest_token, b.check_in, b.check_out, b.status,
+                    b.booking_type, b.hours, b.total_amount, b.created_at,
+                    GREATEST(DATEDIFF(b.check_out, b.check_in), 1) as nights,
+                    r.number as room_number, rt.name as room_type,
+                    e.name as establishment_name, e.city as establishment_city
+             FROM bookings b
+             JOIN rooms r ON r.id = b.room_id
+             JOIN room_types rt ON rt.id = r.room_type_id
+             JOIN establishments e ON e.id = r.establishment_id
+             WHERE b.public_client_id = ?
+             ORDER BY b.created_at DESC",
+            [$clientId]
+        )->fetchAll();
     }
 
     public static function recentByEstablishment(int $estabId, int $limit = 5): array

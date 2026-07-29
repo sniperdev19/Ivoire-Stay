@@ -22,6 +22,9 @@ return [
         'max_rooms'          => PHP_INT_MAX,
         'max_establishments' => 1,
         'prices'             => ['monthly' => 9000, 'yearly' => 86400],
+        // Récompense forfaitaire versée à l'agent commercial référent tous les
+        // 5 premiers-abonnements de ce plan (voir CommissionService).
+        'agent_reward_per_5' => 15000,
         'features' => [
             'invoices'  => true,
             'payments'  => true,
@@ -38,6 +41,7 @@ return [
         'max_rooms'          => PHP_INT_MAX,
         'max_establishments' => PHP_INT_MAX,
         'prices'             => ['monthly' => 20000, 'yearly' => 192000],
+        'agent_reward_per_5' => 30000,
         'features' => [
             'invoices'  => true,
             'payments'  => true,

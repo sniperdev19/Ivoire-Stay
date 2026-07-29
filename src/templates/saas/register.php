@@ -113,14 +113,14 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
        PANNEAU GAUCHE
   ══════════════════════════════════════════ -->
   <div class="rg-left">
-    <div class="rg-ghost">IS</div>
+    <div class="rg-ghost">AS</div>
     <div class="rg-radial"></div>
 
     <div class="rg-brand">
       <a class="rg-brand-inner" href="<?= $base_url ?>/">
-        <div class="rg-brand-sq">IS</div>
+        <div class="rg-brand-sq">AS</div>
         <div class="rg-brand-text">
-          <strong>Afristay</strong>
+          <strong>Afri <span style="color:#C9A84C;">Stay</span></strong>
           <span>SaaS Hôtelier</span>
         </div>
       </a>
@@ -197,13 +197,15 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
   <div class="rg-right">
     <section class="rg-form-wrap">
 
+      <a class="rg-mobile-back" href="<?= $base_url ?>/">← Retour au site</a>
+
       <div class="rg-form-header">
         <div class="rg-form-eyebrow">
           <div class="rg-form-eyebrow-line"></div>
           <span>Inscription · Espace hôtelier</span>
         </div>
         <h1 class="rg-form-title">Créer un<br><em>compte.</em></h1>
-        <p class="rg-form-sub" x-text="isPaid ? 'Plan ' + current.name + ' — paiement à la dernière étape' : 'Démarrez gratuitement, sans carte bancaire'">Démarrez gratuitement, sans carte bancaire</p>
+        <p class="rg-form-sub" x-text="isPaid ? 'Plan ' + current.name + ', paiement à la dernière étape' : 'Démarrez gratuitement, sans carte bancaire'">Démarrez gratuitement, sans carte bancaire</p>
       </div>
 
       <!-- Stepper -->
@@ -265,7 +267,7 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
               </div>
-              <input type="text" class="rg-input" placeholder="Votre nom complet" x-model="form.name">
+              <input type="text" class="rg-input" placeholder="Votre nom complet" x-model="form.name" @input="sanitizeName()">
             </div>
           </div>
 
@@ -280,8 +282,9 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
                     0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                 </svg>
               </div>
-              <input type="tel" class="rg-input" placeholder="+225 07 00 00 00 00" x-model="form.phone">
+              <input type="tel" class="rg-input" placeholder="+225 07 00 00 00 00" x-model="form.phone" @input="sanitizePhone()">
             </div>
+            <p class="rg-field-hint">Commence par 01, 05 ou 07.</p>
           </div>
 
           <div class="rg-field rg-grid-full">
@@ -313,6 +316,15 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
                 x-text="showPass ? 'Masquer' : 'Afficher'">
               </button>
             </div>
+            <div class="rg-pwd-meter" x-show="form.password.length > 0" x-cloak>
+              <div class="rg-pwd-meter-track">
+                <template x-for="i in 4" :key="i">
+                  <span class="rg-pwd-meter-seg"
+                    :style="i <= passwordScore ? { background: passwordScoreColor } : {}"></span>
+                </template>
+              </div>
+              <span class="rg-pwd-meter-label" :style="{ color: passwordScoreColor }" x-text="passwordScoreLabel"></span>
+            </div>
           </div>
 
           <div class="rg-field">
@@ -328,6 +340,8 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
               </div>
               <input type="password" class="rg-input" placeholder="••••••••" x-model="form.password_confirm">
             </div>
+            <p class="rg-field-hint" style="color:#65A30D;" x-show="passwordsMatch" x-cloak>✓ Les mots de passe correspondent.</p>
+            <p class="rg-field-hint" style="color:#DC2626;" x-show="passwordsMismatch" x-cloak>Les mots de passe ne correspondent pas.</p>
           </div>
 
         </div>
@@ -372,6 +386,22 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
         </div>
 
         <div class="rg-field">
+          <label class="rg-label">Ville</label>
+          <div class="rg-input-wrap">
+            <div class="rg-input-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <input type="text" class="rg-input" placeholder="Ex : Abidjan, Yamoussoukro…"
+              x-model="form.establishment_city">
+          </div>
+          <p class="rg-field-hint">Nécessaire pour apparaître dans la recherche des voyageurs.</p>
+        </div>
+
+        <div class="rg-field">
           <label class="rg-label">Type d'établissement</label>
           <div class="rg-type-grid">
             <button type="button" class="rg-type-btn"
@@ -402,11 +432,11 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
         <!-- Note plan sélectionné -->
         <div class="rg-free-note" x-show="!isPaid">
           <div class="rg-free-dot"></div>
-          Plan Starter gratuit — jusqu'à 10 chambres, sans carte bancaire requise.
+          Plan Starter gratuit, jusqu'à 10 chambres, sans carte bancaire requise.
         </div>
         <div class="rg-paid-note" x-show="isPaid">
           <div class="rg-paid-note-dot"></div>
-          Plan <strong x-text="current.name"></strong> sélectionné — le paiement se fera à l'étape suivante.
+          Plan <strong x-text="current.name"></strong> sélectionné. Le paiement se fera à l'étape suivante.
         </div>
 
         <button class="rg-btn rg-btn-primary" type="button"

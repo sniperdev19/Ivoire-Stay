@@ -10,7 +10,7 @@ function registerPage(baseUrl) {
     form: {
       name: '', email: '', phone: '',
       password: '', password_confirm: '',
-      establishment_name: '', establishment_type: 'hotel',
+      establishment_name: '', establishment_type: 'hotel', establishment_city: '',
     },
     step: 1,
     loading: false,
@@ -46,11 +46,42 @@ function registerPage(baseUrl) {
       if (bl === 'yearly' || bl === 'monthly') this.billing = bl;
     },
 
+    /* Retire les chiffres au fil de la saisie (nom complet). */
+    sanitizeName() { this.form.name = this.form.name.replace(/[0-9]/g, ''); },
+
+    /* Ne garde que chiffres / espace / + au fil de la saisie (téléphone). */
+    sanitizePhone() { this.form.phone = this.form.phone.replace(/[^0-9+\s]/g, ''); },
+
+    /* Numéros ivoiriens (plan de numérotation 2021) : 10 chiffres locaux
+       commençant par 01, 05 ou 07, avec ou sans indicatif +225. */
+    isValidCiPhone(v) {
+      let digits = (v || '').replace(/\D/g, '');
+      if (digits.startsWith('225')) digits = digits.slice(3);
+      return digits.length === 10 && /^(01|05|07)/.test(digits);
+    },
+
+    get passwordScore() {
+      const p = this.form.password || '';
+      if (!p) return 0;
+      let score = 0;
+      if (p.length >= 8) score++;
+      if (p.length >= 12) score++;
+      if (/[a-z]/.test(p) && /[A-Z]/.test(p)) score++;
+      if (/\d/.test(p)) score++;
+      if (/[^a-zA-Z0-9]/.test(p)) score++;
+      return Math.min(score, 4);
+    },
+    get passwordScoreLabel() { return ['Très faible', 'Faible', 'Moyen', 'Fort', 'Très fort'][this.passwordScore]; },
+    get passwordScoreColor() { return ['#DC2626', '#EA580C', '#D97706', '#65A30D', '#16A34A'][this.passwordScore]; },
+    get passwordsMatch()    { return this.form.password_confirm.length > 0 && this.form.password === this.form.password_confirm; },
+    get passwordsMismatch() { return this.form.password_confirm.length > 0 && this.form.password !== this.form.password_confirm; },
+
     validateStep1() {
       this.error = null;
       if (!this.form.name.trim())                                   return void (this.error = 'Nom complet requis.');
       if (!this.form.email.match(/^[^@]+@[^@]+\.[^@]+$/))          return void (this.error = 'Email invalide.');
       if (!this.form.phone.trim())                                   return void (this.error = 'Téléphone requis.');
+      if (!this.isValidCiPhone(this.form.phone))                    return void (this.error = 'Téléphone invalide — 10 chiffres commençant par 01, 05 ou 07.');
       if (this.form.password.length < 8)                            return void (this.error = 'Mot de passe : 8 caractères minimum.');
       if (!/[a-zA-Z]/.test(this.form.password) || !/\d/.test(this.form.password))
                                                                        return void (this.error = 'Mot de passe : au moins une lettre et un chiffre.');
@@ -61,6 +92,7 @@ function registerPage(baseUrl) {
     async submit() {
       this.error = null;
       if (!this.form.establishment_name.trim()) { this.error = "Nom de l'établissement requis."; return; }
+      if (!this.form.establishment_city.trim()) { this.error = "Ville requise — sans elle, votre établissement n'apparaîtra pas dans les recherches."; return; }
       this.loading = true;
       try {
         const res  = await fetch(base + '/api/auth/register', {

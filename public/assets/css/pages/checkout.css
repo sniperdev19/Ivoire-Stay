@@ -81,7 +81,7 @@
 }
 
 .ck-brand-text strong { display: block; font-size: 14px; font-weight: 700; color: white; line-height: 1.2; }
-.ck-brand-text span   { font-size: 11px; color: rgba(255,255,255,0.38); }
+.ck-brand-text > span { font-size: 11px; color: rgba(255,255,255,0.38); }
 
 .ck-back-link {
   font-size: 13px;

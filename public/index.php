@@ -15,11 +15,23 @@ use Core\Router;
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('Referrer-Policy: strict-origin-when-cross-origin');
-header('Permissions-Policy: geolocation=(), camera=(), microphone=()');
+// geolocation=(self) : la page Paramètres l'utilise (bouton "Localiser mon
+// établissement", saas-settings.js::locateMe()) — bloqué en tiers/iframe,
+// autorisé en premier contexte. camera=(self) : scan QR agent commercial
+// (agent-dashboard.js::openScanner(), getUserMedia) — était à camera=()
+// avant l'ajout de cette fonctionnalité, ce qui bloquait silencieusement
+// toute ouverture de caméra (getUserMedia rejette, cameraError=true, repli
+// sur la saisie manuelle du code). microphone reste bloqué, rien ne l'utilise.
+header('Permissions-Policy: geolocation=(self), camera=(self), microphone=()');
 // img-src inclut blob: pour l'aperçu de photo avant upload (URL.createObjectURL
 // dans saas-rooms.js) — ce sont des objets locaux créés par le navigateur
-// lui-même, pas des ressources tierces.
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'");
+// lui-même, pas des ressources tierces. *.tile.openstreetmap.org : tuiles de
+// la carte Leaflet (property.js, vitrine + emplacement établissement).
+// connect-src inclut router.project-osrm.org : service de routage public
+// (gratuit, sans clé) utilisé par property.js::drawRoute() pour tracer
+// l'itinéraire client → établissement — pas de SLA officiel, à remplacer par
+// un fournisseur payant si le volume devient significatif.
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tile.openstreetmap.org; font-src 'self' data:; connect-src 'self' https://router.project-osrm.org; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'");
 if (($_SERVER['HTTPS'] ?? '') === 'on' || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') {
     header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
 }

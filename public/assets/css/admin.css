@@ -28,5 +28,11 @@
 .admin-status-active   { background:rgba(22,163,74,0.1); color:#16A34A; }
 .admin-status-inactive { background:rgba(220,38,38,0.08); color:#DC2626; }
 
+/* Bouton "Réactiver" (establishments.php) : même couleur succès que
+   .action-btn-success de saas-bookings.css, mais cette dernière est chargée
+   uniquement sur saas/bookings.php ($pageCss) — jamais sur l'admin, d'où sa
+   redéfinition ici (admin.css est toujours chargé sur les pages admin). */
+.action-btn-success { background:#DCFCE7; color:#16a34a; border:1px solid rgba(22,163,74,0.2); }
+
 .admin-kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
 @media(max-width:900px) { .admin-kpi-grid { grid-template-columns:repeat(2, minmax(0,1fr)); } }

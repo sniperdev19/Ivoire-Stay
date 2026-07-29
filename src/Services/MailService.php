@@ -174,6 +174,22 @@ HTML;
     }
 
     // =========================================================================
+    // 1c. VÉRIFICATION D'EMAIL — inscription
+    // =========================================================================
+    public static function verifyEmail(string $to, string $name, string $verifyUrl): void
+    {
+        $content = "<h1 style='margin:0 0 4px;font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1B4332;line-height:1.2;'>"
+            . "Confirmez votre <em style='color:#C9A84C;font-style:italic;'>adresse email</em></h1>"
+            . "<div style='width:40px;height:2px;background:#C9A84C;margin:20px 0;'></div>"
+            . "<p style='margin:0 0 8px;font-size:15px;color:#374151;line-height:1.7;'>Bonjour " . htmlspecialchars($name) . ", merci de confirmer votre adresse email pour finaliser votre inscription sur Afristay.</p>"
+            . "<p style='margin:0 0 8px;font-size:14px;color:#6B7280;line-height:1.7;'>Cliquez sur le bouton ci-dessous. Ce lien expire dans <strong>24 heures</strong>.</p>"
+            . self::btn($verifyUrl, 'Confirmer mon email →')
+            . "<p style='margin:16px 0 0;font-size:13px;color:#9CA3AF;line-height:1.6;'>Si vous n'êtes pas à l'origine de cette inscription, ignorez simplement cet email.</p>";
+
+        self::send($to, $name, 'Confirmez votre email — Afristay', self::layout($content, 'Confirmez votre adresse email Afristay'));
+    }
+
+    // =========================================================================
     // 2. CONFIRMATION RÉSERVATION — paiement sur place
     // =========================================================================
     public static function bookingConfirmation(array $booking): void
@@ -484,5 +500,18 @@ HTML;
             error_log('[MailService] invoiceMail échec — ' . $e->getMessage());
             throw $e;
         }
+    }
+
+    // =========================================================================
+    // NEWSLETTER — campagne envoyée par le superadmin (AdminNewsletterController)
+    // =========================================================================
+    public static function newsletterCampaign(string $to, string $subject, string $bodyHtml, string $unsubscribeUrl): void
+    {
+        $content = $bodyHtml
+            . "<p style='margin:24px 0 0;font-size:11px;color:#9CA3AF;text-align:center;border-top:1px solid #F3F4F6;padding-top:16px;'>"
+            . "Vous recevez cet email car vous êtes inscrit(e) à la newsletter Afristay. "
+            . "<a href='{$unsubscribeUrl}' style='color:#9CA3AF;'>Se désabonner</a></p>";
+
+        self::send($to, '', $subject, self::layout($content));
     }
 }

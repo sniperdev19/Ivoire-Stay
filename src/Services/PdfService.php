@@ -268,6 +268,220 @@ class PdfService
         return 'storage/pdf/' . $filename;
     }
 
+    /**
+     * Confirmation de réservation téléchargeable par le voyageur lui-même
+     * (accès public via guest_token, cf. PublicController::bookingPdf) — pour
+     * celui qui ne consulte pas l'email de confirmation. Même charte graphique
+     * que generateInvoice(), régénéré à chaque téléchargement (le statut peut
+     * changer entre deux téléchargements — pending/confirmed/annulée), jamais
+     * mis en cache sur disque comme les factures.
+     */
+    public static function generateBookingConfirmation(array $b): string
+    {
+        $dir = STORAGE_PATH . '/pdf';
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+
+        $filename = 'reservation-' . ($b['id'] ?? '0') . '.pdf';
+        $path     = $dir . '/' . $filename;
+
+        $pdf = new \FPDF('P', 'mm', 'A4');
+        $pdf->SetMargins(15, 15, 15);
+        $pdf->SetAutoPageBreak(true, 20);
+        $pdf->AddPage();
+
+        $u   = fn(string $s): string => mb_convert_encoding($s, 'ISO-8859-1', 'UTF-8');
+        $fmt = fn(float $v): string => number_format($v, 0, ',', ' ') . ' FCFA';
+
+        $green = [27, 67, 50];
+        $gold  = [201, 168, 76];
+        $light = [249, 247, 242];
+        $gray  = [107, 114, 128];
+        $dark  = [17, 24, 39];
+        $white = [255, 255, 255];
+        $W     = 180;
+
+        // ── BANDEAU ENTÊTE ───────────────────────────────────────────────────
+        $pdf->SetFillColor(...$green);
+        $pdf->Rect(0, 0, 210, 36, 'F');
+
+        $pdf->SetXY(15, 10);
+        $pdf->SetTextColor(...$gold);
+        $pdf->SetFont('Arial', 'B', 18);
+        $pdf->Cell(90, 8, $u(MAIL_FROM_NAME), 0, 0);
+
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->SetTextColor(200, 200, 200);
+        $pdf->SetXY(105, 10);
+        $pdf->Cell(90, 5, $u('Hôtellerie · Côte d\'Ivoire'), 0, 1, 'R');
+
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->SetXY(15, 20);
+        $pdf->SetTextColor(...$white);
+        $estab = $b['establishment_name'] ?? '';
+        $pdf->Cell(90, 5, $u($estab), 0, 0);
+        if (!empty($b['establishment_phone'])) {
+            $pdf->SetXY(105, 20);
+            $pdf->Cell(90, 5, $u($b['establishment_phone']), 0, 0, 'R');
+        }
+        if (!empty($b['establishment_address'])) {
+            $pdf->SetXY(15, 26);
+            $pdf->Cell(90, 5, $u($b['establishment_address']), 0, 0);
+        } elseif (!empty($b['establishment_city'])) {
+            $pdf->SetXY(15, 26);
+            $pdf->Cell(90, 5, $u($b['establishment_city']), 0, 0);
+        }
+
+        $pdf->SetY(44);
+
+        // ── LIGNE TITRE ───────────────────────────────────────────────────────
+        $pdf->SetFillColor(...$light);
+        $pdf->Rect(15, 40, $W, 18, 'F');
+
+        $pdf->SetXY(18, 43);
+        $pdf->SetFont('Arial', 'B', 14);
+        $pdf->SetTextColor(...$dark);
+        $pdf->Cell(90, 7, $u('CONFIRMATION DE RÉSERVATION'), 0, 0);
+
+        $pdf->SetFont('Arial', 'B', 13);
+        $pdf->SetTextColor(...$gold);
+        $pdf->SetXY(105, 43);
+        $pdf->Cell(88, 7, $u('N° ' . ($b['id'] ?? '')), 0, 0, 'R');
+
+        $statusLabels = [
+            'pending'      => 'En attente de confirmation',
+            'confirmed'    => 'Confirmée',
+            'checked_in'   => 'Client arrivé',
+            'checked_out'  => 'Séjour terminé',
+            'cancelled'    => 'Annulée',
+        ];
+        $statusColors = [
+            'pending'     => [217, 119, 6],
+            'confirmed'   => [22, 163, 74],
+            'checked_in'  => [22, 163, 74],
+            'checked_out' => [107, 114, 128],
+            'cancelled'   => [220, 38, 38],
+        ];
+        $status = $b['status'] ?? 'pending';
+
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->SetTextColor(...($statusColors[$status] ?? $gray));
+        $pdf->SetXY(18, 51);
+        $pdf->Cell(90, 5, $u('Statut : ' . strtoupper($statusLabels[$status] ?? $status)), 0, 0);
+
+        $issuedAt = date('d/m/Y H:i');
+        $pdf->SetTextColor(...$gray);
+        $pdf->SetXY(105, 51);
+        $pdf->Cell(88, 5, $u('Généré le : ' . $issuedAt), 0, 0, 'R');
+
+        $pdf->SetY(66);
+
+        // ── VOYAGEUR + SÉJOUR (2 colonnes) ──────────────────────────────────────
+        $pdf->SetFillColor(...$gold);
+        $pdf->Rect(15, 66, 3, 14, 'F');
+
+        $pdf->SetXY(21, 66);
+        $pdf->SetTextColor(...$gray);
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->Cell(80, 4, $u('VOYAGEUR'), 0, 1);
+
+        $pdf->SetXY(21, 71);
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetTextColor(...$dark);
+        $pdf->Cell(80, 6, $u($b['client_name'] ?? '—'), 0, 1);
+
+        $pdf->SetXY(21, 78);
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->SetTextColor(...$gray);
+        if (!empty($b['client_email'])) {
+            $pdf->Cell(80, 4, $u($b['client_email']), 0, 1);
+            $pdf->SetX(21);
+        }
+        if (!empty($b['client_phone'])) {
+            $pdf->Cell(80, 4, $u($b['client_phone']), 0, 1);
+        }
+
+        $pdf->SetFillColor(...$gold);
+        $pdf->Rect(120, 66, 3, 14, 'F');
+        $pdf->SetXY(126, 66);
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->SetTextColor(...$gray);
+        $pdf->Cell(68, 4, $u('DÉTAILS DU SÉJOUR'), 0, 1);
+
+        $isPassage = ($b['booking_type'] ?? 'nuit') === 'passage';
+        $ci = !empty($b['check_in'])  ? date('d/m/Y', strtotime($b['check_in']))  : '—';
+        $co = !empty($b['check_out']) ? date('d/m/Y', strtotime($b['check_out'])) : '—';
+
+        $details = [];
+        $details[] = ['Chambre', 'N° ' . ($b['room_number'] ?? '—') . ' · ' . ($b['room_type'] ?? '')];
+        if ($isPassage) {
+            $details[] = ['Date', $ci];
+            $details[] = ['Durée', ($b['hours'] ?? '?') . ' heure(s)'];
+        } else {
+            $details[] = ['Arrivée', $ci];
+            $details[] = ['Départ',  $co];
+            $details[] = ['Durée', ($b['nights'] ?? 1) . ' nuit' . (($b['nights'] ?? 1) > 1 ? 's' : '')];
+        }
+
+        $yy = 71;
+        foreach ($details as [$label, $val]) {
+            $pdf->SetXY(126, $yy);
+            $pdf->SetFont('Arial', '', 8);
+            $pdf->SetTextColor(...$gray);
+            $pdf->Cell(28, 4, $u($label . ' :'), 0, 0);
+            $pdf->SetFont('Arial', 'B', 8);
+            $pdf->SetTextColor(...$dark);
+            $pdf->Cell(40, 4, $u($val), 0, 1);
+            $yy += 5;
+        }
+
+        $pdf->SetY(max($pdf->GetY(), 94) + 6);
+
+        // ── MONTANT ───────────────────────────────────────────────────────────
+        $amount      = (float) ($b['total_amount'] ?? 0);
+        $paidAmount  = (float) ($b['paid_amount'] ?? 0);
+
+        $pdf->SetFillColor(...$green);
+        $pdf->SetTextColor(...$white);
+        $pdf->SetFont('Arial', 'B', 10);
+        $pdf->SetX(15);
+        $pdf->Cell(130, 9, $u('MONTANT TOTAL DU SÉJOUR'), 1, 0, 'R', true);
+        $pdf->Cell(50, 9, $u($fmt($amount)), 1, 1, 'R', true);
+
+        if ($paidAmount > 0) {
+            $pdf->SetX(15);
+            $pdf->SetFont('Arial', 'B', 9);
+            $pdf->SetFillColor(240, 253, 244);
+            $pdf->SetTextColor(22, 163, 74);
+            $pdf->Cell(130, 7, $u('Déjà réglé'), 1, 0, 'R', true);
+            $pdf->Cell(50, 7, $u($fmt($paidAmount)), 1, 1, 'R', true);
+        } else {
+            $pdf->SetX(15);
+            $pdf->SetFont('Arial', '', 9);
+            $pdf->SetFillColor(255, 251, 235);
+            $pdf->SetTextColor(217, 119, 6);
+            $pdf->Cell(130, 7, $u('À régler à l\'arrivée'), 1, 0, 'R', true);
+            $pdf->Cell(50, 7, $u($fmt(max(0, $amount - $paidAmount))), 1, 1, 'R', true);
+        }
+
+        // ── NOTE DE BAS ──────────────────────────────────────────────────────
+        $pdf->Ln(12);
+        $pdf->SetFont('Arial', 'I', 8);
+        $pdf->SetTextColor(...$gray);
+        $pdf->SetX(15);
+        $pdf->MultiCell($W, 4, $u('Merci de votre confiance. Ce document atteste de votre réservation auprès de ' . ($b['establishment_name'] ?? MAIL_FROM_NAME) . '. Pour toute question, contactez directement l\'établissement.'), 0, 'C');
+
+        $pdf->Ln(4);
+        $pdf->SetFillColor(...$green);
+        $pdf->Rect(15, $pdf->GetY(), $W, 0.5, 'F');
+        $pdf->Ln(3);
+        $pdf->SetFont('Arial', '', 7);
+        $pdf->SetTextColor(...$gray);
+        $pdf->Cell($W, 4, $u(MAIL_FROM_NAME . ' · ' . APP_URL), 0, 1, 'C');
+
+        $pdf->Output('F', $path);
+        return 'storage/pdf/' . $filename;
+    }
+
     private const EXPENSE_CAT_LABELS = [
         'maintenance' => 'Maintenance', 'salaries' => 'Salaires', 'supplies' => 'Fournitures',
         'utilities'   => 'Énergie / Eau', 'marketing' => 'Marketing', 'other' => 'Autre',

@@ -24,6 +24,28 @@ class PageController
         Response::render('saas/install', ['title' => 'Installer l\'application – Afristay']);
     }
 
+    // ─── Espace agents commerciaux (fonctionnalité temporaire, cf. AGENTS_ENABLED) ──
+
+    public function agentRegister(Request $req, array $params = []): void
+    {
+        Response::render('agent/register', ['title' => 'Devenir agent – Afristay']);
+    }
+
+    public function agentLogin(Request $req, array $params = []): void
+    {
+        Response::render('agent/login', ['title' => 'Connexion agent – Afristay']);
+    }
+
+    public function agentDashboard(Request $req, array $params = []): void
+    {
+        Response::render('agent/dashboard', ['title' => 'Tableau de bord agent – Afristay', 'page' => 'dashboard']);
+    }
+
+    public function agentProfile(Request $req, array $params = []): void
+    {
+        Response::render('agent/profile', ['title' => 'Mon profil agent – Afristay', 'page' => 'profile']);
+    }
+
     public function forgotPassword(Request $req, array $params = []): void
     {
         Response::render('saas/forgot-password', ['title' => 'Mot de passe oublié – Afristay']);
@@ -32,6 +54,11 @@ class PageController
     public function resetPassword(Request $req, array $params = []): void
     {
         Response::render('saas/reset-password', ['title' => 'Réinitialiser le mot de passe – Afristay']);
+    }
+
+    public function verifyEmail(Request $req, array $params = []): void
+    {
+        Response::render('saas/verify-email', ['title' => 'Vérification email – Afristay']);
     }
 
     public function saas(Request $req, array $params = []): void
@@ -159,5 +186,15 @@ class PageController
         $room = $slug !== '' ? Room::findBySlug($slug) : null;
         $id   = $room['id'] ?? 0;
         Response::render('vitrine/booking', ['title' => 'Réserver', 'room_id' => $id]);
+    }
+
+    public function myBookings(Request $req, array $params = []): void
+    {
+        Response::render('vitrine/mes-reservations', ['title' => 'Mes réservations – Afristay']);
+    }
+
+    public function newsletterUnsubscribe(Request $req, array $params = []): void
+    {
+        Response::render('vitrine/newsletter-unsubscribe', ['title' => 'Désabonnement newsletter – Afristay']);
     }
 }

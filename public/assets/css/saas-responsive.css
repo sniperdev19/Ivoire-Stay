@@ -65,6 +65,20 @@ html, body { max-width: 100%; overflow-x: hidden; }
   }
 }
 
+/* ── Bandeau de KPI (cartes stat en tête de page) ─────────────
+   billing/expenses/invoices/payments/reports utilisaient un
+   grid-template-columns:repeat(N,1fr) en style inline, donc happé par la
+   règle générique ci-dessus : à 560px chaque carte se retrouvait étirée
+   plein écran et empilée (au lieu d'un dégradé propre en 2-3 colonnes).
+   auto-fit + minmax élimine le problème à la source — même logique que
+   .client-stat-grid / .client-contact-grid (saas-clients.css). */
+.saas-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
 /* ── Modales ──────────────────────────────────────────────── */
 @media (max-width: 560px) {
   .saas-modal-bg { padding: 10px; }

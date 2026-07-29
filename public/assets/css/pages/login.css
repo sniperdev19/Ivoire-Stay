@@ -100,7 +100,7 @@ body {
   color: white;
   line-height: 1;
 }
-.lg-brand-text span {
+.lg-brand-text > span {
   font-size: 9px;
   font-weight: 500;
   color: rgba(255,255,255,0.35);
@@ -372,9 +372,22 @@ body {
 }
 .lg-vitrine-link:hover { border-color: var(--forest); color: var(--forest); }
 
+.lg-mobile-back {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 22px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  text-decoration: none;
+}
+.lg-mobile-back:hover { color: white; }
+
 @media (max-width: 1024px) {
   body { grid-template-columns: 1fr; }
   .lg-left { display: none; }
+  .lg-mobile-back { display: inline-flex; }
   .lg-separator { display: none; }
   .lg-right { background: var(--forest); min-height: 100vh; height: auto; }
   .lg-form-title, .lg-form-eyebrow span { color: white; }

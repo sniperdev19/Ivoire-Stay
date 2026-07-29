@@ -85,6 +85,7 @@
     <div class="saas-modal" style="max-width:460px;" @click.stop>
       <div class="saas-modal-header">
         <h2 style="font-size:17px;font-weight:700;color:#111827;margin:0;">Demander un retrait</h2>
+        <button type="button" class="saas-modal-close" @click="showModal=false"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
       </div>
       <div class="saas-modal-body">
         <p style="margin:0 0 16px;font-size:13px;color:#6B7280;">Solde disponible : <strong style="color:#16a34a;" x-text="formatPrice(balance?.available_balance ?? 0)"></strong></p>

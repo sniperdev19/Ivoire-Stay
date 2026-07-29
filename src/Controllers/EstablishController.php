@@ -3,7 +3,7 @@
 namespace Controllers;
 
 use Core\{Request, Response, Database, Guard, PlanGate};
-use Models\Establishment;
+use Models\{Establishment, AgentEstablishment};
 use Services\UploadService;
 
 class EstablishController
@@ -21,6 +21,25 @@ class EstablishController
     {
         $user = $_REQUEST['_user'];
         Response::success(Establishment::forUser($user));
+    }
+
+    /** GET /api/establishment/qr — jeton "Mon QR code" scanné par les agents commerciaux. */
+    public function qr(Request $req, array $params = []): void
+    {
+        $estabId = Guard::resolveEstabId($req);
+        if (!$estabId) Response::error('establishment_id requis');
+        Guard::requireEstablishment($estabId);
+
+        $estab = Establishment::find($estabId);
+        if (!$estab) Response::notFound('Établissement introuvable');
+
+        // Premier scan gagne, jamais de réassignation (cf. AgentController::scanQr) —
+        // une fois rattaché, le QR n'a plus aucune utilité : le front le désactive
+        // (affiche "déjà rattaché" au lieu du code) plutôt que de continuer à
+        // afficher un code qui semble actif mais qu'un nouveau scan rejetterait.
+        $agentLinked = AGENTS_ENABLED && (bool) AgentEstablishment::findByEstablishment($estabId);
+
+        Response::success(['qr_token' => $estab['qr_token'], 'agent_linked' => $agentLinked]);
     }
 
     public function store(Request $req, array $params = []): void
@@ -101,8 +120,10 @@ class EstablishController
         $allowed = ['name','type','address','city','phone','email','website','latitude','longitude','description','is_active','check_in_time','check_out_time'];
         // Seul un superadmin peut changer le plan directement (le reste passe par l'abonnement)
         if (Guard::isSuperadmin()) $allowed[] = 'plan';
-        // Désactiver le paiement en ligne est réservé aux plans qui débloquent ce contrôle
-        if (PlanGate::can($estab, 'online_payment_control')) $allowed[] = 'online_payment_enabled';
+        // Désactiver le paiement en ligne est réservé aux plans qui débloquent ce contrôle —
+        // et de toute façon inopérant tant que ONLINE_PAYMENTS_ENABLED (verrou v1) est fermé :
+        // pas la peine de laisser un owner activer un réglage qui ne fera rien.
+        if (ONLINE_PAYMENTS_ENABLED && PlanGate::can($estab, 'online_payment_control')) $allowed[] = 'online_payment_enabled';
         // Le boost (mise en avant dans la recherche publique) est réservé au plan Business
         if (PlanGate::can($estab, 'boost')) $allowed[] = 'is_boosted';
         $update  = array_intersect_key($data, array_flip($allowed));

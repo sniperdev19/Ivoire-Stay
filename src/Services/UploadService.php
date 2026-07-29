@@ -47,6 +47,26 @@ class UploadService
         return 'uploads/establishments/' . $estabId . '/' . $filename;
     }
 
+    // Avatar utilisateur : petit et carré à l'affichage (CSS), 512px est large
+    // pour un rond de ~80px même en écran retina.
+    public const AVATAR_MAX_DIMENSION = 512;
+    public const AVATAR_JPEG_QUALITY  = 85;
+    public const AVATAR_WEBP_QUALITY  = 85;
+
+    public static function uploadAvatar(array $file, int $userId): string
+    {
+        self::validate($file);
+
+        $dir = UPLOAD_PATH . '/avatars';
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+
+        $base     = 'avatar_' . $userId . '_' . bin2hex(random_bytes(10));
+        $ext      = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $filename = self::compressFile($file['tmp_name'], $ext, $dir, $base, self::AVATAR_MAX_DIMENSION, self::AVATAR_JPEG_QUALITY, self::AVATAR_WEBP_QUALITY);
+
+        return 'uploads/avatars/' . $filename;
+    }
+
     public static function uploadReceipt(array $file, int $expenseId): string
     {
         self::validate($file);

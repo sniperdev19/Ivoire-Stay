@@ -12,7 +12,7 @@ function searchPage(base) {
   base = (base || '').replace(/\/$/, '');
   return {
     base: base,
-    filters: { city: '', type: '', check_in: '', check_out: '' },
+    filters: { city: '', type: '' },
     results: [],
     destinations: [],
     loading: false,
@@ -38,10 +38,8 @@ function searchPage(base) {
 
     async init() {
       const p = new URLSearchParams(window.location.search);
-      if (p.get('city'))      this.filters.city      = p.get('city');
-      if (p.get('type'))      this.filters.type      = p.get('type');
-      if (p.get('check_in'))  this.filters.check_in  = p.get('check_in');
-      if (p.get('check_out')) this.filters.check_out = p.get('check_out');
+      if (p.get('city')) this.filters.city = p.get('city');
+      if (p.get('type')) this.filters.type = p.get('type');
       await this.loadDestinations();
       await this.search();
     },
@@ -75,10 +73,8 @@ function searchPage(base) {
       this.totalCount = 0;
       try {
         const q = new URLSearchParams();
-        if (this.filters.city)      q.set('city',      this.filters.city);
-        if (this.filters.type)      q.set('type',      this.filters.type);
-        if (this.filters.check_in)  q.set('check_in',  this.filters.check_in);
-        if (this.filters.check_out) q.set('check_out', this.filters.check_out);
+        if (this.filters.city) q.set('city', this.filters.city);
+        if (this.filters.type) q.set('type', this.filters.type);
         const qs = q.toString();
         window.history.replaceState({}, '', qs ? ('?' + qs) : window.location.pathname);
 
@@ -107,7 +103,7 @@ function searchPage(base) {
     },
 
     clearFilters() {
-      this.filters = { city: '', type: '', check_in: '', check_out: '' };
+      this.filters = { city: '', type: '' };
       window.history.replaceState({}, '', window.location.pathname);
       this.search();
     },

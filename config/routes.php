@@ -10,6 +10,7 @@ $router->get('/register',       'PageController@register');
 $router->get('/forgot-password', 'PageController@forgotPassword');
 $router->get('/reset-password',  'PageController@resetPassword');
 $router->get('/install',        'PageController@install');
+$router->get('/verify-email',   'PageController@verifyEmail');
 $router->get('/saas',           'PageController@saas');
 $router->get('/saas/planning',  'PageController@planning');
 $router->get('/saas/rooms',     'PageController@rooms');
@@ -25,11 +26,23 @@ $router->get('/saas/help',      'PageController@help');
 $router->get('/docs',           'PageController@docs');
 $router->get('/saas/checkout',  'PageController@checkout');
 
+// ─── Pages HTML (Espace agents commerciaux) — fonctionnalité temporaire, cf. AGENTS_ENABLED ──
+$router->get('/agent/register',  'PageController@agentRegister');
+$router->get('/agent/login',     'PageController@agentLogin');
+$router->get('/agent/dashboard', 'PageController@agentDashboard');
+$router->get('/agent/profile',   'PageController@agentProfile');
+
 // ─── Pages HTML (Admin plateforme) — réservées au superadmin, garde de rôle côté JS ──
 $router->get('/admin',                'AdminPageController@dashboard');
 $router->get('/admin/establishments', 'AdminPageController@establishments');
 $router->get('/admin/owners',         'AdminPageController@owners');
 $router->get('/admin/payouts',        'AdminPageController@payouts');
+$router->get('/admin/agents',         'AdminPageController@agents');
+$router->get('/admin/backups',        'AdminPageController@backups');
+$router->get('/admin/notifications',     'AdminPageController@notifications');
+$router->get('/admin/contact-messages',  'AdminPageController@contactMessages');
+$router->get('/admin/newsletter',        'AdminPageController@newsletter');
+$router->get('/admin/announcements',     'AdminPageController@announcements');
 
 // ─── Pages HTML (Vitrine) ─────────────────────────────────────────────────────
 $router->get('/',               'PageController@home');
@@ -41,6 +54,8 @@ $router->get('/confidentialite', 'PageController@privacy');
 $router->get('/search',         'PageController@search');
 $router->get('/property/{slug}', 'PageController@property');
 $router->get('/booking/{slug}', 'PageController@bookingPage');
+$router->get('/mes-reservations', 'PageController@myBookings');
+$router->get('/newsletter/desabonnement', 'PageController@newsletterUnsubscribe');
 
 // ─── API Auth ─────────────────────────────────────────────────────────────────
 $router->post('/api/auth/webauthn/register-options', 'AuthController@webauthnRegisterOptions');
@@ -51,9 +66,28 @@ $router->post('/api/auth/register', 'AuthController@register');
 $router->get('/api/auth/me',        'AuthController@me',      ['auth']);
 $router->post('/api/auth/forgot-password', 'AuthController@forgotPassword');
 $router->post('/api/auth/reset-password',  'AuthController@resetPassword');
+$router->post('/api/auth/verify-email',       'AuthController@verifyEmail');
+$router->post('/api/auth/resend-verification', 'AuthController@resendVerification', ['auth']);
+$router->post('/api/auth/change-password', 'AuthController@changePassword', ['auth']);
+$router->put('/api/auth/profile',   'AuthController@updateProfile', ['auth']);
+$router->post('/api/auth/avatar',   'AuthController@uploadAvatar',  ['auth']);
+$router->delete('/api/auth/avatar', 'AuthController@deleteAvatar',  ['auth']);
+$router->get('/api/auth/sessions',                'AuthController@sessions',            ['auth']);
+$router->post('/api/auth/sessions/{id}/revoke',   'AuthController@revokeSession',        ['auth']);
+$router->post('/api/auth/sessions/revoke-others', 'AuthController@revokeOtherSessions',  ['auth']);
+
+// ─── API Agents commerciaux (fonctionnalité temporaire, cf. AGENTS_ENABLED) ────
+$router->post('/api/agent/register', 'AgentController@register');
+$router->post('/api/agent/login',    'AgentController@login');
+$router->post('/api/agent/logout',   'AgentController@logout', ['auth', 'role:agent']);
+$router->get('/api/agent/me',        'AgentController@me',     ['auth', 'role:agent']);
+$router->post('/api/agent/scan',     'AgentController@scanQr', ['auth', 'role:agent']);
+$router->put('/api/agent/profile',          'AgentController@updateProfile',  ['auth', 'role:agent']);
+$router->post('/api/agent/change-password', 'AgentController@changePassword', ['auth', 'role:agent']);
 
 // ─── API Establishments ───────────────────────────────────────────────────────
 $router->get('/api/establishments',       'EstablishController@index',   ['auth']);
+$router->get('/api/establishment/qr',     'EstablishController@qr',      ['auth', 'role:owner|superadmin']);
 $router->post('/api/establishments',      'EstablishController@store',   ['auth', 'role:owner|superadmin']);
 $router->get('/api/establishments/{id}',  'EstablishController@show',    ['auth']);
 $router->put('/api/establishments/{id}',    'EstablishController@update',      ['auth', 'role:owner|superadmin']);
@@ -128,9 +162,37 @@ $router->post('/api/payouts',             'PayoutController@store',    ['auth', 
 $router->post('/api/payouts/{id}/pay',    'PayoutController@markPaid', ['auth', 'role:superadmin']);
 $router->post('/api/payouts/{id}/reject', 'PayoutController@reject',   ['auth', 'role:superadmin']);
 
+// ─── API Admin — agents commerciaux (fonctionnalité temporaire) ───────────────
+$router->get('/api/admin/agents',                'AgentAdminController@agents',   ['auth', 'role:superadmin']);
+$router->get('/api/admin/agent-payouts',         'AgentAdminController@payouts',  ['auth', 'role:superadmin']);
+$router->post('/api/admin/agent-payouts/{id}/pay',    'AgentAdminController@markPaid', ['auth', 'role:superadmin']);
+$router->post('/api/admin/agent-payouts/{id}/reject', 'AgentAdminController@reject',   ['auth', 'role:superadmin']);
+
 // ─── API Admin plateforme (superadmin uniquement) ──────────────────────────────
 $router->get('/api/admin/overview', 'AdminController@overview', ['auth', 'role:superadmin']);
 $router->get('/api/admin/owners',   'AdminController@owners',   ['auth', 'role:superadmin']);
+$router->post('/api/admin/notifications/broadcast', 'AdminController@broadcastNotification', ['auth', 'role:superadmin']);
+
+// ─── API Messages de contact (superadmin uniquement) ───────────────────────────
+$router->get('/api/admin/contact-messages',            'AdminContactController@index',    ['auth', 'role:superadmin']);
+$router->post('/api/admin/contact-messages/{id}/read',  'AdminContactController@markRead', ['auth', 'role:superadmin']);
+$router->delete('/api/admin/contact-messages/{id}',     'AdminContactController@destroy',  ['auth', 'role:superadmin']);
+
+// ─── API Newsletter — campagnes (superadmin uniquement) ────────────────────────
+$router->get('/api/admin/newsletter/subscribers', 'AdminNewsletterController@subscribers', ['auth', 'role:superadmin']);
+$router->get('/api/admin/newsletter/campaigns',   'AdminNewsletterController@campaigns',   ['auth', 'role:superadmin']);
+$router->post('/api/admin/newsletter/campaigns',  'AdminNewsletterController@send',        ['auth', 'role:superadmin']);
+
+// ─── API Annonces vitrine (superadmin uniquement) ──────────────────────────────
+$router->get('/api/admin/announcements',        'AdminAnnouncementController@index',   ['auth', 'role:superadmin']);
+$router->post('/api/admin/announcements',       'AdminAnnouncementController@store',   ['auth', 'role:superadmin']);
+$router->put('/api/admin/announcements/{id}',   'AdminAnnouncementController@update',  ['auth', 'role:superadmin']);
+$router->delete('/api/admin/announcements/{id}','AdminAnnouncementController@destroy', ['auth', 'role:superadmin']);
+
+// ─── API Sauvegardes de la base (superadmin uniquement) ────────────────────────
+$router->get('/api/admin/backups',                    'AdminBackupController@index',    ['auth', 'role:superadmin']);
+$router->post('/api/admin/backups',                   'AdminBackupController@store',    ['auth', 'role:superadmin']);
+$router->get('/api/admin/backups/{filename}/download', 'AdminBackupController@download', ['auth', 'role:superadmin']);
 
 // ─── API Reports ──────────────────────────────────────────────────────────────
 $router->get('/api/reports/summary', 'ReportController@summary', ['auth', 'role:owner|superadmin']);
@@ -171,10 +233,16 @@ $router->get('/api/public/establishments',  'PublicController@establishments');
 $router->get('/api/public/property/{id}',   'PublicController@property');
 $router->get('/api/public/availability/{id}', 'PublicController@availability');
 $router->post('/api/public/booking',                        'PublicController@bookingRequest');
+$router->post('/api/public/booking/find',                   'PublicController@bookingFind');
+$router->get('/api/public/booking/{id}',                    'PublicController@bookingShow');
+$router->get('/api/public/booking/{id}/pdf',                'PublicController@bookingPdf');
 $router->post('/api/public/booking-payment/initiate',       'BookingPaymentController@initiate');
 $router->post('/api/public/booking-payment/callback',       'BookingPaymentController@callback');
 $router->get('/api/public/booking-payment/verify/{ref}',    'BookingPaymentController@verify');
 $router->get('/api/public/destinations',    'PublicController@destinations');
 $router->post('/api/public/contact',        'PublicController@sendContact');
+$router->get('/api/public/announcements',              'PublicController@announcements');
+$router->post('/api/public/newsletter/subscribe',      'PublicController@newsletterSubscribe');
+$router->get('/api/public/newsletter/unsubscribe',      'PublicController@newsletterUnsubscribe');
 $router->get('/api/public/push/public-key', 'PushController@publicKey');
 $router->post('/api/public/push/subscribe', 'PushController@subscribeGuest');

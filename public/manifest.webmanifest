@@ -4,6 +4,7 @@
   "description": "Application de gestion hôtelière Afristay (réservations, chambres, facturation).",
   "lang": "fr",
   "dir": "ltr",
+  "id": ".",
   "start_url": "login",
   "scope": ".",
   "display": "standalone",

@@ -29,10 +29,6 @@
       <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Avec réservations</div>
       <div style="font-size:24px;font-weight:800;color:#16a34a;" x-text="clients.filter(c => (c.total_bookings ?? 0) > 0).length"></div>
     </div>
-    <div class="saas-card" style="padding:14px 16px;border-top:3px solid #2563EB;">
-      <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Revenu total clients</div>
-      <div style="font-size:18px;font-weight:800;color:#2563EB;" x-text="formatPrice(clients.reduce((sum,c) => sum + (c.total_spent ?? 0), 0))"></div>
-    </div>
   </div>
 
   <!-- Barre recherche -->
@@ -134,18 +130,18 @@
   <!-- Modal détail client -->
   <div x-cloak x-show="showDetail" class="saas-modal-bg" @keydown.escape.window="showDetail = false" @click.self="showDetail = false">
     <div class="saas-modal" style="max-width:620px;" @click.stop>
-      <div class="saas-modal-header">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <div class="client-avatar" style="width:44px;height:44px;border-radius:12px;font-size:16px;" :style="{ background: avatarBg(selectedClient?.id) }" x-text="initials(selectedClient?.name ?? '')"></div>
-          <div>
-            <h2 style="font-size:17px;font-weight:700;color:#111827;margin:0 0 2px;" x-text="selectedClient?.name ?? 'Client'"></h2>
+      <div class="saas-modal-header" style="flex-wrap:wrap;row-gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+          <div class="client-avatar" style="width:44px;height:44px;border-radius:12px;font-size:16px;flex-shrink:0;" :style="{ background: avatarBg(selectedClient?.id) }" x-text="initials(selectedClient?.name ?? '')"></div>
+          <div style="min-width:0;">
+            <h2 style="font-size:17px;font-weight:700;color:#111827;margin:0 0 2px;overflow-wrap:anywhere;" x-text="selectedClient?.name ?? 'Client'"></h2>
             <div style="font-size:12px;color:#9CA3AF;">Client depuis <span x-text="formatDate(selectedClient?.created_at)"></span></div>
           </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <a :href="bookingUrl(selectedClient)" class="btn-saas-primary" style="font-size:13px;padding:7px 14px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Réserver</a>
-          <button @click="openEdit(selectedClient)" class="btn-saas-secondary" style="font-size:13px;padding:7px 14px;"><svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg> Modifier</button>
-          <button @click="showDetail = false" style="width:32px;height:32px;border-radius:8px;background:rgba(0,0,0,0.05);border:none;cursor:pointer;display:grid;place-items:center;"><svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;color:#6B7280;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <a :href="bookingUrl(selectedClient)" class="btn-saas-primary" style="font-size:13px;padding:7px 14px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;"><svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Réserver</a>
+          <button @click="openEdit(selectedClient)" class="btn-saas-secondary" style="font-size:13px;padding:7px 14px;white-space:nowrap;"><svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg> Modifier</button>
+          <button type="button" class="saas-modal-close" @click="showDetail = false"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
         </div>
       </div>
 
@@ -154,19 +150,28 @@
 
         <div x-show="!detailLoading && selectedClient">
           <!-- 3 stats -->
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">
+          <div class="client-stat-grid">
             <div class="client-stat"><div class="client-stat-value" x-text="selectedClient?.total_bookings ?? clientHistory.length"></div><div class="client-stat-label">Séjours</div></div>
             <div class="client-stat"><div class="client-stat-value" style="font-size:15px;" x-text="formatPrice(selectedClient?.total_spent ?? clientHistory.reduce((s,b)=> s + (b.total_price ?? 0),0))"></div><div class="client-stat-label">Total dépensé</div></div>
             <div class="client-stat"><div class="client-stat-value" style="font-size:13px;" x-text="formatDate(selectedClient?.last_visit ?? selectedClient?.updated_at)"></div><div class="client-stat-label">Dernière visite</div></div>
           </div>
 
           <!-- Contact -->
-          <div style="background:#FAFAFA;border-radius:12px;padding:16px;margin-bottom:20px;">
-            <div style="font-size:11px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">Informations de contact</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-              <div style="display:flex;align-items:center;gap:10px;"><div style="width:32px;height:32px;border-radius:8px;background:rgba(22,163,74,0.08);display:grid;place-items:center;flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;color:#16a34a;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg></div><div><div style="font-size:11px;color:#9CA3AF;">Téléphone</div><div style="font-size:14px;color:#111827;font-weight:500;" x-text="selectedClient?.phone ?? '-'" /></div></div>
-              <div style="display:flex;align-items:center;gap:10px;"><div style="width:32px;height:32px;border-radius:8px;background:rgba(37,99,235,0.08);display:grid;place-items:center;flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;color:#2563EB;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div><div><div style="font-size:11px;color:#9CA3AF;">Email</div><div style="font-size:14px;color:#111827;font-weight:500;" x-text="selectedClient?.email ?? '-'" /></div></div>
-              <div style="display:flex;align-items:center;gap:10px;grid-column:span 2;"><div style="width:32px;height:32px;border-radius:8px;background:rgba(201,168,76,0.08);display:grid;place-items:center;flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div><div><div style="font-size:11px;color:#9CA3AF;">Adresse</div><div style="font-size:14px;color:#111827;font-weight:500;" x-text="selectedClient?.address ?? '-'" /></div></div>
+          <div class="client-contact-box">
+            <div class="client-contact-title">Informations de contact</div>
+            <div class="client-contact-grid">
+              <div class="client-contact-item">
+                <div class="client-contact-icon" style="background:rgba(22,163,74,0.08);"><svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;color:#16a34a;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg></div>
+                <div class="client-contact-text"><div class="client-contact-label">Téléphone</div><div class="client-contact-value" x-text="selectedClient?.phone ?? '-'"></div></div>
+              </div>
+              <div class="client-contact-item">
+                <div class="client-contact-icon" style="background:rgba(37,99,235,0.08);"><svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;color:#2563EB;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div>
+                <div class="client-contact-text"><div class="client-contact-label">Email</div><div class="client-contact-value" x-text="selectedClient?.email ?? '-'"></div></div>
+              </div>
+              <div class="client-contact-item client-contact-item--full">
+                <div class="client-contact-icon" style="background:rgba(201,168,76,0.08);"><svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
+                <div class="client-contact-text"><div class="client-contact-label">Adresse</div><div class="client-contact-value" x-text="selectedClient?.address ?? '-'"></div></div>
+              </div>
             </div>
           </div>
 
@@ -178,9 +183,9 @@
 
             <div x-show="clientHistory.length > 0" style="display:flex;flex-direction:column;gap:8px;">
               <template x-for="b in clientHistory" :key="b.id">
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#FAFAFA;border-radius:10px;border:1px solid rgba(0,0,0,0.05);flex-wrap:wrap;gap:8px;">
-                  <div style="display:flex;align-items:center;gap:10px;flex:1;"><div style="width:32px;height:32px;border-radius:8px;background:rgba(201,168,76,0.1);display:grid;place-items:center;flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg></div><div><div style="font-size:13px;font-weight:500;color:#111827;" x-text="b.room_name ?? '-'"></div><div style="font-size:12px;color:#9CA3AF;"><span x-text="formatDate(b.check_in)"></span> → <span x-text="formatDate(b.check_out)"></span> · <span x-text="(b.nights ?? 1) + ' nuit(s)'"></span></div></div></div>
-                  <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:13px;font-weight:600;color:#111827;" x-text="formatPrice(b.total_price ?? b.amount)"></span><span :class="statusCfg(b.status).badge" x-text="statusCfg(b.status).label"></span></div>
+                <div class="modal-list-item">
+                  <div style="display:flex;align-items:center;gap:10px;flex:1;"><div style="width:32px;height:32px;border-radius:8px;background:rgba(201,168,76,0.1);display:grid;place-items:center;flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg></div><div><p class="modal-value" x-text="b.room_name ?? '-'"></p><p class="modal-meta" style="margin-top:2px;"><span x-text="formatDate(b.check_in)"></span> → <span x-text="formatDate(b.check_out)"></span> · <span x-text="(b.nights ?? 1) + ' nuit(s)'"></span></p></div></div>
+                  <div style="display:flex;align-items:center;gap:10px;"><span class="modal-value" x-text="formatPrice(b.total_price ?? b.amount)"></span><span :class="statusCfg(b.status).badge" x-text="statusCfg(b.status).label"></span></div>
                 </div>
               </template>
             </div>
@@ -199,7 +204,7 @@
   <!-- Modal édition client -->
   <div x-cloak x-show="showEdit" class="saas-modal-bg" @keydown.escape.window="showEdit = false" @click.self="showEdit = false">
     <div class="saas-modal" style="max-width:440px;" @click.stop>
-      <div class="saas-modal-header"><h2 style="font-size:17px;font-weight:700;color:#111827;margin:0;">Modifier le client</h2><button @click="showEdit = false" style="width:32px;height:32px;border-radius:8px;background:rgba(0,0,0,0.05);border:none;cursor:pointer;display:grid;place-items:center;"><svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;color:#6B7280;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+      <div class="saas-modal-header"><h2 style="font-size:17px;font-weight:700;color:#111827;margin:0;">Modifier le client</h2><button type="button" class="saas-modal-close" @click="showEdit = false"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
       <div class="saas-modal-body">
         <div x-show="editError" style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.2);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#DC2626;" x-text="editError"></div>
         <div style="display:grid;gap:14px;">

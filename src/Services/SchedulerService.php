@@ -22,7 +22,7 @@ use Core\Database;
  */
 class SchedulerService
 {
-    private const JOBS = ['daily_arrivals', 'expiring_subscriptions', 'establishment_freeze_sync'];
+    private const JOBS = ['daily_arrivals', 'expiring_subscriptions', 'establishment_freeze_sync', 'expire_pending_bookings', 'db_backup'];
     private const SUBSCRIPTION_REMINDER_WINDOW_DAYS = 3;
 
     public static function maybeRunDueJobs(): void
@@ -55,6 +55,8 @@ class SchedulerService
                 'daily_arrivals'           => self::runDailyArrivals(),
                 'expiring_subscriptions'   => self::runExpiringSubscriptions(),
                 'establishment_freeze_sync' => self::runEstablishmentFreezeSync(),
+                'expire_pending_bookings'  => self::runExpirePendingBookings(),
+                'db_backup'                => self::runDbBackup(),
                 default                    => 'job inconnu',
             };
             error_log("[SchedulerService] {$job} — {$summary}");
@@ -197,6 +199,60 @@ class SchedulerService
     }
 
     /**
+     * Annule automatiquement les réservations en ligne restées 'pending'
+     * (jamais confirmées par l'établissement) dont la date d'arrivée est
+     * dépassée. Sans ce job elles restent 'pending' indéfiniment et
+     * continuent de bloquer la chambre dans Booking::isRoomAvailable()
+     * (qui n'exclut que 'cancelled'/'checked_out').
+     */
+    public static function runExpirePendingBookings(bool $verbose = false): string
+    {
+        $pdo = Database::getInstance();
+        $log = fn(string $line) => $verbose ? print($line . "\n") : null;
+
+        $expired = $pdo->query("
+            SELECT b.id, r.establishment_id, r.number as room_number,
+                   COALESCE(CONCAT(pc.first_name, ' ', pc.last_name), u.name) as client_name,
+                   COALESCE(pc.email, u.email) as client_email,
+                   e.name as establishment_name
+            FROM bookings b
+            JOIN rooms r ON r.id = b.room_id
+            JOIN establishments e ON e.id = r.establishment_id
+            LEFT JOIN public_clients pc ON pc.id = b.public_client_id
+            LEFT JOIN users u ON u.id = b.user_id
+            WHERE b.status = 'pending'
+              AND b.check_in < CURDATE()
+        ")->fetchAll(\PDO::FETCH_ASSOC);
+
+        $log(count($expired) . ' réservation(s) pending expirée(s) à annuler.');
+
+        $stmtCancel = $pdo->prepare("UPDATE bookings SET status = 'cancelled' WHERE id = ?");
+
+        foreach ($expired as $b) {
+            $stmtCancel->execute([$b['id']]);
+
+            NotificationService::bookingCancelled(
+                (int) $b['establishment_id'],
+                $b['client_name'] ?? 'Client',
+                $b['room_number'] ?? '?',
+                (int) $b['id']
+            );
+
+            if (!empty($b['client_email'])) {
+                try {
+                    MailService::bookingCancelledGuest($b);
+                } catch (\Throwable $e) {
+                    $log("✗ Échec email annulation (réservation #{$b['id']}) : " . $e->getMessage());
+                }
+            }
+
+            $log("→ Réservation #{$b['id']} (établissement #{$b['establishment_id']}) annulée — jamais confirmée avant la date d'arrivée.");
+        }
+
+        return count($expired) . ' réservation(s) pending expirée(s) annulée(s)';
+    }
+
+    /**
      * Recalcule le gel des établissements en excédent (EstablishmentFreezeService)
      * pour les owners multi-établissements. Nécessaire car un abonnement expiré
      * n'est jamais physiquement redescendu à 'starter' en base (PlanGate::getPlan()
@@ -221,5 +277,15 @@ class SchedulerService
         }
 
         return count($ownerIds) . ' owner(s) synchronisé(s)';
+    }
+
+    /**
+     * Sauvegarde quotidienne de la base (BackupService) — pas de shell/cron
+     * en prod, même mécanique que les autres jobs de cette classe. Dump SQL
+     * gzippé dans storage/backups/, rétention 7 jours glissants.
+     */
+    public static function runDbBackup(bool $verbose = false): string
+    {
+        return BackupService::run($verbose);
     }
 }

@@ -181,48 +181,46 @@
        @click.self="closeDetail()">
     <div class="saas-modal" style="max-width:480px;">
       <div class="saas-modal-header">
-        <div>
-          <p style="font-size:12px;color:#9CA3AF;margin:0;">
-            Réservation #<span x-text="selectedBooking?.id"></span>
-          </p>
-          <h2 style="font-size:17px;font-weight:700;color:#111827;margin:4px 0 0;"
-              x-text="selectedBooking?.client_name"></h2>
+        <div class="modal-header-info">
+          <p class="modal-eyebrow">Réservation #<span x-text="selectedBooking?.id"></span></p>
+          <h2 class="modal-title-lg" style="font-size:17px;" x-text="selectedBooking?.client_name"></h2>
         </div>
-        <button @click="closeDetail()"
-                style="background:none;border:none;cursor:pointer;padding:4px;color:#6B7280;">
-          <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <button type="button" class="saas-modal-close" @click="closeDetail()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
       </div>
       <div class="saas-modal-body">
-        <div style="display:grid;gap:16px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:13px;color:#6B7280;">Statut</span>
-            <span :class="statusBadge(selectedBooking?.status)"
-                  x-text="statusLabel(selectedBooking?.status)"></span>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:13px;color:#6B7280;">Chambre</span>
-            <span style="font-size:13px;font-weight:600;color:#111827;"
-                  x-text="roomName(selectedBooking?.room_id)"></span>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div style="background:#FAFAFA;border-radius:10px;padding:12px;">
-              <div style="font-size:11px;color:#9CA3AF;margin-bottom:4px;">Check-in</div>
-              <div style="font-size:13px;font-weight:600;color:#111827;"
-                   x-text="formatDate(selectedBooking?.check_in)"></div>
+        <div style="display:grid;gap:14px;">
+          <div class="modal-card modal-grid">
+            <div>
+              <p class="modal-label">Statut</p>
+              <span :class="statusBadge(selectedBooking?.status)" x-text="statusLabel(selectedBooking?.status)"></span>
             </div>
-            <div style="background:#FAFAFA;border-radius:10px;padding:12px;">
-              <div style="font-size:11px;color:#9CA3AF;margin-bottom:4px;">Check-out</div>
-              <div style="font-size:13px;font-weight:600;color:#111827;"
-                   x-text="formatDate(selectedBooking?.check_out)"></div>
+            <div>
+              <p class="modal-label">Chambre</p>
+              <p class="modal-value" x-text="roomName(selectedBooking?.room_id)"></p>
             </div>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-radius:10px;">
-            <span style="font-size:13px;color:#6B7280;">Montant total</span>
-            <span style="font-size:16px;font-weight:800;color:#1B4332;"
-                  x-text="formatPrice(selectedBooking?.total_amount ?? selectedBooking?.total_price)"></span>
+
+          <div class="modal-strip">
+            <div class="modal-strip-row">
+              <div>
+                <p class="modal-label">Arrivée</p>
+                <p class="modal-value" x-text="formatDate(selectedBooking?.check_in)"></p>
+              </div>
+              <span class="modal-strip-arrow">→</span>
+              <div>
+                <p class="modal-label">Départ</p>
+                <p class="modal-value" x-text="formatDate(selectedBooking?.check_out)"></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-card" style="background:rgba(201,168,76,0.06);border-color:rgba(201,168,76,0.15);display:flex;align-items:center;justify-content:space-between;">
+            <p class="modal-label" style="margin:0;">Montant total</p>
+            <p class="modal-amount" x-text="formatPrice(selectedBooking?.total_amount ?? selectedBooking?.total_price)"></p>
           </div>
         </div>
       </div>

@@ -21,14 +21,14 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
 <body>
 
   <div class="lg-left">
-    <div class="lg-ghost">IS</div>
+    <div class="lg-ghost">AS</div>
     <div class="lg-radial"></div>
 
     <div class="lg-brand">
       <a class="lg-brand-inner" href="<?= $base_url ?>/">
-        <div class="lg-brand-sq">IS</div>
+        <div class="lg-brand-sq">AS</div>
         <div class="lg-brand-text">
-          <strong>Afristay</strong>
+          <strong>Afri <span style="color:#C9A84C;">Stay</span></strong>
           <span>SaaS Hôtelier</span>
         </div>
       </a>
@@ -82,6 +82,8 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
 
   <!-- Panneau droit : gate PWA ou formulaire selon le contexte -->
   <div class="lg-right" x-data="loginPage('<?= $base_url ?>')" x-init="init()">
+
+    <a class="lg-mobile-back" href="<?= $base_url ?>/">← Retour au site</a>
 
     <!-- ═══ GATE : navigateur normal (app non installée) ═══ -->
     <div class="lg-gate" x-show="!isApp" x-cloak>

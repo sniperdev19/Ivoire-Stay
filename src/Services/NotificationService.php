@@ -47,6 +47,21 @@ class NotificationService
     }
 
     /**
+     * Annonce plateforme envoyée manuellement par un superadmin à tous les
+     * propriétaires (AdminController::broadcastNotification()) — pas aux
+     * receptionists (comptes équipe, pas destinataires des communications
+     * "propriétaire de la plateforme"). Retourne le nombre de destinataires.
+     */
+    public static function broadcastToOwners(string $title, string $message): int
+    {
+        $owners = User::where(['role' => 'owner']);
+        foreach ($owners as $owner) {
+            self::create((int) $owner['id'], 'platform_announcement', $title, $message);
+        }
+        return count($owners);
+    }
+
+    /**
      * Notifie toute l'équipe de l'établissement : le propriétaire et les
      * membres (receptionist) — pas seulement l'owner, puisque ce sont
      * souvent eux qui gèrent les réservations/paiements au quotidien.
@@ -180,6 +195,21 @@ class NotificationService
             'Abonnement activé',
             $estabName . ' · Plan ' . $planLabel,
             ['establishment_id' => $estabId]
+        );
+    }
+
+    /**
+     * Palier de 10 premiers-abonnements atteint pour un agent commercial —
+     * versement forfaitaire à traiter manuellement (voir AgentPayoutController).
+     * Les agents n'ont pas de compte `users` (pas de boîte de notifications
+     * propre) : seuls les superadmins, qui traitent le versement, sont notifiés.
+     */
+    public static function agentPayoutReady(string $agentNom, string $planLabel, float $amount, int $payoutId): void
+    {
+        self::forSuperadmins('agent_payout_ready',
+            'Versement agent à traiter',
+            $agentNom . ' · Plan ' . $planLabel . ' · ' . number_format($amount, 0, ',', ' ') . ' FCFA',
+            ['agent_payout_id' => $payoutId]
         );
     }
 

@@ -29,4 +29,35 @@ class AdminPageController
     {
         Response::render('admin/payouts', ['title' => 'AfriStay Admin — Retraits', 'page' => 'payouts']);
     }
+
+    /** Fonctionnalité temporaire — cf. AGENTS_ENABLED dans config/config.php. */
+    public function agents(Request $req, array $params = []): void
+    {
+        Response::render('admin/agents', ['title' => 'AfriStay Admin — Agents commerciaux', 'page' => 'agents']);
+    }
+
+    public function backups(Request $req, array $params = []): void
+    {
+        Response::render('admin/backups', ['title' => 'AfriStay Admin — Sauvegardes', 'page' => 'backups']);
+    }
+
+    public function notifications(Request $req, array $params = []): void
+    {
+        Response::render('admin/notifications', ['title' => 'AfriStay Admin — Notifications', 'page' => 'notifications']);
+    }
+
+    public function contactMessages(Request $req, array $params = []): void
+    {
+        Response::render('admin/contact-messages', ['title' => 'AfriStay Admin — Messages de contact', 'page' => 'contact-messages']);
+    }
+
+    public function newsletter(Request $req, array $params = []): void
+    {
+        Response::render('admin/newsletter', ['title' => 'AfriStay Admin — Newsletter', 'page' => 'newsletter']);
+    }
+
+    public function announcements(Request $req, array $params = []): void
+    {
+        Response::render('admin/announcements', ['title' => 'AfriStay Admin — Annonces vitrine', 'page' => 'announcements']);
+    }
 }
