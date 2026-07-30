@@ -1,0 +1,7 @@
+Options -Indexes
+
+RewriteEngine On
+
+# Ne pas rediriger si on est déjà dans public/
+RewriteCond %{REQUEST_URI} !^/PROJETS/Ivoire%20Stay/public
+RewriteRule ^(.*)$ public/$1 [L,QSA]
