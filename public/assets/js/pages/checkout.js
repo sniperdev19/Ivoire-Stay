@@ -9,7 +9,7 @@ function checkoutPage(baseUrl) {
 
     plan: 'pro',
     billing: 'monthly',
-    payMethod: 'orange',
+    payMethod: 'wave',
 
     loading: false,
     error: null,
@@ -17,31 +17,29 @@ function checkoutPage(baseUrl) {
 
     plans: {
       pro: {
-        name: 'Pro',
-        nameEm: 'Pro.',
+        name: 'Premium',
+        nameEm: 'Premium.',
         tagline: 'Pour les établissements qui veulent accélérer.',
         prices:      { monthly: 9000,  yearly: 86400 },
         monthlyEq:   { monthly: 9000,  yearly: 7200  },
         features: [
           'Chambres illimitées',
-          'Paiements Orange Money, Wave & MTN',
-          'Analytics avancées',
-          'Rapports & exports PDF',
-          'Support prioritaire 24h/24',
+          'Facturation & gestion des paiements',
+          'Suivi des dépenses',
+          'Rapports & Analyses',
+          'Export PDF',
         ],
       },
       business: {
-        name: 'Business',
-        nameEm: 'Business.',
+        name: 'Premium+',
+        nameEm: 'Premium+.',
         tagline: 'Pour les groupes hôteliers et gestionnaires multi-sites.',
         prices:      { monthly: 20000, yearly: 192000 },
         monthlyEq:   { monthly: 20000, yearly: 16000  },
         features: [
-          'Tout le plan Pro inclus',
+          'Tout le plan Premium inclus',
           'Multi-établissements illimités',
-          'Gestion multi-utilisateurs & rôles',
-          'API & intégrations personnalisées',
-          'Gestionnaire de compte dédié',
+          'Boost vitrine',
         ],
       },
     },
@@ -81,6 +79,19 @@ function checkoutPage(baseUrl) {
         if (data.success) this.prorationCredit = Number(data.data?.proration_credit) || 0;
       } catch (e) {
         this.prorationCredit = 0;
+      }
+
+      // Retour depuis Genius Pay après un paiement refusé/annulé (error_url) : on
+      // interroge /verify pour que le statut 'pending' initial soit bien remplacé
+      // par 'failed' côté DB, plutôt que de rester "en attente" indéfiniment.
+      const ref = p.get('ref');
+      if (p.get('error') === '1' && ref) {
+        try {
+          await fetch(this.api + '/api/subscriptions/verify/' + encodeURIComponent(ref), {
+            headers: { Authorization: 'Bearer ' + this.token },
+          });
+        } catch (e) { /* best-effort — le nettoyage opportuniste au prochain /status rattrapera sinon */ }
+        this.error = 'Le paiement a échoué ou a été annulé. Vous pouvez réessayer.';
       }
     },
 
