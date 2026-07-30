@@ -19,15 +19,15 @@ function registerPage(baseUrl) {
 
     plan: 'starter',
     billing: 'monthly',
-    payMethod: 'orange',
+    payMethod: 'wave',
     token: null,
     payLoading: false,
     payError: null,
 
     planData: {
-      starter:  { name: 'Starter',  price: { monthly: 0,     yearly: 0      }, monthlyEq: { monthly: 0,     yearly: 0     }, free: true },
-      pro:      { name: 'Pro',      price: { monthly: 9000,  yearly: 86400  }, monthlyEq: { monthly: 9000,  yearly: 7200  } },
-      business: { name: 'Business', price: { monthly: 20000, yearly: 192000 }, monthlyEq: { monthly: 20000, yearly: 16000 } },
+      starter:  { name: 'Gratuit',  price: { monthly: 0,     yearly: 0      }, monthlyEq: { monthly: 0,     yearly: 0     }, free: true },
+      pro:      { name: 'Premium',  price: { monthly: 9000,  yearly: 86400  }, monthlyEq: { monthly: 9000,  yearly: 7200  } },
+      business: { name: 'Premium+', price: { monthly: 20000, yearly: 192000 }, monthlyEq: { monthly: 20000, yearly: 16000 } },
     },
 
     get isPaid()  { return this.plan !== 'starter'; },

@@ -144,30 +144,12 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
       <div class="ck-label">Mode de paiement</div>
       <div class="ck-pay-opts">
 
-        <div class="ck-pay-opt" :class="payMethod === 'orange' ? 'selected' : ''" @click="payMethod = 'orange'">
-          <div class="ck-pay-radio"><div class="ck-pay-radio-dot"></div></div>
-          <div class="ck-pay-icon" style="background:#FF6B00;">OM</div>
-          <div class="ck-pay-info">
-            <div class="ck-pay-name">Orange Money</div>
-            <div class="ck-pay-sub">Paiement instantané via Orange CI</div>
-          </div>
-        </div>
-
         <div class="ck-pay-opt" :class="payMethod === 'wave' ? 'selected' : ''" @click="payMethod = 'wave'">
           <div class="ck-pay-radio"><div class="ck-pay-radio-dot"></div></div>
           <div class="ck-pay-icon" style="background:#00B9F2;">WV</div>
           <div class="ck-pay-info">
             <div class="ck-pay-name">Wave</div>
             <div class="ck-pay-sub">Sans frais de transaction</div>
-          </div>
-        </div>
-
-        <div class="ck-pay-opt" :class="payMethod === 'mtn' ? 'selected' : ''" @click="payMethod = 'mtn'">
-          <div class="ck-pay-radio"><div class="ck-pay-radio-dot"></div></div>
-          <div class="ck-pay-icon" style="background:#FFCB00;color:#1B1B1B;">MTN</div>
-          <div class="ck-pay-info">
-            <div class="ck-pay-name">MTN Mobile Money</div>
-            <div class="ck-pay-sub">Disponible 24h/24</div>
           </div>
         </div>
 

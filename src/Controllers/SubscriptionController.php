@@ -14,6 +14,23 @@ class SubscriptionController
         Response::success(require BASE_PATH . '/config/plans.php');
     }
 
+    /**
+     * Marque comme 'failed' les abonnements restés 'pending' plus de 30 minutes.
+     * Genius Pay n'envoie pas toujours un webhook quand l'utilisateur abandonne
+     * le paiement (ferme l'app/l'onglet sans revenir sur success_url/error_url) —
+     * sans ce nettoyage opportuniste, ces lignes restent "en attente" indéfiniment.
+     * Déclenché à chaque consultation de l'abonnement plutôt que par cron (pas
+     * d'infra cron sur cet hébergement).
+     */
+    private function expireStalePending(int $estabId): void
+    {
+        Database::query(
+            "UPDATE subscriptions SET status = 'failed'
+             WHERE establishment_id = ? AND status = 'pending' AND created_at < NOW() - INTERVAL 30 MINUTE",
+            [$estabId]
+        );
+    }
+
     // ─── GET /api/subscriptions/status ───────────────────────────────────────
     public function status(Request $req, array $params = []): void
     {
@@ -25,6 +42,8 @@ class SubscriptionController
         // ces actions retombaient toujours (silencieusement) sur le premier.
         $estab = Establishment::find(Guard::resolveEstabId($req));
         if (!$estab) Response::notFound('Établissement introuvable');
+
+        $this->expireStalePending((int) $estab['id']);
 
         $plan       = PlanGate::getPlan($estab);
         $expiresAt  = $estab['plan_expires_at'] ?? null;
@@ -52,6 +71,8 @@ class SubscriptionController
         $user  = $_REQUEST['_user'];
         $estab = Establishment::find(Guard::resolveEstabId($req)); // cf. status() ci-dessus
         if (!$estab) Response::notFound('Établissement introuvable');
+
+        $this->expireStalePending((int) $estab['id']);
 
         $rows = Database::query(
             "SELECT * FROM subscriptions WHERE establishment_id = ? ORDER BY created_at DESC",
@@ -187,6 +208,8 @@ class SubscriptionController
         $estab = Establishment::find(Guard::resolveEstabId($req)); // cf. status() ci-dessus
         if (!$estab) Response::notFound('Établissement introuvable');
 
+        $this->expireStalePending((int) $estab['id']);
+
         $data    = $req->all();
         $plan    = $data['plan']    ?? '';
         $billing = $data['billing'] ?? 'monthly';
@@ -254,7 +277,7 @@ class SubscriptionController
                 'reference'      => $reference,
                 'pay_method'     => $data['pay_method'] ?? '',
                 'success_url'    => APP_URL . '/saas/settings?sub=ok&plan=' . $plan . '&ref=' . $reference,
-                'error_url'      => APP_URL . '/saas/checkout?plan=' . $plan . '&error=1',
+                'error_url'      => APP_URL . '/saas/checkout?plan=' . $plan . '&error=1&ref=' . $reference,
                 'customer_name'  => $user['name']  ?? 'Client',
                 'customer_email' => $user['email'] ?? '',
             ]);
@@ -458,6 +481,12 @@ class SubscriptionController
                 if ($ownerId) EstablishmentFreezeService::recompute($ownerId);
 
                 Response::success(['status' => 'active', 'plan' => $sub['plan'], 'expires_at' => $expiresAt]);
+            } elseif ($internalStatus === 'failed' && $sub['status'] !== 'failed') {
+                // Persiste l'échec constaté auprès de Genius Pay — sans ça, un abonnement
+                // resterait "pending" indéfiniment côté DB même si le paiement a bel et
+                // bien échoué (redirection vers error_url, ou retour de l'utilisateur
+                // après avoir quitté l'app en cours de paiement).
+                Database::query("UPDATE subscriptions SET status = 'failed' WHERE id = ?", [$sub['id']]);
             }
 
             Response::success(['status' => $internalStatus, 'gp_status' => $result['status']]);

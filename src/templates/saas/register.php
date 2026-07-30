@@ -138,15 +138,15 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
 
       <div class="rg-plans">
         <div class="rg-plan" :class="plan === 'starter' ? 'rg-plan-active' : ''">
-          <span class="rg-plan-name">STARTER</span>
-          <span class="rg-plan-badge badge-free">Gratuit</span>
+          <span class="rg-plan-name">GRATUIT</span>
+          <span class="rg-plan-badge badge-free">0 FCFA</span>
         </div>
         <div class="rg-plan" :class="plan === 'pro' ? 'rg-plan-active' : ''">
-          <span class="rg-plan-name">PRO</span>
+          <span class="rg-plan-name">PREMIUM</span>
           <span class="rg-plan-price">9 000 FCFA / mois</span>
         </div>
         <div class="rg-plan" :class="plan === 'business' ? 'rg-plan-active' : ''">
-          <span class="rg-plan-name">BUSINESS</span>
+          <span class="rg-plan-name">PREMIUM+</span>
           <span class="rg-plan-price">20 000 FCFA / mois</span>
         </div>
       </div>
@@ -487,28 +487,12 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
         <!-- Modes de paiement -->
         <div class="rg-label">Mode de paiement</div>
         <div class="rg-pay-opts">
-          <div class="rg-pay-opt" :class="payMethod === 'orange' ? 'selected' : ''" @click="payMethod = 'orange'">
-            <div class="rg-pay-radio"><div class="rg-pay-radio-dot"></div></div>
-            <div class="rg-pay-icon" style="background:#FF6B00;">OM</div>
-            <div>
-              <div class="rg-pay-name">Orange Money</div>
-              <div class="rg-pay-sub">Paiement instantané via Orange CI</div>
-            </div>
-          </div>
           <div class="rg-pay-opt" :class="payMethod === 'wave' ? 'selected' : ''" @click="payMethod = 'wave'">
             <div class="rg-pay-radio"><div class="rg-pay-radio-dot"></div></div>
             <div class="rg-pay-icon" style="background:#00B9F2;">WV</div>
             <div>
               <div class="rg-pay-name">Wave</div>
               <div class="rg-pay-sub">Sans frais de transaction</div>
-            </div>
-          </div>
-          <div class="rg-pay-opt" :class="payMethod === 'mtn' ? 'selected' : ''" @click="payMethod = 'mtn'">
-            <div class="rg-pay-radio"><div class="rg-pay-radio-dot"></div></div>
-            <div class="rg-pay-icon" style="background:#FFCB00;color:#1B1B1B;">MTN</div>
-            <div>
-              <div class="rg-pay-name">MTN Mobile Money</div>
-              <div class="rg-pay-sub">Disponible 24h/24</div>
             </div>
           </div>
         </div>

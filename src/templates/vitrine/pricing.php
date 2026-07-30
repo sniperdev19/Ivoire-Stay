@@ -30,7 +30,7 @@
     <div class="pr-card">
       <div class="pr-card-top"></div>
       <div class="pr-card-body">
-        <div class="pr-plan-name">Starter</div>
+        <div class="pr-plan-name">Gratuit</div>
         <p class="pr-plan-tagline">Pour tester et démarrer sans engagement.</p>
         <div class="pr-price-block">
           <div class="pr-price">0 <small>FCFA</small></div>
@@ -45,7 +45,7 @@
           <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Tableau de bord de base</span></li>
+              </svg></span><span>Réservations en ligne</span></li>
           <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
@@ -53,15 +53,15 @@
           <li class="pr-feature pr-feature-disabled"><span class="pr-feature-check"><svg
                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1B4332" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Paiements Mobile Money</span></li>
+              </svg></span><span>Facturation</span></li>
           <li class="pr-feature pr-feature-disabled"><span class="pr-feature-check"><svg
                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1B4332" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Analytics avancées</span></li>
+              </svg></span><span>Gestion des paiements</span></li>
           <li class="pr-feature pr-feature-disabled"><span class="pr-feature-check"><svg
                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1B4332" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Multi-établissements</span></li>
+              </svg></span><span>Rapports &amp; Analyses</span></li>
         </ul>
         <a href="<?= $base ?>/register?plan=starter" class="pr-card-btn pr-btn-outline">Démarrer gratuitement</a>
       </div>
@@ -72,7 +72,7 @@
       <div class="pr-card-top pr-card-top-gold"></div>
       <span class="pr-popular-badge">Le plus populaire</span>
       <div class="pr-card-body">
-        <div class="pr-plan-name">Pro</div>
+        <div class="pr-plan-name">Premium</div>
         <p class="pr-plan-tagline">Pour les établissements qui veulent accélérer.</p>
         <div class="pr-price-block">
           <div class="pr-price"><span x-text="annual ? '7 200' : '9 000'">9 000</span> <small>FCFA</small></div>
@@ -88,26 +88,30 @@
           <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Paiements Orange Money, Wave, MTN</span></li>
+              </svg></span><span>Facturation &amp; gestion des paiements</span></li>
           <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Analytics avancées</span></li>
+              </svg></span><span>Suivi des dépenses</span></li>
           <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Rapports &amp; exports PDF</span></li>
+              </svg></span><span>Rapports &amp; Analyses</span></li>
           <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Support prioritaire 24h/24</span></li>
+              </svg></span><span>Export PDF</span></li>
+          <li class="pr-feature pr-feature-disabled"><span class="pr-feature-check"><svg
+                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1B4332" stroke-width="3">
+                <polyline points="20 6 9 17 4 12" />
+              </svg></span><span>Boost vitrine</span></li>
           <li class="pr-feature pr-feature-disabled"><span class="pr-feature-check"><svg
                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1B4332" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
               </svg></span><span>Multi-établissements</span></li>
         </ul>
         <a :href="'<?= $base ?>/register?plan=pro&billing=' + (annual ? 'yearly' : 'monthly')"
-          class="pr-card-btn pr-btn-gold">Choisir Pro →</a>
+          class="pr-card-btn pr-btn-gold">Choisir Premium →</a>
       </div>
     </div>
 
@@ -115,7 +119,7 @@
     <div class="pr-card">
       <div class="pr-card-top" style="background:var(--forest);"></div>
       <div class="pr-card-body">
-        <div class="pr-plan-name">Business</div>
+        <div class="pr-plan-name">Premium+</div>
         <p class="pr-plan-tagline">Pour les groupes hôteliers et gestionnaires multi-sites.</p>
         <div class="pr-price-block">
           <div class="pr-price"><span x-text="annual ? '16 000' : '20 000'">20 000</span> <small>FCFA</small></div>
@@ -127,7 +131,7 @@
           <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Tout le plan Pro inclus</span></li>
+              </svg></span><span>Tout le plan Premium inclus</span></li>
           <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
@@ -135,22 +139,10 @@
           <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Gestion multi-utilisateurs &amp; rôles</span></li>
-          <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
-                <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>API &amp; intégrations personnalisées</span></li>
-          <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
-                <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Onboarding &amp; formation dédiés</span></li>
-          <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
-                <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Gestionnaire de compte dédié</span></li>
+              </svg></span><span>Boost vitrine</span></li>
         </ul>
         <a :href="'<?= $base ?>/register?plan=business&billing=' + (annual ? 'yearly' : 'monthly')"
-          class="pr-card-btn pr-btn-outline">Choisir Business →</a>
+          class="pr-card-btn pr-btn-outline">Choisir Premium+ →</a>
       </div>
     </div>
   </section>
@@ -166,9 +158,9 @@
       <thead>
         <tr>
           <th>Fonctionnalité</th>
-          <th>Starter</th>
-          <th>Pro</th>
-          <th>Business</th>
+          <th>Gratuit</th>
+          <th>Premium</th>
+          <th>Premium+</th>
         </tr>
       </thead>
       <tbody>
@@ -182,19 +174,10 @@
           <td>Illimité</td>
         </tr>
         <tr>
-          <td>Calendrier de disponibilité</td>
-          <td><span class="pr-check">✓</span></td>
-          <td><span class="pr-check">✓</span></td>
-          <td><span class="pr-check">✓</span></td>
-        </tr>
-        <tr>
-          <td>Gestion des tarifs saisonniers</td>
-          <td><span class="pr-dash">—</span></td>
-          <td><span class="pr-check">✓</span></td>
-          <td><span class="pr-check">✓</span></td>
-        </tr>
-        <tr class="pr-cat-row">
-          <td colspan="4">Réservations &amp; paiements</td>
+          <td>Établissements</td>
+          <td>1</td>
+          <td>1</td>
+          <td>Illimité</td>
         </tr>
         <tr>
           <td>Réservations en ligne</td>
@@ -202,58 +185,70 @@
           <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
         </tr>
+        <tr class="pr-cat-row">
+          <td colspan="4">Facturation &amp; paiements</td>
+        </tr>
         <tr>
-          <td>Orange Money / Wave / MTN</td>
+          <td>Facturation</td>
           <td><span class="pr-dash">—</span></td>
           <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
         </tr>
         <tr>
-          <td>Facturation automatique PDF</td>
+          <td>Gestion des paiements</td>
+          <td><span class="pr-dash">—</span></td>
+          <td><span class="pr-check">✓</span></td>
+          <td><span class="pr-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Contrôle du paiement en ligne</td>
+          <td><span class="pr-dash">—</span></td>
+          <td><span class="pr-check">✓</span></td>
+          <td><span class="pr-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Export PDF</td>
           <td><span class="pr-dash">—</span></td>
           <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
         </tr>
         <tr class="pr-cat-row">
-          <td colspan="4">Analytics &amp; rapports</td>
+          <td colspan="4">Suivi &amp; analyses</td>
         </tr>
         <tr>
-          <td>Tableau de bord de base</td>
-          <td><span class="pr-check">✓</span></td>
-          <td><span class="pr-check">✓</span></td>
-          <td><span class="pr-check">✓</span></td>
-        </tr>
-        <tr>
-          <td>Analytics avancées</td>
+          <td>Suivi des dépenses</td>
           <td><span class="pr-dash">—</span></td>
           <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
         </tr>
         <tr>
-          <td>Exports &amp; rapports personnalisés</td>
+          <td>Rapports &amp; Analyses</td>
+          <td><span class="pr-dash">—</span></td>
+          <td><span class="pr-check">✓</span></td>
+          <td><span class="pr-check">✓</span></td>
+        </tr>
+        <tr class="pr-cat-row">
+          <td colspan="4">Visibilité &amp; multi-sites</td>
+        </tr>
+        <tr>
+          <td>Boost vitrine</td>
+          <td><span class="pr-dash">—</span></td>
+          <td><span class="pr-dash">—</span></td>
+          <td><span class="pr-check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Multi-établissements</td>
           <td><span class="pr-dash">—</span></td>
           <td><span class="pr-dash">—</span></td>
           <td><span class="pr-check">✓</span></td>
         </tr>
         <tr class="pr-cat-row">
-          <td colspan="4">Support &amp; accompagnement</td>
+          <td colspan="4">Support</td>
         </tr>
         <tr>
           <td>Support par email</td>
           <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
-          <td><span class="pr-check">✓</span></td>
-        </tr>
-        <tr>
-          <td>Support prioritaire 24h/24</td>
-          <td><span class="pr-dash">—</span></td>
-          <td><span class="pr-check">✓</span></td>
-          <td><span class="pr-check">✓</span></td>
-        </tr>
-        <tr>
-          <td>Gestionnaire de compte dédié</td>
-          <td><span class="pr-dash">—</span></td>
-          <td><span class="pr-dash">—</span></td>
           <td><span class="pr-check">✓</span></td>
         </tr>
       </tbody>
@@ -281,14 +276,14 @@
       <div class="pr-faq-item" :class="open===2?'pr-faq-open':''">
         <button class="pr-faq-q" @click="open=open===2?null:2" type="button"><span>Y a-t-il une période d'essai
             ?</span><span class="pr-faq-icon">+</span></button>
-        <div class="pr-faq-a" x-show="open===2" x-transition>Le plan Starter est gratuit et sans limite de temps. Vous
-          pouvez tester les fonctionnalités Pro pendant 14 jours sans carte bancaire.</div>
+        <div class="pr-faq-a" x-show="open===2" x-transition>Le plan Gratuit est gratuit et sans limite de temps. Vous
+          pouvez tester les fonctionnalités Premium pendant 14 jours sans carte bancaire.</div>
       </div>
       <div class="pr-faq-item" :class="open===3?'pr-faq-open':''">
         <button class="pr-faq-q" @click="open=open===3?null:3" type="button"><span>Comment fonctionnent les paiements
             SaaS ?</span><span class="pr-faq-icon">+</span></button>
         <div class="pr-faq-a" x-show="open===3" x-transition>Vos abonnements sont facturés mensuellement ou annuellement
-          par Orange Money, MTN Money, Wave ou virement bancaire. Une facture PDF est émise automatiquement.</div>
+          par Wave. Une facture PDF est émise automatiquement.</div>
       </div>
       <div class="pr-faq-item" :class="open===4?'pr-faq-open':''">
         <button class="pr-faq-q" @click="open=open===4?null:4" type="button"><span>Mes données sont-elles sécurisées
@@ -300,7 +295,7 @@
         <button class="pr-faq-q" @click="open=open===5?null:5" type="button"><span>Puis-je gérer plusieurs hôtels
             ?</span><span class="pr-faq-icon">+</span></button>
         <div class="pr-faq-a" x-show="open===5" x-transition>La gestion multi-établissements est disponible
-          exclusivement sur le plan Business, sans limite de nombre d'établissements.</div>
+          exclusivement sur le plan Premium+, sans limite de nombre d'établissements.</div>
       </div>
     </div>
   </section>
