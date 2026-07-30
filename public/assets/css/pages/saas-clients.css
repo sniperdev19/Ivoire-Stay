@@ -1,0 +1,45 @@
+/* ============================================================
+   Afristay — Page SaaS : clients (saas/clients.php)
+   ============================================================ */
+
+/* Ligne client cliquable */
+.client-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.client-row:hover td { background: rgba(201,168,76,0.03) !important; }
+/* Avatar couleur */
+.client-avatar {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 700;
+  color: white; flex-shrink: 0;
+}
+/* Stat client dans modal.
+   auto-fit + minmax (même logique que .client-contact-grid ci-dessous) :
+   3 colonnes tant qu'il y a la place, dégrade en 2 puis 1 sans jamais
+   étirer une carte sur toute la largeur — la règle générique de
+   saas-responsive.css (grid-template-columns:1fr !important en dessous de
+   560px) ne s'applique qu'aux grilles en style inline, donc ne touche pas
+   cette classe. */
+.client-stat-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:10px; margin-bottom:20px; }
+.client-stat { background: #FAFAFA; border-radius: 12px; padding: 14px; text-align:center; }
+.client-stat-value { font-size:20px; font-weight:800; color:#111827; line-height:1; margin-bottom:4px; }
+.client-stat-label { font-size:11px; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.05em; }
+
+/* KPI en tête de page */
+.client-kpi-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:20px; }
+
+/* Bloc "Informations de contact" du modal détail client.
+   auto-fit + minmax évite le débordement horizontal constaté quand la
+   valeur (email long, adresse) ne tient pas dans une colonne fixe :
+   les items retombent naturellement en 1 colonne sur mobile sans media query. */
+.client-contact-box { background:#FAFAFA; border-radius:12px; padding:16px; margin-bottom:20px; }
+.client-contact-title { font-size:11px; font-weight:700; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:12px; }
+.client-contact-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:14px 12px; }
+.client-contact-item { display:flex; align-items:center; gap:10px; min-width:0; }
+.client-contact-item--full { grid-column:1 / -1; }
+.client-contact-icon { width:32px; height:32px; border-radius:8px; display:grid; place-items:center; flex-shrink:0; }
+.client-contact-text { min-width:0; }
+.client-contact-label { font-size:11px; color:#9CA3AF; }
+.client-contact-value { font-size:14px; color:#111827; font-weight:500; overflow-wrap:anywhere; }

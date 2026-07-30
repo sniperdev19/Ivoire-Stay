@@ -1,0 +1,105 @@
+/* ============================================================
+   Afristay — Responsivité SaaS (PWA, tous écrans)
+   Chargé après saas.css sur toutes les pages via layout.php.
+   Ne pas fusionner dans saas.css (généré par le build Tailwind).
+   ============================================================ */
+
+/* Sécurité anti-scroll horizontal de la page (les tableaux/plannings
+   gèrent déjà leur propre défilement interne via overflow-x:auto). */
+html, body { max-width: 100%; overflow-x: hidden; }
+
+/* ── Bug flexbox classique : un enfant de flex (ex. bloc titre+
+   sous-titre) refuse par défaut de rétrécir sous sa largeur de
+   contenu (min-width:auto), donc le texte du sous-titre déborde
+   au lieu de passer à la ligne. Corrigé partout où ce motif
+   (titre de page dans un conteneur flex) apparaît. ─────────── */
+.saas-content div:has(> h1),
+.saas-content div:has(> h2) {
+  min-width: 0;
+}
+/* Certaines pages oublient flex-wrap sur la ligne d'en-tête : on le force. */
+.saas-content > div:has(> div > h1),
+.saas-content > div:has(> div > h2) {
+  flex-wrap: wrap !important;
+}
+.saas-content h1, .saas-content h2, .saas-content p {
+  overflow-wrap: anywhere;
+}
+
+/* ── Contenu principal ─────────────────────────────────────── */
+@media (max-width: 900px) {
+  .saas-content { padding: 20px; }
+}
+@media (max-width: 560px) {
+  .saas-content { padding: 14px; }
+}
+/* Réserve la place de la barre d'onglets mobile fixe (voir saas.input.css) :
+   ce fichier est chargé après saas.css et gagne sinon la cascade, coupant
+   le bas des pages/formulaires derrière la tab bar. */
+@media (max-width: 768px) {
+  .saas-content { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ── Barre du haut ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .saas-topbar { padding: 0 14px; gap: 8px; }
+}
+@media (max-width: 420px) {
+  .saas-topbar .saas-topbar-date { display: none; }
+}
+
+/* ── Grilles inline non responsives (stats, formulaires) ─────
+   Beaucoup de pages SaaS utilisent des grid-template-columns en
+   style inline sans media query dédiée. On les fait dégrader
+   proprement par palier plutôt que de les réécrire une à une. */
+@media (max-width: 900px) {
+  .saas-content [style*="grid-template-columns"],
+  .saas-modal [style*="grid-template-columns"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 560px) {
+  .saas-content [style*="grid-template-columns"],
+  .saas-modal [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Bandeau de KPI (cartes stat en tête de page) ─────────────
+   billing/expenses/invoices/payments/reports utilisaient un
+   grid-template-columns:repeat(N,1fr) en style inline, donc happé par la
+   règle générique ci-dessus : à 560px chaque carte se retrouvait étirée
+   plein écran et empilée (au lieu d'un dégradé propre en 2-3 colonnes).
+   auto-fit + minmax élimine le problème à la source — même logique que
+   .client-stat-grid / .client-contact-grid (saas-clients.css). */
+.saas-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* ── Modales ──────────────────────────────────────────────── */
+@media (max-width: 560px) {
+  .saas-modal-bg { padding: 10px; }
+  .saas-modal-body, .saas-modal-header, .saas-modal-footer { padding: 16px !important; }
+  .type-modal-scroll { padding: 18px !important; }
+  .type-modal-footer { padding: 14px 18px !important; }
+  .type-preview-panel { padding: 18px !important; }
+}
+
+/* ── Dropdowns ancrés (notifications, profil) : ne jamais déborder ── */
+.saas-anchored-dropdown { max-width: calc(100vw - 24px); }
+@media (max-width: 420px) {
+  .saas-anchored-dropdown { position: fixed !important; left: 12px !important; right: 12px !important; width: auto !important; top: 64px !important; }
+}
+
+/* ── Toasts / dropdowns : ne jamais déborder du viewport ─────── */
+.saas-toast, [style*="position:fixed;bottom:24px;right:24px"] {
+  max-width: calc(100vw - 32px);
+}
+@media (max-width: 480px) {
+  .saas-toast, [style*="position:fixed;bottom:24px;right:24px"] {
+    left: 16px; right: 16px; min-width: 0 !important; width: auto !important;
+  }
+}

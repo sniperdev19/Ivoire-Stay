@@ -1,0 +1,251 @@
+/* ============================================================
+   Afristay — Page autonome : Inscription (saas/register.php)
+   ============================================================ */
+
+/* Polices chargées via <link> vers /assets/css/fonts.css dans le template */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --gold: #C9A84C;
+  --forest: #1B4332;
+  --cream: #FAF7F2;
+  --mid: #2D6A4F;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.05; }
+  50%       { opacity: 0.1; }
+}
+
+html, body { height: 100%; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  display: grid;
+  grid-template-columns: 42fr 58fr;
+  min-height: 100vh;
+}
+
+.rg-left {
+  background: var(--forest);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  overflow: hidden;
+  height: 100vh;
+}
+.rg-ghost {
+  position: absolute;
+  right: -40px;
+  bottom: -60px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 380px;
+  font-weight: 700;
+  color: rgba(201,168,76,0.06);
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+  animation: pulse 6s ease-in-out infinite;
+}
+.rg-radial {
+  position: absolute;
+  top: -80px;
+  left: -60px;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,168,76,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.rg-brand { position: relative; z-index: 2; padding: 36px 44px 0; display: flex; align-items: center; justify-content: space-between; }
+.rg-brand-inner { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.rg-brand-sq {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--gold), #A67C2E);
+  display: grid; place-items: center;
+  font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: white;
+}
+.rg-brand-text strong { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: white; line-height: 1; display: block; }
+.rg-brand-text > span { font-size: 9px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.15em; }
+.rg-nav-link { font-family: 'Inter', sans-serif; font-size: 11px; color: rgba(255,255,255,0.4); text-decoration: none; padding: 6px 14px; border: 0.5px solid rgba(255,255,255,0.1); border-radius: 999px; transition: all 0.2s; }
+.rg-nav-link:hover { color: white; border-color: rgba(255,255,255,0.25); }
+
+.rg-mobile-back { display: none; align-items: center; gap: 6px; margin-bottom: 22px; font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(27,67,50,0.5); text-decoration: none; }
+.rg-mobile-back:hover { color: var(--forest); }
+
+.rg-left-body { position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 44px 48px; }
+.rg-tag { font-size: 9px; letter-spacing: 0.4em; text-transform: uppercase; color: rgba(201,168,76,0.65); margin-bottom: 16px; }
+.rg-headline { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 300; color: white; line-height: 0.9; margin-bottom: 18px; }
+.rg-headline em { color: var(--gold); font-style: italic; display: block; }
+.rg-rule { width: 40px; height: 1px; background: var(--gold); margin-bottom: 18px; }
+.rg-desc { font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(255,255,255,0.42); line-height: 1.8; max-width: 280px; margin-bottom: 32px; }
+
+.rg-plans { display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
+.rg-plan { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 10px; border: 0.5px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.04); }
+.rg-plan-name { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); }
+.rg-plan-price { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--gold); font-weight: 400; }
+.rg-plan-badge { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.badge-free { background: rgba(22,163,74,0.15); color: #4ade80; }
+.badge-pro  { background: rgba(201,168,76,0.15); color: var(--gold); }
+.badge-biz  { background: rgba(52,211,153,0.12); color: #34d399; }
+
+.rg-steps { display: flex; flex-direction: column; gap: 12px; }
+.rg-step { display: flex; align-items: flex-start; gap: 12px; }
+.rg-step-dot {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: rgba(201,168,76,0.1); border: 0.5px solid rgba(201,168,76,0.25);
+  display: grid; place-items: center; flex-shrink: 0;
+  font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; color: var(--gold);
+}
+.rg-step-text { font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.55; padding-top: 3px; }
+.rg-step-text strong { color: rgba(255,255,255,0.75); font-weight: 600; display: block; }
+
+.rg-separator {
+  position: fixed; left: 42%; top: 0; bottom: 0; width: 1px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(201,168,76,0.25) 20%, rgba(201,168,76,0.4) 50%, rgba(201,168,76,0.25) 80%, transparent 100%);
+  z-index: 100;
+}
+.rg-separator-dot {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gold); box-shadow: 0 0 16px rgba(201,168,76,0.6);
+}
+
+.rg-right { background: var(--cream); padding: 48px 64px; overflow-y: auto; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; }
+.rg-form-wrap { width: 100%; max-width: 440px; padding-top: 20px; animation: fadeUp 0.5s ease; }
+
+.rg-form-header { margin-bottom: 32px; }
+.rg-form-eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.rg-form-eyebrow-line { width: 24px; height: 1px; background: var(--gold); }
+.rg-form-eyebrow span { font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: var(--gold); }
+.rg-form-title { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 300; color: var(--forest); line-height: 0.9; margin-bottom: 10px; }
+.rg-form-title em { color: var(--gold); font-style: italic; }
+.rg-form-sub { font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(27,67,50,0.48); }
+
+.rg-stepper { display: flex; align-items: center; margin-bottom: 28px; }
+.rg-step-circle {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; flex-shrink: 0;
+  transition: all 0.3s; border: 1px solid rgba(27,67,50,0.15); color: rgba(27,67,50,0.3); background: transparent;
+}
+.rg-step-circle.active { background: var(--gold); border-color: var(--gold); color: white; box-shadow: 0 4px 14px rgba(201,168,76,0.35); }
+.rg-step-circle.done { background: var(--forest); border-color: var(--forest); color: white; }
+.rg-step-circle.done svg { width: 14px; height: 14px; stroke: white; stroke-width: 2.5; fill: none; }
+.rg-step-info { margin-left: 10px; flex: 1; }
+.rg-step-name { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em; }
+.rg-step-name.active { color: var(--forest); }
+.rg-step-name.inactive { color: rgba(27,67,50,0.3); }
+.rg-connector { flex-shrink: 0; width: 48px; height: 1px; margin: 0 12px; transition: background 0.3s; }
+.rg-connector.done { background: var(--forest); }
+.rg-connector.pending { background: rgba(27,67,50,0.1); }
+
+.rg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.rg-grid-full { grid-column: 1 / -1; }
+.rg-field { display: flex; flex-direction: column; gap: 7px; }
+.rg-label { font-family: 'Inter', sans-serif; font-size: 9px; text-transform: uppercase; letter-spacing: 0.35em; color: var(--gold); }
+.rg-field-hint { font-family: 'Inter', sans-serif; font-size: 11px; color: rgba(27,67,50,0.45); margin: 6px 2px 0; }
+
+.rg-pwd-meter { display: flex; align-items: center; gap: 8px; margin: 8px 2px 0; }
+.rg-pwd-meter-track { display: flex; gap: 4px; flex: 1; }
+.rg-pwd-meter-seg { flex: 1; height: 3px; border-radius: 2px; background: rgba(27,67,50,0.1); transition: background 0.2s; }
+.rg-pwd-meter-label { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; white-space: nowrap; }
+.rg-input-wrap { position: relative; }
+.rg-input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(27,67,50,0.3); pointer-events: none; }
+.rg-input-icon svg { width: 15px; height: 15px; }
+.rg-input {
+  width: 100%; padding: 14px 16px 14px 42px;
+  border: 1px solid rgba(27,67,50,0.12); border-radius: 12px;
+  background: white; color: var(--forest);
+  font-family: 'Inter', sans-serif; font-size: 14px;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.rg-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+.rg-input::placeholder { color: rgba(27,67,50,0.25); }
+.rg-input.has-toggle { padding-right: 80px; }
+.rg-toggle-btn { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; font-family: 'Inter', sans-serif; font-size: 11px; color: rgba(27,67,50,0.45); cursor: pointer; padding: 4px 8px; border-radius: 6px; font-weight: 500; }
+.rg-toggle-btn:hover { color: var(--forest); }
+
+.rg-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+.rg-type-btn {
+  padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(27,67,50,0.12);
+  background: white; color: rgba(27,67,50,0.5);
+  font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.rg-type-btn.active { background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.4); color: var(--forest); }
+
+.rg-btn {
+  width: 100%; padding: 16px 24px; border: none; border-radius: 12px;
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: all 0.2s; letter-spacing: 0.02em; margin-top: 24px;
+}
+.rg-btn-primary { background: linear-gradient(135deg, var(--gold), #A67C2E); color: white; }
+.rg-btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(201,168,76,0.4); }
+.rg-btn-dark { background: var(--forest); color: white; }
+.rg-btn-dark:hover:not(:disabled) { background: #0d2118; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(15,43,32,0.28); }
+.rg-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+
+.rg-back-btn { display: flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(27,67,50,0.45); background: none; border: none; cursor: pointer; padding: 4px 0; margin-bottom: 20px; transition: color 0.2s; }
+.rg-back-btn:hover { color: var(--forest); }
+.rg-back-btn svg { width: 14px; height: 14px; }
+
+.rg-alert { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(239,68,68,0.06); border: 0.5px solid rgba(239,68,68,0.2); border-radius: 12px; color: #DC2626; font-family: 'Inter', sans-serif; font-size: 13px; margin-bottom: 18px; }
+.rg-alert svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+.rg-form-footer { text-align: center; margin-top: 24px; font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(27,67,50,0.42); }
+.rg-form-footer a { color: var(--forest); font-weight: 600; text-decoration: none; border-bottom: 1px solid rgba(27,67,50,0.2); padding-bottom: 1px; }
+.rg-form-footer a:hover { border-color: var(--forest); }
+
+.rg-free-note { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: rgba(201,168,76,0.06); border: 0.5px solid rgba(201,168,76,0.15); border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(27,67,50,0.6); margin-top: 14px; }
+.rg-free-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+
+.rg-section-divider { height: 0.5px; background: rgba(27,67,50,0.08); margin: 20px 0; }
+
+@media (max-width: 1024px) {
+  body { grid-template-columns: 1fr; }
+  .rg-left { display: none; }
+  .rg-mobile-back { display: inline-flex; color: rgba(255,255,255,0.5); }
+  .rg-mobile-back:hover { color: white; }
+  .rg-separator { display: none; }
+  .rg-right { background: var(--forest); }
+  .rg-form-title { color: white; }
+  .rg-form-title em { color: var(--gold); }
+  .rg-form-eyebrow span, .rg-label { color: var(--gold); }
+  .rg-field-hint { color: rgba(255,255,255,0.4); }
+  .rg-pwd-meter-seg { background: rgba(255,255,255,0.12); }
+  .rg-form-sub { color: rgba(255,255,255,0.5); }
+  .rg-input { background: rgba(255,255,255,0.07); color: white; border-color: rgba(255,255,255,0.12); }
+  .rg-input::placeholder { color: rgba(255,255,255,0.25); }
+  .rg-input:focus { border-color: var(--gold); background: rgba(255,255,255,0.1); }
+  .rg-input-icon { color: rgba(255,255,255,0.3); }
+  .rg-toggle-btn { color: rgba(255,255,255,0.45); }
+  .rg-type-btn { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.45); }
+  .rg-type-btn.active { background: rgba(201,168,76,0.12); border-color: rgba(201,168,76,0.35); color: white; }
+  .rg-step-circle { border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.3); }
+  .rg-step-name.active { color: white; }
+  .rg-step-name.inactive { color: rgba(255,255,255,0.3); }
+  .rg-connector.pending { background: rgba(255,255,255,0.08); }
+  .rg-back-btn { color: rgba(255,255,255,0.45); }
+  .rg-back-btn:hover { color: white; }
+  .rg-alert { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); color: #fca5a5; }
+  .rg-free-note { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); color: rgba(255,255,255,0.4); }
+  .rg-form-footer { color: rgba(255,255,255,0.4); }
+  .rg-form-footer a { color: var(--gold); border-color: rgba(201,168,76,0.3); }
+  .rg-section-divider { background: rgba(255,255,255,0.07); }
+}
+
+@media (max-width: 520px) {
+  .rg-right { padding: 40px 24px; }
+  .rg-grid { grid-template-columns: 1fr; }
+}

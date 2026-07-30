@@ -1,0 +1,66 @@
+/* ============================================================
+   Afristay — Espace Admin plateforme (superadmin)
+   Réutilise saas.css / saas-responsive.css (cartes, boutons, modales,
+   tableaux, badges) — seules les variables de couleur sont redéfinies
+   ici pour une identité distincte de l'espace hôtelier (indigo/slate
+   au lieu du vert/or), pour qu'on distingue immédiatement les deux espaces.
+   ============================================================ */
+
+:root {
+  --saas-sidebar:       #1e1b4b; /* indigo-950 */
+  --saas-sidebar-hover: #312e81; /* indigo-900 */
+  --saas-gold:          #6366f1; /* indigo-500 — remplace l'accent or hôtelier */
+  --saas-gold-light:    rgba(99,102,241,0.12);
+}
+
+.admin-badge {
+  display:inline-block; font-size:10px; font-weight:700; letter-spacing:0.06em;
+  text-transform:uppercase; color:#6366f1; background:rgba(99,102,241,0.12);
+  padding:3px 10px; border-radius:20px;
+}
+
+.admin-plan-pill { display:inline-flex; align-items:center; font-size:12px; font-weight:700; padding:4px 10px; border-radius:9999px; white-space:nowrap; }
+.admin-plan-starter  { background:#F3F4F6; color:#6B7280; }
+.admin-plan-pro      { background:rgba(37,99,235,0.1); color:#2563EB; }
+.admin-plan-business { background:rgba(99,102,241,0.12); color:#6366F1; }
+
+.admin-status-pill { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; padding:4px 10px; border-radius:9999px; white-space:nowrap; }
+.admin-status-active   { background:rgba(22,163,74,0.1); color:#16A34A; }
+.admin-status-inactive { background:rgba(220,38,38,0.08); color:#DC2626; }
+
+/* Bouton "Réactiver" (establishments.php) : même couleur succès que
+   .action-btn-success de saas-bookings.css, mais cette dernière est chargée
+   uniquement sur saas/bookings.php ($pageCss) — jamais sur l'admin, d'où sa
+   redéfinition ici (admin.css est toujours chargé sur les pages admin). */
+.action-btn-success { background:#DCFCE7; color:#16a34a; border:1px solid rgba(22,163,74,0.2); }
+
+.admin-kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+@media(max-width:900px) { .admin-kpi-grid { grid-template-columns:repeat(2, minmax(0,1fr)); } }
+
+/* ── Graphiques "Vue d'ensemble" (admin/dashboard.php) ── */
+.admin-trend-grid { }
+@media(max-width:700px) { .admin-trend-grid { grid-template-columns: 1fr !important; } }
+
+/* Barres de tendance : la cible de survol/focus dépasse la barre peinte
+   (padding invisible) — jamais seulement les pixels colorés, cf. dataviz skill. */
+.chart-bar-hover { cursor:pointer; padding:2px; margin:-2px; box-sizing:content-box; }
+.chart-bar-hover:hover, .chart-bar-hover:focus-visible { opacity:0.75; outline:none; }
+
+/* Grille de colonnes (6 mois) — CSS Grid plutôt que flex : nombre de colonnes
+   fixe et explicite, aucune ambiguïté de sens (row/column) à débugger. */
+.chart-cols {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  align-items: end;
+  gap: 10px;
+}
+.chart-col {
+  display: grid;
+  grid-template-rows: 16px 90px 14px; /* valeur | piste (hauteur fixe) | mois */
+  row-gap: 6px;
+  justify-items: center;
+  min-width: 0;
+}
+.chart-col-value { font-size: 11px; font-weight: 700; color: #374151; align-self: end; }
+.chart-col-track { width: 100%; height: 90px; display: flex; align-items: flex-end; justify-content: center; }
+.chart-col-month { font-size: 10px; color: #9CA3AF; white-space: nowrap; align-self: start; }

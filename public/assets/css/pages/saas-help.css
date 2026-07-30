@@ -1,0 +1,188 @@
+/* ============================================================
+   Afristay — Page SaaS : aide & FAQ (saas/help.php)
+   ============================================================ */
+
+/* ── En-tête ──────────────────────────────────────────────── */
+.hlp-header { margin-bottom: 20px; }
+.hlp-title  { margin: 0; font-size: 20px; font-weight: 700; color: #111827; }
+.hlp-sub    { margin: 4px 0 0; font-size: 13px; color: #9CA3AF; }
+
+/* ── Barre de recherche ───────────────────────────────────── */
+.hlp-search-wrap {
+  position: relative;
+  margin-bottom: 20px;
+}
+.hlp-search-wrap svg {
+  position: absolute;
+  left: 14px; top: 50%;
+  transform: translateY(-50%);
+  width: 16px; height: 16px;
+  color: #9CA3AF; pointer-events: none;
+}
+.hlp-search {
+  width: 100%;
+  padding: 11px 14px 11px 40px;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 12px;
+  font-size: 14px; color: #374151;
+  background: white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.hlp-search:focus {
+  outline: none;
+  border-color: #C9A84C;
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+}
+
+/* ── Mise en page 2 colonnes ──────────────────────────────── */
+.hlp-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+  align-items: start;
+}
+@media(max-width:960px) { .hlp-layout { grid-template-columns: 1fr; } }
+
+/* ── Section titre ────────────────────────────────────────── */
+.hlp-section-head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px;
+}
+.hlp-section-head svg { width: 18px; height: 18px; color: #C9A84C; flex-shrink: 0; }
+.hlp-section-head h3  { margin: 0; font-size: 15px; font-weight: 700; color: #111827; }
+
+/* ── Cards démarrage rapide ───────────────────────────────── */
+.hlp-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+@media(max-width:640px) { .hlp-steps { grid-template-columns: 1fr; } }
+
+.hlp-step {
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid rgba(0,0,0,0.06);
+  background: white;
+  position: relative;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.hlp-step:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); transform: translateY(-2px); }
+.hlp-step-num {
+  width: 30px; height: 30px;
+  border-radius: 10px;
+  background: rgba(201,168,76,0.1);
+  display: grid; place-items: center;
+  font-size: 13px; font-weight: 800; color: #C9A84C;
+  margin-bottom: 10px;
+}
+.hlp-step-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: grid; place-items: center;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+.hlp-step-icon svg { width: 18px; height: 18px; }
+.hlp-step-icon-blue   { background: rgba(37,99,235,0.1);  color: #2563EB; }
+.hlp-step-icon-green  { background: rgba(22,163,74,0.1);  color: #16a34a; }
+.hlp-step-icon-gold   { background: rgba(201,168,76,0.12); color: #C9A84C; }
+.hlp-step-title { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+.hlp-step-desc  { font-size: 12px; color: #6B7280; line-height: 1.5; }
+
+/* ── FAQ accordéon ────────────────────────────────────────── */
+.hlp-faq-list { margin-top: 4px; }
+.hlp-faq-item {
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.hlp-faq-item:last-child { border-bottom: none; }
+.hlp-faq-btn {
+  width: 100%;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  background: transparent; border: none;
+  padding: 14px 0; cursor: pointer;
+  text-align: left;
+}
+.hlp-faq-q {
+  font-size: 14px; font-weight: 600; color: #111827;
+  line-height: 1.4; transition: color 0.15s;
+}
+.hlp-faq-btn:hover .hlp-faq-q { color: #C9A84C; }
+.hlp-faq-arrow {
+  width: 18px; height: 18px;
+  color: #C9A84C; flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.hlp-faq-arrow.open { transform: rotate(180deg); }
+.hlp-faq-answer {
+  font-size: 13px; color: #6B7280;
+  line-height: 1.65;
+  padding-bottom: 14px;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────── */
+.hlp-contact-card {
+  background: linear-gradient(135deg, #0F2B20, #1B4332);
+  border-radius: 16px; padding: 20px;
+  color: white; margin-bottom: 12px;
+}
+.hlp-contact-label {
+  font-size: 10px; color: rgba(255,255,255,0.5);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+.hlp-contact-title {
+  font-size: 16px; font-weight: 700; margin-bottom: 14px;
+}
+.hlp-contact-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 10px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 8px; font-size: 13px;
+  color: rgba(255,255,255,0.85);
+}
+.hlp-contact-row svg { width: 14px; height: 14px; color: #C9A84C; flex-shrink: 0; }
+.hlp-contact-btn {
+  display: block; text-align: center; margin-top: 14px;
+  background: linear-gradient(135deg, #C9A84C, #A67C2E);
+  color: white; font-weight: 600; font-size: 13px;
+  padding: 10px 16px; border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.2s; box-shadow: 0 2px 8px rgba(201,168,76,0.3);
+}
+.hlp-contact-btn:hover { box-shadow: 0 6px 16px rgba(201,168,76,0.4); transform: translateY(-1px); }
+
+.hlp-docs-card {
+  background: white; border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 18px; margin-bottom: 12px;
+}
+.hlp-docs-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: rgba(37,99,235,0.08); color: #2563EB;
+  display: grid; place-items: center; margin-bottom: 10px;
+}
+.hlp-docs-icon svg { width: 18px; height: 18px; }
+.hlp-docs-title { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+.hlp-docs-desc  { font-size: 12px; color: #6B7280; line-height: 1.5; margin-bottom: 12px; }
+
+.hlp-links-card {
+  background: white; border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 18px;
+}
+.hlp-link-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  text-decoration: none; color: #374151;
+  font-size: 13px; font-weight: 500;
+  transition: color 0.15s;
+}
+.hlp-link-row:last-child { border-bottom: none; }
+.hlp-link-row:hover { color: #C9A84C; }
+.hlp-link-row svg { width: 15px; height: 15px; color: #9CA3AF; flex-shrink: 0; transition: color 0.15s; }
+.hlp-link-row:hover svg { color: #C9A84C; }
+.hlp-link-arrow { margin-left: auto; width: 14px; height: 14px; color: #D1D5DB; }

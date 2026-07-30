@@ -1,0 +1,413 @@
+/* ============================================================
+   Afristay — Page SaaS : paramètres (saas/settings.php)
+   ============================================================ */
+
+/* ── En-tête ──────────────────────────────────────────────── */
+.stg-page-title { margin: 0; font-size: 20px; font-weight: 700; color: #111827; }
+.stg-page-sub   { margin: 4px 0 0; color: #9CA3AF; font-size: 13px; }
+
+/* ── Mise en page : nav latérale + contenu ────────────────── */
+.stg-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  align-items: start;
+  gap: 24px;
+}
+@media(max-width:900px) {
+  .stg-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Navigation latérale ───────────────────────────────────── */
+.stg-side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: white;
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.05);
+  position: sticky;
+  top: 84px;
+}
+@media(max-width:900px) {
+  .stg-side-nav {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+}
+.stg-side-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #6B7280;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  white-space: nowrap;
+}
+.stg-side-item svg { width: 16px; height: 16px; opacity: 0.55; flex-shrink: 0; transition: opacity 0.15s; }
+.stg-side-item:hover { background: rgba(0,0,0,0.04); color: #374151; }
+.stg-side-item-active {
+  background: rgba(201,168,76,0.12);
+  color: #A67C2E;
+  font-weight: 700;
+}
+.stg-side-item-active svg { opacity: 1; color: #C9A84C; }
+
+.stg-content { min-width: 0; }
+
+/* ── Bannière nouvel établissement ────────────────────────── */
+.stg-welcome {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 22px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #1B4332, #2D6A4F);
+  border-radius: 16px;
+  color: white;
+}
+.stg-welcome-emoji  { font-size: 28px; flex-shrink: 0; margin-top: 2px; }
+.stg-welcome-title  { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.stg-welcome-desc   { font-size: 13px; color: rgba(255,255,255,0.72); line-height: 1.5; }
+
+/* ── En-tête de section (icône + titre + sous-titre) ──────── */
+.stg-section-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 0; }
+.stg-section-icon {
+  width: 42px; height: 42px; border-radius: 12px;
+  background: rgba(201,168,76,0.1);
+  display: grid; place-items: center; flex-shrink: 0;
+}
+.stg-section-icon svg { width: 20px; height: 20px; color: #C9A84C; }
+.stg-section-title { margin: 0 0 3px; font-size: 16px; font-weight: 700; color: #111827; }
+.stg-section-sub   { margin: 0; font-size: 13px; color: #6B7280; }
+
+.stg-divider { height: 1px; background: rgba(0,0,0,0.06); margin: 20px -24px; }
+
+/* ── Groupes de champs (Identité / Contact / Présentation) ─── */
+.stg-group + .stg-group {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px dashed rgba(0,0,0,0.08);
+}
+.stg-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #C9A84C;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+.stg-label-optional { font-size: 11px; font-weight: 400; color: #9CA3AF; text-transform: none; letter-spacing: normal; }
+
+/* ── Grille de champs ─────────────────────────────────────── */
+.stg-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 4px; }
+.stg-col-2     { grid-column: span 2; }
+@media(max-width:640px) {
+  .stg-form-grid { grid-template-columns: 1fr; }
+  .stg-col-2     { grid-column: span 1; }
+}
+
+/* ── Champs avec icône ────────────────────────────────────── */
+.stg-input-wrap  { position: relative; }
+.stg-input-icon  {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  width: 15px; height: 15px; color: #9CA3AF; pointer-events: none;
+}
+.stg-input-has-icon { padding-left: 36px; }
+
+/* ── Localisation (bouton "Localiser mon hôtel") ──────────── */
+.stg-locate {
+  display: flex; align-items: center; gap: 16px;
+  background: rgba(201,168,76,0.05);
+  border: 1px solid rgba(201,168,76,0.15);
+  border-radius: 14px;
+  padding: 16px 18px;
+  flex-wrap: wrap;
+}
+.stg-locate-info { flex: 1; min-width: 220px; }
+.stg-locate-empty { margin: 0; font-size: 13px; color: #6B7280; line-height: 1.5; }
+.stg-locate-done { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.stg-locate-done svg { width: 22px; height: 22px; color: #16a34a; flex-shrink: 0; }
+.stg-locate-done-title  { font-size: 13px; font-weight: 700; color: #111827; }
+.stg-locate-done-coords { font-size: 12px; color: #6B7280; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.stg-locate-view {
+  font-size: 12px; font-weight: 600; color: #C9A84C;
+  text-decoration: none; margin-left: auto; white-space: nowrap;
+}
+.stg-locate-view:hover { text-decoration: underline; }
+.stg-locate-btn { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
+.stg-locate-btn svg { width: 15px; height: 15px; }
+.stg-locate-error { margin: 10px 2px 0; font-size: 12px; color: #DC2626; }
+
+/* ── Paiement des réservations (switch) ───────────────────── */
+.stg-payment-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  background: #F9FAFB; border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 14px; padding: 16px 18px;
+}
+.stg-payment-toggle.stg-locked { background: rgba(201,168,76,0.05); border-color: rgba(201,168,76,0.15); }
+.stg-payment-toggle-info { flex: 1; min-width: 220px; }
+.stg-payment-toggle-title { font-size: 14px; font-weight: 700; color: #111827; display: flex; align-items: center; gap: 8px; }
+.stg-payment-toggle-desc { margin: 6px 0 0; font-size: 12.5px; color: #6B7280; line-height: 1.5; }
+.stg-pro-badge {
+  font-size: 10px; font-weight: 700; color: #A67C2E;
+  background: rgba(201,168,76,0.15); padding: 2px 7px; border-radius: 5px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+
+.stg-switch {
+  flex-shrink: 0; width: 46px; height: 26px; border-radius: 999px;
+  background: #D1D5DB; border: none; cursor: pointer; position: relative;
+  transition: background 0.2s; padding: 0;
+}
+.stg-switch:disabled { cursor: not-allowed; opacity: 0.6; }
+.stg-switch-on { background: linear-gradient(135deg, #C9A84C, #A67C2E); }
+.stg-switch-dot {
+  position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+  border-radius: 50%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  transition: transform 0.2s;
+}
+.stg-switch-on .stg-switch-dot { transform: translateX(20px); }
+
+/* ── Alertes inline ───────────────────────────────────────── */
+.stg-feedback { margin-top: 14px; }
+.stg-alert {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-radius: 10px;
+  font-size: 13px; font-weight: 500;
+}
+.stg-alert svg { width: 16px; height: 16px; flex-shrink: 0; }
+.stg-alert-success { background: rgba(16,185,129,0.08); color: #065f46; border: 1px solid rgba(16,185,129,0.2); }
+.stg-alert-error   { background: rgba(220,38,38,0.06);  color: #DC2626; border: 1px solid rgba(220,38,38,0.15); }
+
+/* ── Carrousel de navigation (onglet Général) ─────────────── */
+.stg-carousel-nav {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 16px;
+}
+/* min-width:0 nécessaire pour que le texte puisse rétrécir sous sa largeur de
+   contenu dans un flex item (sinon le bouton "Suivant : <section>" pousse le
+   reste hors du conteneur au lieu de tronquer). */
+.stg-carousel-btn { display: inline-flex; align-items: center; gap: 6px; min-width: 0; flex: 0 1 auto; }
+.stg-carousel-btn > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.stg-carousel-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+.stg-carousel-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.stg-carousel-dots { display: flex; align-items: center; gap: 6px; flex-shrink: 0; justify-content: center; }
+.stg-carousel-dot {
+  width: 8px; height: 8px; border-radius: 50%; padding: 0;
+  border: none; background: rgba(0,0,0,0.12); cursor: pointer; transition: all 0.2s ease;
+}
+.stg-carousel-dot:hover { background: rgba(0,0,0,0.25); }
+.stg-carousel-dot-active { background: var(--saas-gold); width: 20px; border-radius: 4px; }
+
+/* Sous ~560px : les 3 blocs (Précédent / points / Suivant) ne tiennent plus
+   sur une ligne — on empile les points au-dessus, puis les deux boutons
+   côte à côte (chacun tronque son propre texte si besoin, cf. ellipsis
+   ci-dessus, au lieu de faire déborder tout le bandeau). */
+@media (max-width: 560px) {
+  .stg-carousel-nav { flex-wrap: wrap; }
+  .stg-carousel-dots { order: -1; width: 100%; }
+  .stg-carousel-btn { flex: 1 1 0; max-width: calc(50% - 6px); }
+  .stg-carousel-btn:last-child { justify-content: flex-end; }
+}
+
+/* ── Pied de formulaire ───────────────────────────────────── */
+.stg-form-actions {
+  margin-top: 20px;
+  display: flex; gap: 8px; justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+.stg-btn-spinner {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: white;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ── Galerie photos (établissement) ───────────────────────── */
+.stg-photo-grid { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+.stg-photo-slot { width: 120px; height: 120px; border-radius: 14px; position: relative; overflow: hidden; flex-shrink: 0; }
+.stg-photo-filled img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.stg-photo-cover-badge {
+  position: absolute; bottom: 6px; left: 6px;
+  background: rgba(0,0,0,0.55); color: white;
+  font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 6px;
+}
+.stg-photo-remove {
+  position: absolute; top: 6px; right: 6px; width: 22px; height: 22px;
+  border-radius: 50%; border: none; background: rgba(0,0,0,0.55); color: white;
+  cursor: pointer; font-size: 12px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.stg-photo-remove:disabled { opacity: 0.5; cursor: not-allowed; }
+.stg-photo-empty {
+  border: 2px dashed rgba(201,168,76,0.3); background: rgba(201,168,76,0.04);
+  display: flex; align-items: center; justify-content: center;
+  color: #C9A84C; cursor: pointer; transition: background 0.15s;
+}
+.stg-photo-empty:hover { background: rgba(201,168,76,0.08); }
+.stg-photo-loading { cursor: wait; }
+
+/* ── Hero abonnement ──────────────────────────────────────── */
+.stg-sub-hero {
+  background: linear-gradient(135deg, #0F2B20 0%, #1B4332 100%);
+  border-radius: 20px;
+  padding: 28px 32px;
+  color: white;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.stg-sub-hero::before {
+  content: '';
+  position: absolute;
+  right: -40px; top: -40px;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: rgba(201,168,76,0.07);
+  pointer-events: none;
+}
+.stg-sub-pill {
+  font-size: 10px; color: rgba(255,255,255,0.5);
+  text-transform: uppercase; letter-spacing: 0.12em;
+  margin-bottom: 8px;
+}
+.stg-sub-plan {
+  font-family: Cormorant, Georgia, serif;
+  font-size: 34px; color: #C9A84C; font-weight: 700; line-height: 1;
+}
+.stg-sub-valid {
+  margin-top: 10px; font-size: 13px; color: rgba(255,255,255,0.65);
+}
+.stg-sub-valid strong { color: rgba(255,255,255,0.9); }
+.stg-sub-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; flex-shrink: 0; }
+.stg-sub-stat {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 8px 14px; font-size: 13px; color: rgba(255,255,255,0.75);
+}
+.stg-sub-stat svg { width: 14px; height: 14px; color: #C9A84C; flex-shrink: 0; }
+.stg-sub-stat strong { color: white; font-weight: 700; }
+
+/* ── Grille plans ─────────────────────────────────────────── */
+.stg-plans { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+@media(max-width:900px) { .stg-plans { grid-template-columns: 1fr; } }
+
+.stg-plan {
+  padding: 22px; border: 2px solid rgba(0,0,0,0.06);
+  border-radius: 16px; background: white;
+  transition: all 0.2s; display: flex; flex-direction: column;
+}
+.stg-plan:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.08); transform: translateY(-2px); }
+.stg-plan-current {
+  border-color: #C9A84C;
+  box-shadow: 0 0 0 4px rgba(201,168,76,0.08);
+}
+.stg-plan-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.stg-plan-name { font-size: 17px; font-weight: 700; color: #134E4A; }
+.stg-plan-price {
+  font-family: Cormorant, Georgia, serif;
+  font-size: 26px; color: #C9A84C; font-weight: 700; line-height: 1;
+}
+.stg-plan-yr { font-size: 11px; color: #9CA3AF; margin-top: 3px; }
+.stg-plan-rooms { font-size: 12px; color: #6B7280; margin-top: 6px; }
+.stg-plan-features {
+  list-style: none; padding: 0;
+  margin: 12px 0 16px; flex: 1;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  padding-top: 12px;
+}
+.stg-plan-features li {
+  display: flex; align-items: center; gap: 7px;
+  padding: 3px 0; font-size: 13px;
+}
+.stg-fi { font-weight: 700; font-size: 13px; flex-shrink: 0; }
+.stg-fi-ok { color: #16a34a; }
+.stg-fi-no { color: #D1D5DB; }
+.stg-ft-ok { color: #374151; }
+.stg-ft-no { color: #D1D5DB; }
+.stg-plan-active {
+  text-align: center; font-size: 13px;
+  color: #16a34a; font-weight: 600; padding: 8px 0;
+}
+
+/* ── Onglet Compte ────────────────────────────────────────── */
+.stg-account-hero {
+  display: flex; align-items: center; gap: 18px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  margin-bottom: 20px;
+}
+.stg-avatar {
+  width: 60px; height: 60px; border-radius: 16px;
+  background: linear-gradient(135deg, #C9A84C, #A67C2E);
+  background-size: cover; background-position: center;
+  display: grid; place-items: center;
+  font-size: 20px; font-weight: 800; color: white; flex-shrink: 0;
+}
+.stg-avatar-wrap { position: relative; flex-shrink: 0; }
+.stg-avatar-edit {
+  position: absolute; right: -4px; bottom: -4px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #fff; border: 1px solid rgba(0,0,0,0.1);
+  display: grid; place-items: center; cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  color: #6B7280; transition: color 0.15s, border-color 0.15s;
+}
+.stg-avatar-edit:hover { color: #A67C2E; border-color: rgba(201,168,76,0.4); }
+.stg-avatar-edit svg { width: 13px; height: 13px; }
+.stg-avatar-edit-loading { opacity: 0.5; pointer-events: none; }
+.stg-avatar-remove {
+  position: absolute; left: -4px; bottom: -4px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; border: 1px solid rgba(220,38,38,0.2);
+  display: grid; place-items: center; cursor: pointer; padding: 0;
+  color: #DC2626; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.stg-avatar-remove svg { width: 11px; height: 11px; }
+.stg-account-name  { font-size: 17px; font-weight: 700; color: #111827; }
+.stg-account-email { font-size: 13px; color: #9CA3AF; margin-top: 3px; }
+.stg-account-role  { margin-top: 8px; }
+
+/* ── Appareils connectés ──────────────────────────────────── */
+.stg-session-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 0; border-top: 1px solid rgba(0,0,0,0.05);
+}
+.stg-session-device { font-size: 13px; font-weight: 600; color: #374151; }
+.stg-session-meta   { font-size: 12px; color: #9CA3AF; margin-top: 2px; }
+.stg-badge-muted    { background: #F3F4F6; color: #9CA3AF; }
+
+.stg-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media(max-width:640px) { .stg-panels { grid-template-columns: 1fr; } }
+
+.stg-panel { border-radius: 14px; padding: 18px; }
+.stg-panel-security { background: #FFFBEB; border: 1px solid rgba(217,119,6,0.15); }
+.stg-panel-danger   { background: rgba(220,38,38,0.04); border: 1px solid rgba(220,38,38,0.12); }
+
+.stg-panel-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: grid; place-items: center; margin-bottom: 12px;
+}
+.stg-panel-security .stg-panel-icon { background: rgba(217,119,6,0.12); color: #D97706; }
+.stg-panel-danger   .stg-panel-icon { background: rgba(220,38,38,0.1);  color: #DC2626; }
+.stg-panel-icon svg { width: 18px; height: 18px; }
+.stg-panel-title { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+.stg-panel-danger .stg-panel-title { color: #DC2626; }
+.stg-panel-desc  { font-size: 13px; color: #6B7280; line-height: 1.5; margin-bottom: 14px; }

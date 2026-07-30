@@ -1,0 +1,14 @@
+# Secrets — jamais commités, déposés manuellement sur l'hébergeur
+.env
+.env.local
+.env.*.local
+
+# Données runtime (uploads, sauvegardes DB, sessions) — pas du code
+/storage/
+/public/assets/uploads/*
+!/public/assets/uploads/.htaccess
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

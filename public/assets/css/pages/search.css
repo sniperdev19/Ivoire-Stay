@@ -1,0 +1,108 @@
+/* ============================================================
+   Afristay — Page recherche (vitrine/search.php)
+   ============================================================ */
+
+.search-page { overflow-x: hidden; font-family: 'Inter', sans-serif; background: #FAF7F2; min-height: 100vh; }
+
+/* ── HERO ── */
+.sr-hero { background: #1B4332; position: relative; overflow: hidden; padding: 80px 80px 56px; padding-top: 160px; }
+.sr-hero-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(10,30,20,0.97) 0%, rgba(15,43,32,0.90) 100%); }
+.sr-hero-ghost { position: absolute; right: -40px; bottom: -30px; font-family: 'Cormorant Garamond', serif; font-size: 240px; font-weight: 700; color: rgba(201,168,76,0.04); line-height: 1; pointer-events: none; user-select: none; }
+.sr-hero-content { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 14px; }
+.sr-hero-rule { width: 40px; height: 1px; background: #C9A84C; }
+.sr-hero-tag { font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.35em; text-transform: uppercase; color: rgba(201,168,76,0.65); }
+.sr-hero-title { font-family: 'Cormorant Garamond', serif; font-size: 80px; font-weight: 300; color: white; line-height: 0.9; }
+.sr-hero-title em { color: #C9A84C; font-style: italic; }
+
+/* ── BARRE DE RECHERCHE ── */
+.sr-search-bar { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(12px); border-radius: 20px; padding: 20px 24px; margin-top: 24px; }
+.sr-sb-field { display: flex; flex-direction: column; gap: 7px; }
+.sr-sb-label { font-family: 'Inter', sans-serif; font-size: 9px; text-transform: uppercase; letter-spacing: 0.3em; color: rgba(201,168,76,0.6); }
+.sr-sb-input { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 11px 14px; color: white; font-family: 'Inter', sans-serif; font-size: 13px; outline: none; width: 100%; }
+.sr-sb-input::placeholder { color: rgba(255,255,255,0.35); }
+.sr-sb-input:focus { border-color: rgba(201,168,76,0.5); }
+.sr-sb-select { cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; padding-right: 32px; }
+.sr-sb-select option { background: #1B4332; color: white; }
+.sr-sb-btn { padding: 11px 28px; background: #C9A84C; color: white; border: none; border-radius: 999px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+.sr-sb-btn:hover { background: #b8943d; }
+
+/* ── BARRE DE FILTRES ── */
+.sr-filters-strip { background: white; border-bottom: 0.5px solid rgba(27,67,50,0.08); padding: 0 80px; position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 0; }
+.sr-filter-group { display: flex; align-items: center; gap: 12px; padding: 14px 24px; border-right: 0.5px solid rgba(27,67,50,0.06); flex-wrap: wrap; }
+.sr-filter-label { font-family: 'Inter', sans-serif; font-size: 9px; text-transform: uppercase; letter-spacing: 0.3em; color: rgba(27,67,50,0.38); flex-basis: 100%; }
+.sr-filter-btn { padding: 6px 16px; border: 1px solid rgba(27,67,50,0.12); border-radius: 999px; font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(27,67,50,0.6); cursor: pointer; background: transparent; transition: all 0.2s; white-space: nowrap; }
+.sr-filter-btn.active { background: #1B4332; color: white; border-color: #1B4332; }
+.sr-filter-btn:hover:not(.active) { border-color: #C9A84C; color: #1B4332; }
+.sr-filters-right { margin-left: auto; display: flex; align-items: center; gap: 12px; padding: 0 0 0 16px; }
+.sr-view-btn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid rgba(27,67,50,0.1); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: rgba(27,67,50,0.4); transition: all 0.2s; }
+.sr-view-btn.active { background: #1B4332; color: white; border-color: #1B4332; }
+.sr-view-btn svg { width: 16px; height: 16px; }
+.sr-result-count { font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(27,67,50,0.45); white-space: nowrap; }
+
+/* ── CORPS ── */
+.sr-body { padding: 40px 80px 80px; }
+.sr-results-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+.sr-results-list { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── CARTES (grille) ── */
+.sr-card { background: white; border: 0.5px solid rgba(27,67,50,0.08); border-radius: 20px; overflow: hidden; transition: transform 0.25s, box-shadow 0.25s; }
+.sr-card:hover { transform: translateY(-4px); box-shadow: 0 20px 48px rgba(27,67,50,0.1); }
+.sr-card-img-wrap { position: relative; height: 200px; overflow: hidden; }
+.sr-card-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s; }
+.sr-card:hover .sr-card-img { transform: scale(1.05); }
+.sr-card-badge { position: absolute; top: 12px; left: 12px; background: rgba(250,247,242,0.95); color: #1B4332; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 999px; }
+.sr-card-badge-featured { background: #C9A84C; color: white; }
+.sr-card-body { padding: 20px 22px 22px; }
+.sr-card-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #1B4332; font-weight: 400; margin-bottom: 4px; }
+.sr-card-loc { font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(27,67,50,0.45); margin-bottom: 12px; display: flex; align-items: center; gap: 5px; }
+.sr-card-loc svg { width: 12px; height: 12px; }
+.sr-card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; border-top: 0.5px solid rgba(27,67,50,0.07); }
+.sr-card-price { font-family: 'Cormorant Garamond', serif; font-size: 24px; color: #1B4332; font-weight: 700; }
+.sr-card-price small { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 400; color: rgba(27,67,50,0.4); }
+.sr-card-link { padding: 8px 18px; background: #1B4332; color: white; border-radius: 999px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; text-decoration: none; transition: background 0.2s; }
+.sr-card-link:hover { background: #0d2118; }
+.sr-card-stars { display: flex; gap: 2px; margin-bottom: 10px; }
+.sr-card-star { color: #C9A84C; font-size: 13px; }
+
+/* ── CARTES (liste) ── */
+.sr-card-list { background: white; border: 0.5px solid rgba(27,67,50,0.08); border-radius: 20px; overflow: hidden; display: grid; grid-template-columns: 280px 1fr; transition: transform 0.25s, box-shadow 0.25s; }
+.sr-card-list:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(27,67,50,0.1); }
+.sr-card-list .sr-card-img-wrap { height: 100%; min-height: 180px; }
+.sr-card-list .sr-card-body { padding: 24px 28px; display: flex; flex-direction: column; justify-content: space-between; }
+
+/* ── SKELETON ── */
+.sr-skeleton { background: white; border: 0.5px solid rgba(27,67,50,0.06); border-radius: 20px; overflow: hidden; }
+.sr-skel-img { height: 200px; background: linear-gradient(90deg, rgba(27,67,50,0.04) 25%, rgba(27,67,50,0.08) 50%, rgba(27,67,50,0.04) 75%); background-size: 200% 100%; animation: skel-shine 1.4s infinite; }
+.sr-skel-body { padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; }
+.sr-skel-line { height: 14px; border-radius: 7px; background: linear-gradient(90deg, rgba(27,67,50,0.04) 25%, rgba(27,67,50,0.08) 50%, rgba(27,67,50,0.04) 75%); background-size: 200% 100%; animation: skel-shine 1.4s infinite; }
+@keyframes skel-shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ── ETAT VIDE ── */
+.sr-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 80px 40px; gap: 16px; }
+.sr-empty-icon { width: 72px; height: 72px; border-radius: 50%; background: rgba(201,168,76,0.08); display: grid; place-items: center; color: rgba(201,168,76,0.5); }
+.sr-empty-icon svg { width: 32px; height: 32px; }
+.sr-empty-title { font-family: 'Cormorant Garamond', serif; font-size: 40px; color: #1B4332; font-weight: 300; }
+.sr-empty-sub { font-family: 'Inter', sans-serif; font-size: 14px; color: rgba(27,67,50,0.5); max-width: 360px; line-height: 1.75; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1200px) {
+  .sr-hero { padding: 80px 48px 52px; padding-top: 140px; }
+  .sr-filters-strip { padding: 0 48px; }
+  .sr-body { padding: 32px 48px 64px; }
+  .sr-search-bar { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 1024px) {
+  .sr-hero-title { font-size: 60px; }
+  .sr-results-grid { grid-template-columns: repeat(2,1fr); }
+  .sr-card-list { grid-template-columns: 220px 1fr; }
+}
+@media (max-width: 768px) {
+  .sr-hero { padding: 60px 24px 40px; padding-top: 120px; }
+  .sr-hero-title { font-size: 48px; }
+  .sr-search-bar { grid-template-columns: 1fr; padding: 16px; }
+  .sr-filters-strip { padding: 0 24px; overflow-x: auto; }
+  .sr-body { padding: 24px; }
+  .sr-results-grid { grid-template-columns: 1fr; }
+  .sr-card-list { grid-template-columns: 1fr; }
+  .sr-card-list .sr-card-img-wrap { height: 180px; }
+}

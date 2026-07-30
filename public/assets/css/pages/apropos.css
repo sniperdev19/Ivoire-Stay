@@ -1,0 +1,121 @@
+/* ============================================================
+   Afristay — Page à propos (vitrine/apropos.php)
+   ============================================================ */
+
+.about-page { overflow-x: hidden; }
+
+/* ── HERO ── */
+.ab-hero { display: grid; grid-template-columns: 1fr 1fr; min-height: 520px; }
+.ab-hero-left { background: #1B4332; padding: 80px 60px; display: flex; flex-direction: column; justify-content: flex-end; position: relative; overflow: hidden; }
+.ab-hero-ghost { position: absolute; top: -20px; left: -10px; font-family: 'Cormorant Garamond', serif; font-size: 280px; font-weight: 700; color: rgba(201,168,76,0.06); line-height: 1; pointer-events: none; user-select: none; }
+.ab-hero-num { font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.4em; text-transform: uppercase; color: rgba(201,168,76,0.55); margin-bottom: 16px; position: relative; z-index: 1; }
+.ab-hero-title { font-family: 'Cormorant Garamond', serif; font-size: 96px; font-weight: 300; color: white; line-height: 0.88; position: relative; z-index: 1; }
+.ab-hero-title em { color: #C9A84C; font-style: italic; display: block; }
+.ab-hero-rule { width: 48px; height: 1px; background: #C9A84C; margin: 28px 0; position: relative; z-index: 1; }
+.ab-hero-sub { font-family: 'Inter', sans-serif; font-size: 15px; color: rgba(255,255,255,0.55); line-height: 1.8; max-width: 360px; position: relative; z-index: 1; }
+.ab-hero-right { background: #FAF7F2; padding: 80px 60px; display: flex; flex-direction: column; justify-content: space-between; border-left: 0.5px solid rgba(27,67,50,0.1); }
+.ab-pill { display: inline-block; padding: 6px 16px; border: 1px solid #C9A84C; color: #C9A84C; font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; border-radius: 3px; }
+.ab-quote-block { margin-top: auto; }
+.ab-quote-mark { display: block; font-family: 'Cormorant Garamond', serif; font-size: 96px; line-height: 0.6; color: #C9A84C; margin-bottom: 16px; }
+.ab-quote-text { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: #1B4332; line-height: 1.15; font-style: italic; }
+.ab-quote-author { margin-top: 20px; font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(27,67,50,0.38); }
+
+/* ── MISSION ── */
+.ab-mission { display: grid; grid-template-columns: 42fr 58fr; min-height: 580px; background: #FAF7F2; border-top: 0.5px solid rgba(27,67,50,0.08); }
+.ab-mission-visual { position: relative; overflow: hidden; background: #1B4332; }
+.ab-mission-visual img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.85; }
+.ab-mission-img-badge { position: absolute; bottom: 24px; left: 24px; padding: 8px 16px; background: #C9A84C; color: white; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; border-radius: 2px; }
+.ab-mission-content { padding: 72px 64px; display: flex; flex-direction: column; justify-content: center; gap: 24px; }
+.ab-eyebrow { display: flex; align-items: center; gap: 12px; }
+.ab-eyebrow-rule { width: 28px; height: 1px; background: #C9A84C; }
+.ab-eyebrow span { font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: #C9A84C; }
+.ab-mission-title { font-family: 'Cormorant Garamond', serif; font-size: 56px; font-weight: 400; color: #1B4332; line-height: 1.0; }
+.ab-mission-title em { color: #C9A84C; font-style: italic; }
+.ab-mission-pull { border-left: 2px solid #C9A84C; padding-left: 20px; }
+.ab-mission-pull p { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-style: italic; color: #1B4332; line-height: 1.6; }
+.ab-mission-body { font-family: 'Inter', sans-serif; font-size: 15px; color: rgba(27,67,50,0.65); line-height: 1.9; }
+.ab-btn-dark { display: inline-flex; align-items: center; gap: 10px; padding: 14px 32px; background: #1B4332; color: white; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; border-radius: 999px; text-decoration: none; width: fit-content; transition: transform 0.2s, background 0.2s; }
+.ab-btn-dark:hover { background: #0d2118; transform: translateY(-2px); }
+
+/* ── STATISTIQUES ── */
+.ab-stats { background: #FAF7F2; padding: 80px 60px; border-top: 0.5px solid rgba(27,67,50,0.08); }
+.ab-stats-header { display: flex; align-items: center; gap: 16px; margin-bottom: 48px; }
+.ab-stats-rule { flex: 1; height: 0.5px; background: rgba(27,67,50,0.12); }
+.ab-stats-header span { font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.35em; text-transform: uppercase; color: #C9A84C; white-space: nowrap; }
+.ab-stats-grid { display: grid; grid-template-columns: repeat(4,1fr); }
+.ab-stat-item { padding: 32px 36px; border-right: 0.5px solid rgba(27,67,50,0.08); position: relative; overflow: hidden; }
+.ab-stat-item:last-child { border-right: none; }
+.ab-stat-ghost { position: absolute; top: 8px; left: 20px; font-family: 'Cormorant Garamond', serif; font-size: 100px; font-weight: 700; line-height: 1; color: transparent; -webkit-text-stroke: 1.5px rgba(27,67,50,0.1); pointer-events: none; user-select: none; }
+.ab-stat-num { font-family: 'Cormorant Garamond', serif; font-size: 56px; font-weight: 700; line-height: 1; color: #1B4332; position: relative; z-index: 1; margin-top: 36px; }
+.ab-stat-num span { color: #C9A84C; font-size: 28px; }
+.ab-stat-label { font-family: 'Inter', sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 0.22em; color: rgba(27,67,50,0.42); margin-top: 10px; position: relative; z-index: 1; }
+.ab-stat-bar { width: 24px; height: 2px; background: #C9A84C; margin-top: 16px; position: relative; z-index: 1; }
+
+/* ── ÉQUIPE ── */
+.ab-team { background: #1B4332; padding: 72px 60px; position: relative; overflow: hidden; }
+.ab-team-header { display: flex; align-items: center; gap: 16px; margin-bottom: 48px; }
+.ab-team-rule { flex: 1; height: 0.5px; background: rgba(201,168,76,0.15); }
+.ab-team-header span { font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.35em; text-transform: uppercase; color: rgba(201,168,76,0.65); white-space: nowrap; }
+.ab-team-list { display: flex; flex-direction: column; }
+.ab-team-member { display: grid; grid-template-columns: 1fr 1fr; align-items: end; padding: 28px 0; border-bottom: 0.5px solid rgba(255,255,255,0.06); }
+.ab-team-member:last-child { border-bottom: none; }
+.ab-member-left { display: flex; flex-direction: column; gap: 6px; }
+.ab-member-initials { font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.15em; color: rgba(201,168,76,0.4); text-transform: uppercase; }
+.ab-member-name { font-family: 'Cormorant Garamond', serif; font-size: 56px; font-weight: 300; color: white; line-height: 1; }
+.ab-member-name em { font-style: italic; color: #C9A84C; }
+.ab-member-right { text-align: right; }
+.ab-member-role { font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: #C9A84C; margin-bottom: 8px; }
+.ab-member-desc { font-family: 'Inter', sans-serif; font-size: 13px; color: rgba(255,255,255,0.38); line-height: 1.6; max-width: 280px; margin-left: auto; }
+.ab-team-deco { position: absolute; right: 40px; bottom: 0; font-family: 'Cormorant Garamond', serif; font-size: 200px; font-weight: 700; color: rgba(201,168,76,0.04); line-height: 1; pointer-events: none; user-select: none; }
+
+/* ── CTA ── */
+.ab-cta { background: #FAF7F2; display: grid; grid-template-columns: 6px 1fr; position: relative; overflow: hidden; border-top: 0.5px solid rgba(27,67,50,0.08); }
+.ab-cta-accent { background: #C9A84C; }
+.ab-cta-body { padding: 80px 72px; display: flex; flex-direction: column; gap: 20px; position: relative; z-index: 1; }
+.ab-cta-eyebrow { display: flex; align-items: center; gap: 10px; }
+.ab-cta-dot { width: 7px; height: 7px; border-radius: 50%; background: #C9A84C; }
+.ab-cta-eyebrow span { font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.35em; text-transform: uppercase; color: rgba(27,67,50,0.42); }
+.ab-cta-title { font-family: 'Cormorant Garamond', serif; font-size: 72px; font-weight: 400; color: #1B4332; line-height: 1.0; max-width: 14ch; }
+.ab-cta-title em { color: #C9A84C; font-style: italic; }
+.ab-cta-sub { font-family: 'Inter', sans-serif; font-size: 15px; color: rgba(27,67,50,0.6); line-height: 1.9; max-width: 520px; }
+.ab-cta-btns { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+.ab-btn-cta-p { padding: 16px 40px; background: #1B4332; color: white; border-radius: 999px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; text-decoration: none; transition: transform 0.2s, background 0.2s; }
+.ab-btn-cta-p:hover { background: #0d2118; transform: translateY(-2px); }
+.ab-btn-cta-o { padding: 16px 40px; border: 1px solid rgba(27,67,50,0.22); color: #1B4332; border-radius: 999px; font-family: 'Inter', sans-serif; font-size: 14px; text-decoration: none; transition: border-color 0.2s; }
+.ab-btn-cta-o:hover { border-color: #1B4332; }
+.ab-cta-deco { position: absolute; right: 40px; top: 50%; transform: translateY(-50%); font-family: 'Cormorant Garamond', serif; font-size: 200px; font-weight: 700; color: rgba(27,67,50,0.05); line-height: 1; pointer-events: none; user-select: none; z-index: 0; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) {
+  .ab-hero { grid-template-columns: 1fr; }
+  .ab-hero-right { border-left: none; border-top: 0.5px solid rgba(27,67,50,0.1); padding: 48px 40px; }
+  .ab-hero-title { font-size: 72px; }
+  .ab-mission { grid-template-columns: 1fr; }
+  .ab-mission-visual { height: 320px; }
+  .ab-stats { padding: 60px 40px; }
+  .ab-stats-grid { grid-template-columns: repeat(2,1fr); }
+  .ab-stat-item:nth-child(2) { border-right: none; }
+  .ab-stat-item { border-bottom: 0.5px solid rgba(27,67,50,0.08); }
+  .ab-stat-item:nth-child(3), .ab-stat-item:nth-child(4) { border-bottom: none; }
+  .ab-team { padding: 56px 40px; }
+  .ab-member-name { font-size: 42px; }
+  .ab-cta-body { padding: 60px 40px; }
+  .ab-cta-title { font-size: 52px; }
+}
+@media (max-width: 768px) {
+  .ab-hero-left, .ab-hero-right { padding: 48px 24px; }
+  .ab-hero-title { font-size: 56px; }
+  .ab-mission-content { padding: 48px 24px; }
+  .ab-mission-title { font-size: 40px; }
+  .ab-stats { padding: 48px 24px; }
+  .ab-stats-grid { grid-template-columns: 1fr 1fr; }
+  .ab-team { padding: 48px 24px; }
+  .ab-team-member { grid-template-columns: 1fr; gap: 10px; }
+  .ab-member-right { text-align: left; }
+  .ab-member-desc { margin-left: 0; }
+  .ab-member-name { font-size: 36px; }
+  .ab-cta-body { padding: 48px 24px; }
+  .ab-cta-title { font-size: 40px; }
+  .ab-cta-btns { flex-direction: column; }
+  .ab-cta-deco { display: none; }
+}

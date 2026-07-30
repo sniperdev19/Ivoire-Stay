@@ -1,0 +1,317 @@
+/* ============================================================
+   Afristay — Page "Mes réservations" (/mes-reservations)
+   ============================================================ */
+
+.mr-page { padding-top: 0; }
+
+/* ── Hero ── */
+.mr-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 160px 40px 64px;
+  background: linear-gradient(160deg, #1B4332 0%, #2D6A4F 100%);
+  color: #fff;
+}
+
+.mr-hero-bg-word {
+  position: absolute;
+  top: -0.15em;
+  right: -0.05em;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(60px, 14vw, 220px);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
+  pointer-events: none;
+  line-height: 1;
+}
+
+.mr-hero-content {
+  position: relative;
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.mr-hero-rule {
+  width: 48px;
+  height: 2px;
+  background: #C9A84C;
+  margin: 0 auto 16px;
+}
+
+.mr-hero-tag {
+  display: inline-block;
+  font-family: Inter, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #C9A84C;
+  margin-bottom: 16px;
+}
+
+.mr-hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(36px, 6vw, 56px);
+  font-weight: 600;
+  line-height: 1.05;
+  margin-bottom: 16px;
+}
+
+.mr-hero-title em { color: #C9A84C; font-style: normal; }
+
+.mr-hero-sub {
+  font-family: Inter, sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ── Main ── */
+.mr-main {
+  max-width: 640px;
+  margin: -32px auto 0;
+  padding: 0 24px 100px;
+  position: relative;
+  z-index: 2;
+}
+
+.mr-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: rgba(27, 67, 50, 0.6);
+  background: #fff;
+  border-radius: 24px;
+  padding: 40px 24px;
+  box-shadow: 0 8px 32px rgba(27, 67, 50, 0.1);
+}
+
+.mr-empty {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: rgba(27, 67, 50, 0.55);
+  text-align: center;
+  background: #fff;
+  border-radius: 24px;
+  padding: 32px 24px;
+  box-shadow: 0 8px 32px rgba(27, 67, 50, 0.1);
+  margin-bottom: 20px;
+}
+
+/* ── Liste des réservations ── */
+.mr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.mr-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 22px 24px;
+  box-shadow: 0 8px 32px rgba(27, 67, 50, 0.1);
+  border: 1px solid rgba(201, 168, 76, 0.15);
+}
+
+.mr-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mr-card-estab {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1B4332;
+}
+
+.mr-card-room {
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  color: rgba(27, 67, 50, 0.55);
+  margin-top: 2px;
+}
+
+.mr-badge {
+  flex-shrink: 0;
+  font-family: Inter, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 6px 12px;
+  border-radius: 50px;
+  white-space: nowrap;
+}
+
+.mr-badge-pending { background: rgba(217, 119, 6, 0.1); color: #D97706; }
+.mr-badge-confirmed { background: rgba(22, 163, 74, 0.1); color: #16A34A; }
+.mr-badge-checked_in { background: rgba(22, 163, 74, 0.1); color: #16A34A; }
+.mr-badge-checked_out { background: rgba(107, 114, 128, 0.12); color: #6B7280; }
+.mr-badge-cancelled { background: rgba(220, 38, 38, 0.1); color: #DC2626; }
+
+.mr-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px solid rgba(201, 168, 76, 0.15);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.15);
+  margin-bottom: 16px;
+}
+
+.mr-card-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: Inter, sans-serif;
+}
+
+.mr-card-item span {
+  font-size: 11px;
+  color: rgba(27, 67, 50, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mr-card-item strong {
+  font-size: 14px;
+  color: #1B4332;
+  font-weight: 600;
+}
+
+.mr-card-btn {
+  display: block;
+  text-align: center;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1B4332;
+  background: transparent;
+  border: 1.5px solid #C9A84C;
+  border-radius: 50px;
+  padding: 11px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.mr-card-btn:hover { background: #C9A84C; color: #fff; }
+
+.mr-toggle-search {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: none;
+  border: none;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #A67C2E;
+  cursor: pointer;
+  padding: 8px;
+  margin-bottom: 12px;
+}
+
+.mr-toggle-search:hover { text-decoration: underline; }
+
+/* ── Formulaire recherche ── */
+.mr-search-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 32px 28px;
+  box-shadow: 0 8px 32px rgba(27, 67, 50, 0.1);
+}
+
+.mr-search-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1B4332;
+  margin-bottom: 6px;
+}
+
+.mr-search-sub {
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  color: rgba(27, 67, 50, 0.55);
+  margin-bottom: 20px;
+}
+
+.mr-search-form { display: flex; flex-direction: column; gap: 16px; }
+
+.mr-field { display: flex; flex-direction: column; gap: 6px; }
+
+.mr-label {
+  font-family: Inter, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(27, 67, 50, 0.7);
+}
+
+.mr-input {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  padding: 12px 16px;
+  border: 1.5px solid rgba(27, 67, 50, 0.15);
+  border-radius: 12px;
+  background: #FAF7F2;
+  color: #1B4332;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.mr-input:focus { border-color: #C9A84C; }
+
+.mr-search-error {
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  color: #DC2626;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.mr-search-btn {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #C9A84C, #A67C2E);
+  border: none;
+  border-radius: 50px;
+  padding: 13px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.mr-search-btn:hover { transform: translateY(-1px); }
+.mr-search-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.mr-cancel-search {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: none;
+  border: none;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  color: rgba(27, 67, 50, 0.5);
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+.mr-cancel-search:hover { text-decoration: underline; }
+
+@media (max-width: 600px) {
+  .mr-hero { padding: 140px 24px 56px; }
+  .mr-card-grid { grid-template-columns: 1fr 1fr; }
+}
