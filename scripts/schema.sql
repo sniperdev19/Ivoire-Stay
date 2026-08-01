@@ -524,13 +524,17 @@ CREATE TABLE `agent_referrals` (
   CONSTRAINT `agent_referrals_ibfk_2` FOREIGN KEY (`establishment_id`) REFERENCES `establishments` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Versement forfaitaire par palier de 10 (30000 F Pro / 60000 F Business),
--- traité manuellement par un superadmin, même principe que payout_requests.
+-- Versement (forfait fixe tous les 5 premiers-abonnements d'un plan, ou une
+-- des 4 primes ponctuelles de agent_bonus_awards) traité manuellement par un
+-- superadmin, même principe que payout_requests. `plan` NULL + `label` rempli
+-- pour les primes non rattachées à un plan précis (premier arrivé, top du
+-- mois, conversion rapide) — cf. scripts/migration_agent_bonuses.sql.
 DROP TABLE IF EXISTS `agent_payouts`;
 CREATE TABLE `agent_payouts` (
   `id` int NOT NULL AUTO_INCREMENT,
   `agent_id` int NOT NULL,
-  `plan` enum('pro','business') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `plan` enum('pro','business') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `label` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `amount` decimal(10,2) NOT NULL,
   `mobile_money_operator` enum('orange','mtn','moov','wave') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `mobile_money_number` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -547,6 +551,27 @@ CREATE TABLE `agent_payouts` (
 
 ALTER TABLE `agent_referrals`
   ADD CONSTRAINT `agent_referrals_ibfk_3` FOREIGN KEY (`payout_id`) REFERENCES `agent_payouts` (`id`) ON DELETE SET NULL;
+
+-- Registre des 4 primes ponctuelles décernées (premier arrivé, premier client
+-- Business, conversion rapide, top du mois) — cf. le commentaire détaillé de
+-- scripts/migration_agent_bonuses.sql pour la sémantique de `scope_key` selon
+-- `type`. UNIQUE (type, scope_key) empêche tout double versement.
+DROP TABLE IF EXISTS `agent_bonus_awards`;
+CREATE TABLE `agent_bonus_awards` (
+  `id`         int NOT NULL AUTO_INCREMENT,
+  `agent_id`   int NOT NULL,
+  `type`       varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `scope_key`  varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `amount`     decimal(10,2) NOT NULL,
+  `payout_id`  int DEFAULT NULL,
+  `awarded_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_type_scope` (`type`, `scope_key`),
+  KEY `agent_id` (`agent_id`),
+  KEY `payout_id` (`payout_id`),
+  CONSTRAINT `agent_bonus_awards_ibfk_1` FOREIGN KEY (`agent_id`) REFERENCES `agents` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `agent_bonus_awards_ibfk_2` FOREIGN KEY (`payout_id`) REFERENCES `agent_payouts` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Automatisation "par code" des tâches quotidiennes (rappels arrivée/départ,
 -- abonnements expirants) : pas de cron/Task Scheduler externe requis, le
@@ -607,6 +632,17 @@ CREATE TABLE `announcements` (
   `is_active`  tinyint(1) NOT NULL DEFAULT '1',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Réglages plateforme éditables depuis /admin/settings (Core\Settings) : les
+-- fichiers config/*.php restent la valeur par défaut/de secours tant qu'aucune
+-- ligne n'existe pour une clé donnée — cf. scripts/migration_platform_settings.sql.
+DROP TABLE IF EXISTS `platform_settings`;
+CREATE TABLE `platform_settings` (
+  `key`        varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value`      text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

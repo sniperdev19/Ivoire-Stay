@@ -3,8 +3,8 @@
 -- paiements, notifications, abonnements push, demandes de retrait, jetons de
 -- sécurité (rate limiting, blacklist JWT, webauthn, reset mot de passe),
 -- sessions/appareils connectés, agents commerciaux et leurs rattachements/
--- versements, messages de contact, abonnés/campagnes newsletter, annonces
--- vitrine, etc. sont supprimés.
+-- versements/primes, réglages plateforme, messages de contact, abonnés/
+-- campagnes newsletter, annonces vitrine, etc. sont supprimés.
 --
 -- Chaque ligne est un DELETE indépendant, dans l'ordre des dépendances de clés
 -- étrangères — donc ça fonctionne même exécuté ligne par ligne (ex: collé une
@@ -45,6 +45,8 @@ DELETE FROM contact_messages;
 DELETE FROM newsletter_campaigns;
 DELETE FROM newsletter_subscribers;
 DELETE FROM announcements;
+DELETE FROM platform_settings;
+DELETE FROM agent_bonus_awards;
 DELETE FROM agent_referrals;
 DELETE FROM agent_establishments;
 DELETE FROM agent_payouts;
@@ -81,6 +83,7 @@ ALTER TABLE contact_messages AUTO_INCREMENT = 1;
 ALTER TABLE newsletter_campaigns AUTO_INCREMENT = 1;
 ALTER TABLE newsletter_subscribers AUTO_INCREMENT = 1;
 ALTER TABLE announcements AUTO_INCREMENT = 1;
+ALTER TABLE agent_bonus_awards AUTO_INCREMENT = 1;
 ALTER TABLE agent_referrals AUTO_INCREMENT = 1;
 ALTER TABLE agent_establishments AUTO_INCREMENT = 1;
 ALTER TABLE agent_payouts AUTO_INCREMENT = 1;

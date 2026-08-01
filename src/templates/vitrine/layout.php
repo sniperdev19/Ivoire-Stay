@@ -384,12 +384,19 @@ elseif (preg_match('#/newsletter/desabonnement#', $uri)) $pageName = 'newsletter
     'booking'  => '/search',
   ];
   $activePath = $activeMap[$pageName] ?? '/';
+
+  /* Vérifiée et rendue côté PHP (pas en JS après coup) : s'il n'y a aucune
+     annonce active, rien n'est injecté dans la page — ni le composant Alpine,
+     ni le moindre appel réseau. Ça évite toute apparition de la popup vide
+     le temps qu'un fetch réponde. */
+  $activeAnnouncement = \Models\Announcement::activeOne();
   ?>
+  <?php if ($activeAnnouncement): ?>
   <!-- Popup d'annonce plateforme (Announcement::activeOne()), affiché une fois
        au chargement — overlay, donc n'a aucun impact sur la mise en page ni
        sur la position de la nav flottante ci-dessous (contrairement à
        l'ancien bandeau fixe en haut de page). -->
-  <div x-data="vitrineAnnouncementPopup('<?= $base ?>')" x-init="init()"
+  <div x-data='vitrineAnnouncementPopup(<?= json_encode($activeAnnouncement, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>)' x-init="init()"
     x-show="open" x-cloak x-transition.opacity @keydown.escape.window="dismiss()"
     style="position:fixed;inset:0;z-index:200;background:rgba(15,43,32,0.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:grid;place-items:center;padding:20px;">
     <div @click.outside="dismiss()"
@@ -412,6 +419,7 @@ elseif (preg_match('#/newsletter/desabonnement#', $uri)) $pageName = 'newsletter
       </button>
     </div>
   </div>
+  <?php endif; ?>
 
   <header x-data="vitrineNav()" x-init="init()" @keydown.escape.window="mobileOpen = false">
     <nav style="position:fixed;top:0;left:0;right:0;width:100%;background:transparent;padding:18px 40px;z-index:50;"
@@ -538,8 +546,8 @@ elseif (preg_match('#/newsletter/desabonnement#', $uri)) $pageName = 'newsletter
         <div>
           <h4 class="font-display" style="font-size:20px;margin-bottom:14px;font-weight:400;">Contact</h4>
           <p style="color:rgba(246,239,230,0.65);">Yamoussoukro, Côte d'Ivoire</p>
-          <p style="margin-top:8px;color:rgba(246,239,230,0.65);">support@afristay.ci</p>
-          <p style="margin-top:4px;color:rgba(246,239,230,0.65);">+225 01 61 95 90 80</p>
+          <p style="margin-top:8px;color:rgba(246,239,230,0.65);"><?= htmlspecialchars(\Core\Settings::get('contact_email', 'afristay24@gmail.com')) ?></p>
+          <p style="margin-top:4px;color:rgba(246,239,230,0.65);"><?= htmlspecialchars(\Core\Settings::get('contact_phone', '+225 01 61 95 90 80')) ?></p>
         </div>
       </div>
     </div>

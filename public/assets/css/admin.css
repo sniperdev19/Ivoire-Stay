@@ -41,6 +41,12 @@
 .admin-trend-grid { }
 @media(max-width:700px) { .admin-trend-grid { grid-template-columns: 1fr !important; } }
 
+/* Carte d'occupation + top établissements (admin/establishments.php) — classe dédiée
+   (pas de grid-template-columns en style inline) pour échapper à la règle générique de
+   saas-responsive.css qui neutraliserait le ratio 1.4fr/1fr voulu ici. */
+.admin-analytics-grid { display:grid; grid-template-columns:1.4fr 1fr; gap:16px; }
+@media(max-width:900px) { .admin-analytics-grid { grid-template-columns: 1fr; } }
+
 /* Barres de tendance : la cible de survol/focus dépasse la barre peinte
    (padding invisible) — jamais seulement les pixels colorés, cf. dataviz skill. */
 .chart-bar-hover { cursor:pointer; padding:2px; margin:-2px; box-sizing:content-box; }

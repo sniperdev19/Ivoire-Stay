@@ -56,35 +56,27 @@ function newsletterFooterForm(baseUrl) {
 
 /**
  * Popup d'annonce plateforme, affiché au chargement de la vitrine
- * (src/templates/vitrine/layout.php). Charge l'annonce active
- * (Announcement::activeOne()) et l'affiche une fois — la fermeture est
- * mémorisée par ID (localStorage) pour ne plus jamais réafficher CETTE
- * annonce précise, tout en réapparaissant automatiquement si une NOUVELLE
- * annonce est publiée plus tard. Remplace l'ancien bandeau fixe en haut de
- * page (jugé mal adapté) — en overlay, ça ne modifie donc plus jamais la
- * mise en page ni la position de la nav flottante.
+ * (src/templates/vitrine/layout.php). L'annonce active (Announcement::
+ * activeOne()) est résolue et injectée côté PHP directement dans x-data —
+ * le bloc entier n'est même pas rendu par le layout s'il n'y en a aucune,
+ * donc pas d'appel réseau ni de popup vide le temps qu'un fetch réponde.
+ * La fermeture est mémorisée par ID (localStorage) pour ne plus jamais
+ * réafficher CETTE annonce précise, tout en réapparaissant automatiquement
+ * si une NOUVELLE annonce est publiée plus tard.
  */
-function vitrineAnnouncementPopup(baseUrl) {
+function vitrineAnnouncementPopup(announcement) {
   return {
-    announcement: null,
+    announcement,
     open: false,
 
-    async init() {
-      try {
-        const res  = await fetch(baseUrl + '/api/public/announcements');
-        const data = await res.json();
-        if (data.success && data.data) {
-          this.announcement = data.data;
-          const dismissedId = localStorage.getItem('afristay_announcement_dismissed');
-          if (String(dismissedId) !== String(this.announcement.id)) {
-            this.open = true;
-          }
-        }
-      } catch (e) { /* pas de popup si l'API échoue — pas bloquant */ }
+    init() {
+      const dismissedId = localStorage.getItem('afristay_announcement_dismissed');
+      if (String(dismissedId) !== String(this.announcement.id)) {
+        this.open = true;
+      }
     },
 
     dismiss() {
-      if (!this.announcement) return;
       localStorage.setItem('afristay_announcement_dismissed', String(this.announcement.id));
       this.open = false;
     },

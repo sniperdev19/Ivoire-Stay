@@ -10,6 +10,7 @@ function agentDashboardPage(baseUrl) {
     referrals: [],
     payouts: [],
     progress: { pro: { count: 0, target: 5, reward: 0 }, business: { count: 0, target: 5, reward: 0 } },
+    bonuses: {},
 
     showScanner:  false,
     cameraError:  false,
@@ -52,6 +53,7 @@ function agentDashboardPage(baseUrl) {
           this.referrals      = data.data.referrals;
           this.payouts        = data.data.payouts;
           this.progress       = data.data.progress;
+          this.bonuses        = data.data.bonuses || {};
           localStorage.setItem('agent', JSON.stringify(this.agent));
         }
       } catch (_) { /* réseau indisponible — on garde les données déjà chargées */ }

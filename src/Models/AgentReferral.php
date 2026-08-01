@@ -22,6 +22,30 @@ class AgentReferral extends BaseModel
         )->fetchColumn();
     }
 
+    /** Total tous plans confondus — utilisé par la prime "premier arrivé" (CommissionService). */
+    public static function countTotal(int $agentId): int
+    {
+        return (int) Database::query(
+            "SELECT COUNT(*) FROM agent_referrals WHERE agent_id = ?",
+            [$agentId]
+        )->fetchColumn();
+    }
+
+    /**
+     * Classement "nombre de premiers-abonnements" sur une période [from, to[ —
+     * utilisé pour le rang affiché au dashboard agent (mois en cours) et pour
+     * la prime "top du mois" (SchedulerService::runAgentMonthlyBonus, mois précédent).
+     */
+    public static function rankingBetween(string $from, string $to): array
+    {
+        return Database::query(
+            "SELECT agent_id, COUNT(*) as cnt FROM agent_referrals
+             WHERE created_at >= ? AND created_at < ?
+             GROUP BY agent_id ORDER BY cnt DESC",
+            [$from, $to]
+        )->fetchAll();
+    }
+
     /** Les N plus anciens premiers-abonnements d'un plan pas encore versés (pour former un lot de 10). */
     public static function oldestPendingIds(int $agentId, string $plan, int $limit): array
     {

@@ -3,7 +3,7 @@
 namespace Controllers;
 
 use Core\{Request, Response, Database};
-use Models\{Agent, AgentPayout};
+use Models\{Agent, AgentPayout, AgentBonusAward};
 
 /** Superadmin uniquement — vue d'ensemble des agents commerciaux et traitement des versements. */
 class AgentAdminController
@@ -16,6 +16,12 @@ class AgentAdminController
     public function payouts(Request $req, array $params = []): void
     {
         Response::success(AgentPayout::allWithStatus($req->get('status')));
+    }
+
+    /** GET /api/admin/agent-bonuses — primes récentes décernées (toutes, palier inclus), pour admin/agents.php. */
+    public function bonuses(Request $req, array $params = []): void
+    {
+        Response::success(AgentBonusAward::recent());
     }
 
     public function markPaid(Request $req, array $params = []): void

@@ -10,7 +10,7 @@ const _faqItems = <?= json_encode([
   ["q" => "Quelle est la politique d'annulation ?", "a" => "La politique d'annulation est définie par chaque établissement et affichée sur sa fiche publique."],
   ["q" => "Comment changer d'abonnement ?",         "a" => "Allez dans Paramètres → Abonnement pour voir les plans disponibles et changer vers un plan supérieur."],
   ["q" => "Comment supprimer une réservation ?",    "a" => "Ouvrez le détail d'une réservation depuis la page Réservations, puis cliquez sur Annuler ou Supprimer."],
-  ["q" => "Comment contacter le support ?",         "a" => "Utilisez le formulaire de contact dans cette page ou écrivez directement à support@afristay.ci."],
+  ["q" => "Comment contacter le support ?",         "a" => "Utilisez le formulaire de contact dans cette page ou écrivez directement à afristay24@gmail.com."],
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?>;
 </script>
 
@@ -102,13 +102,13 @@ const _faqItems = <?= json_encode([
         <div class="hlp-contact-title">Une question ? On est là.</div>
         <div class="hlp-contact-row">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-          support@afristay.ci
+          afristay24@gmail.com
         </div>
         <div class="hlp-contact-row">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
           +225 07 00 00 00 00
         </div>
-        <a href="mailto:support@afristay.ci" class="hlp-contact-btn">Envoyer un message</a>
+        <a href="mailto:afristay24@gmail.com" class="hlp-contact-btn">Envoyer un message</a>
       </div>
 
       <!-- Documentation -->

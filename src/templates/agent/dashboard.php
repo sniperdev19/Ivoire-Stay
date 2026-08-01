@@ -58,10 +58,64 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
     </div>
 
     <div class="ag-section">
+      <h2>Primes</h2>
+      <div class="ag-list">
+        <div class="ag-bonus-row">
+          <div>
+            <div class="ag-bonus-title">🏁 Premier arrivé</div>
+            <div class="ag-bonus-desc" x-text="`Le premier agent à ${bonuses.first_to_5?.target || 5} établissements payants (${bonuses.first_to_5?.progress || 0}/${bonuses.first_to_5?.target || 5})`"></div>
+          </div>
+          <div style="text-align:right;">
+            <div class="ag-bonus-amount" x-text="formatFcfa(bonuses.first_to_5?.amount)"></div>
+            <span class="ag-badge" :class="{
+                'ag-badge-paid':   bonuses.first_to_5?.status === 'won',
+                'ag-badge-locked': bonuses.first_to_5?.status === 'claimed_by_other',
+                'ag-badge-open':   bonuses.first_to_5?.status === 'open',
+              }" x-text="{ won: 'Remportée', claimed_by_other: 'Déjà prise', open: 'À gagner' }[bonuses.first_to_5?.status] || ''"></span>
+          </div>
+        </div>
+        <div class="ag-bonus-row">
+          <div>
+            <div class="ag-bonus-title">💎 Premier client Business</div>
+            <div class="ag-bonus-desc">Le tout premier établissement Business que vous faites signer</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="ag-bonus-amount" x-text="formatFcfa(bonuses.first_business?.amount)"></div>
+            <span class="ag-badge" :class="bonuses.first_business?.status === 'won' ? 'ag-badge-paid' : 'ag-badge-open'"
+              x-text="bonuses.first_business?.status === 'won' ? 'Remportée' : 'À gagner'"></span>
+          </div>
+        </div>
+        <div class="ag-bonus-row">
+          <div>
+            <div class="ag-bonus-title">⚡ Conversion rapide</div>
+            <div class="ag-bonus-desc" x-text="`Établissement payant dans les ${bonuses.fast_conversion?.days || 7} j après le scan`"></div>
+          </div>
+          <div style="text-align:right;">
+            <div class="ag-bonus-amount" x-text="formatFcfa(bonuses.fast_conversion?.amount)"></div>
+            <span class="ag-badge" :class="bonuses.fast_conversion?.count > 0 ? 'ag-badge-paid' : 'ag-badge-open'"
+              x-text="bonuses.fast_conversion?.count > 0 ? ('Gagnée ' + bonuses.fast_conversion.count + ' fois') : 'Pas encore gagnée'"></span>
+          </div>
+        </div>
+        <div class="ag-bonus-row">
+          <div>
+            <div class="ag-bonus-title">🏆 Top agent du mois</div>
+            <div class="ag-bonus-desc" x-text="`Le plus de référencements payants sur le mois (${bonuses.monthly_top?.rank_referrals || 0} ce mois-ci)`"></div>
+            <div class="ag-bonus-desc" x-show="bonuses.monthly_top?.won_last" style="color:var(--mid);">Gagnée le mois dernier</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="ag-bonus-amount" x-text="formatFcfa(bonuses.monthly_top?.amount)"></div>
+            <span class="ag-badge" :class="bonuses.monthly_top?.rank === 1 ? 'ag-badge-paid' : 'ag-badge-open'"
+              x-text="bonuses.monthly_top?.rank ? ('#' + bonuses.monthly_top.rank + ' sur ' + bonuses.monthly_top.total_ranked) : 'Pas classé'"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ag-section">
       <h2>Établissements rattachés (<span x-text="establishments.length"></span>)</h2>
       <div class="ag-list">
         <template x-if="establishments.length === 0">
-          <div class="ag-list-empty">Aucun établissement rattaché pour l'instant — scannez un QR code pour commencer.</div>
+          <div class="ag-list-empty">Aucun établissement rattaché pour l'instant. Scannez un QR code pour commencer.</div>
         </template>
         <template x-for="e in establishments" :key="e.id">
           <div class="ag-list-row">
@@ -80,7 +134,7 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
         </template>
         <template x-for="p in payouts" :key="p.id">
           <div class="ag-list-row">
-            <span x-text="(p.plan === 'pro' ? 'Pro' : 'Business') + ' · ' + formatFcfa(p.amount)"></span>
+            <span x-text="(p.label || (p.plan === 'pro' ? 'Pro' : 'Business')) + ' · ' + formatFcfa(p.amount)"></span>
             <span class="ag-badge" :class="'ag-badge-' + p.status" x-text="p.status === 'pending' ? 'En attente' : (p.status === 'paid' ? 'Payé' : 'Rejeté')"></span>
           </div>
         </template>
@@ -104,7 +158,7 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
 
       <div class="ag-manual-fallback" x-show="cameraError">
         <p style="font-size:13px;margin-bottom:8px;color:rgba(27,67,50,0.6);">
-          Caméra indisponible — entrez le code affiché sous le QR de l'établissement :
+          Caméra indisponible. Entrez le code affiché sous le QR de l'établissement :
         </p>
         <input type="text" x-model="manualToken" placeholder="Code de l'établissement">
         <button class="ag-btn ag-btn-gold" @click="submitScan(manualToken)">Valider</button>

@@ -95,7 +95,7 @@
       <div class="ab-team-member">
         <div class="ab-member-left">
           <div class="ab-member-initials">KF</div>
-          <h3 class="ab-member-name">Kouame <em>Fréjus</em></h3>
+          <h3 class="ab-member-name">Kouadio <em>Fréjus</em></h3>
         </div>
         <div class="ab-member-right">
           <div class="ab-member-role">Dev Frontend</div>

@@ -36,9 +36,9 @@ class AdminPageController
         Response::render('admin/agents', ['title' => 'AfriStay Admin — Agents commerciaux', 'page' => 'agents']);
     }
 
-    public function backups(Request $req, array $params = []): void
+    public function settings(Request $req, array $params = []): void
     {
-        Response::render('admin/backups', ['title' => 'AfriStay Admin — Sauvegardes', 'page' => 'backups']);
+        Response::render('admin/settings', ['title' => 'AfriStay Admin — Paramètres', 'page' => 'settings']);
     }
 
     public function notifications(Request $req, array $params = []): void
