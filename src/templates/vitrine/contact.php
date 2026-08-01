@@ -1,4 +1,8 @@
-﻿<?php $base_url = $base_url ?? rtrim(APP_URL, '/'); ?>
+﻿<?php
+$base_url     = $base_url ?? rtrim(APP_URL, '/');
+$contactEmail = \Core\Settings::get('contact_email', 'afristay24@gmail.com');
+$contactPhone = \Core\Settings::get('contact_phone', '+225 01 61 95 90 80');
+?>
 
 <div class="contact-page" x-data="contactPage('<?= $base_url ?>')">
 
@@ -67,7 +71,7 @@
           </div>
           <div>
             <span class="ct-info-label">Appelez-nous</span>
-            <strong class="ct-info-value">+225 01 61 95 90 80</strong>
+            <strong class="ct-info-value"><?= htmlspecialchars($contactPhone) ?></strong>
             <span class="ct-info-sub">Lun – Ven · 8h–18h</span>
           </div>
         </div>
@@ -82,7 +86,7 @@
           </div>
           <div>
             <span class="ct-info-label">Écrivez-nous</span>
-            <strong class="ct-info-value">support@afristay.ci</strong>
+            <strong class="ct-info-value"><?= htmlspecialchars($contactEmail) ?></strong>
             <span class="ct-info-sub">Réponse sous 24h</span>
           </div>
         </div>

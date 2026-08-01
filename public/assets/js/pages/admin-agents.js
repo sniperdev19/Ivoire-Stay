@@ -15,13 +15,16 @@ function adminAgentsPage(baseUrl) {
     filter: 'pending',
     toast: null,
 
+    loadingBonuses: true,
+    bonuses: [],
+
     rejectTarget: null,
     rejectNotes: '',
     rejectError: null,
     rejectSubmitting: false,
 
     async init() {
-      await Promise.all([this.loadAgents(), this.loadPayouts()]);
+      await Promise.all([this.loadAgents(), this.loadPayouts(), this.loadBonuses()]);
     },
 
     async loadAgents() {
@@ -50,6 +53,28 @@ function adminAgentsPage(baseUrl) {
       } finally {
         this.loadingPayouts = false;
       }
+    },
+
+    async loadBonuses() {
+      this.loadingBonuses = true;
+      try {
+        const res  = await fetch(baseUrl + '/api/admin/agent-bonuses', { headers: this.apiHeaders() });
+        const data = await res.json();
+        this.bonuses = data.success ? (data.data ?? []) : [];
+      } catch (e) {
+        this.bonuses = [];
+      } finally {
+        this.loadingBonuses = false;
+      }
+    },
+
+    bonusTypeLabel(type) {
+      return {
+        first_to_5:      '🏁 Premier arrivé (5 établissements)',
+        first_business:  '💎 Premier client Business',
+        fast_conversion: '⚡ Conversion rapide',
+        monthly_top:     '🏆 Top agent du mois',
+      }[type] ?? type;
     },
 
     async markPaid(id) {

@@ -57,7 +57,13 @@ define('ONLINE_PAYMENTS_ENABLED', filter_var(env('ONLINE_PAYMENTS_ENABLED', 'fal
 // Fonctionnalité temporaire : espace agents commerciaux (inscription/scan QR/
 // commissions). Coupe les routes /agent/* et le bouton "Mon QR code" côté
 // établissement tant que false, sans supprimer le code.
-define('AGENTS_ENABLED', filter_var(env('AGENTS_ENABLED', 'true'), FILTER_VALIDATE_BOOLEAN));
+// Pilotable depuis /admin/settings (Core\Settings, table platform_settings) —
+// la variable d'environnement ne sert plus que de valeur par défaut tant
+// qu'aucun réglage n'a été enregistré en base (ou si la table n'existe pas
+// encore sur cet environnement, cf. Core\Settings::get()). L'autoloader est
+// déjà chargé à ce stade (voir public/index.php), Core\Settings est donc
+// disponible ici.
+define('AGENTS_ENABLED', \Core\Settings::getBool('agents_enabled', filter_var(env('AGENTS_ENABLED', 'true'), FILTER_VALIDATE_BOOLEAN)));
 
 define('VAPID_PUBLIC_KEY',  env('VAPID_PUBLIC_KEY',  ''));
 define('VAPID_PRIVATE_KEY', env('VAPID_PRIVATE_KEY', ''));

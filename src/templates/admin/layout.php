@@ -19,7 +19,6 @@ $navItems = [
     ['key' => 'establishments', 'label' => 'Établissements', 'href' => '/admin/establishments','icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
     ['key' => 'owners',         'label' => 'Propriétaires',  'href' => '/admin/owners',        'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z'],
     ['key' => 'payouts',        'label' => 'Retraits',       'href' => '/admin/payouts',       'icon' => 'M17 9V7a4 4 0 00-8 0v2M5 9h14l1 11H4L5 9z'],
-    ['key' => 'backups',        'label' => 'Sauvegardes',    'href' => '/admin/backups',       'icon' => 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4'],
     ['key' => 'notifications',    'label' => 'Notifications',       'href' => '/admin/notifications',    'icon' => 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'],
     ['key' => 'contact-messages',  'label' => 'Messages de contact', 'href' => '/admin/contact-messages', 'icon' => 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
     ['key' => 'newsletter',        'label' => 'Newsletter',          'href' => '/admin/newsletter',        'icon' => 'M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5'],
@@ -28,6 +27,8 @@ $navItems = [
 if (AGENTS_ENABLED) {
     $navItems[] = ['key' => 'agents', 'label' => 'Agents commerciaux', 'href' => '/admin/agents', 'icon' => 'M4 4h4v4H4V4zm0 12h4v4H4v-4zm12-12h4v4h-4V4zm0 5h4v11h-4V9zM9 4h1v6H9V4zM4 11h6v1H4v-1zm5 3h1v6H9v-6zm-5 2h1v1H4v-1z'];
 }
+// Toujours en dernier : convention "Paramètres" en bas de menu.
+$navItems[] = ['key' => 'settings', 'label' => 'Paramètres', 'href' => '/admin/settings', 'icon' => 'M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894zM15 12a3 3 0 11-6 0 3 3 0 016 0z'];
 $currentPage = $page ?? 'dashboard';
 ?>
 <!DOCTYPE html>
@@ -69,10 +70,20 @@ $currentPage = $page ?? 'dashboard';
   <link rel="stylesheet" href="<?= $base ?>/assets/css/pages/<?= htmlspecialchars($css) ?>.css?v=<?= file_exists($cssPath) ? filemtime($cssPath) : 1 ?>">
   <?php endforeach; ?>
 
+  <!-- Leaflet (carte d'occupation par ville) — uniquement sur /admin/establishments,
+       auto-hébergé comme sur la fiche établissement vitrine (même CSP, pas de CDN). -->
+  <?php if ($currentPage === 'establishments'): ?>
+  <link rel="stylesheet" href="<?= $base ?>/assets/vendor/leaflet/leaflet.css">
+  <?php endif; ?>
+
   <?php $saasJsPath = BASE_PATH . '/public/assets/js/saas.js'; ?>
   <script defer src="<?= $base ?>/assets/js/saas.js?v=<?= file_exists($saasJsPath) ? filemtime($saasJsPath) : 1 ?>"></script>
   <?php $adminJsPath = BASE_PATH . '/public/assets/js/admin.js'; ?>
   <script defer src="<?= $base ?>/assets/js/admin.js?v=<?= file_exists($adminJsPath) ? filemtime($adminJsPath) : 1 ?>"></script>
+  <?php if ($currentPage === 'establishments'): ?>
+  <script defer src="<?= $base ?>/assets/vendor/leaflet/leaflet.js"></script>
+  <?php endif; ?>
+
   <?php foreach ($pageJs as $js): ?>
   <?php $jsPath = BASE_PATH . '/public/assets/js/pages/' . $js . '.js'; ?>
   <script defer src="<?= $base ?>/assets/js/pages/<?= htmlspecialchars($js) ?>.js?v=<?= file_exists($jsPath) ? filemtime($jsPath) : 1 ?>"></script>
@@ -267,7 +278,7 @@ $currentPage = $page ?? 'dashboard';
       // en plus nombreux) derrière un bouton "Menu" — même pattern que
       // saas/layout.php (primaryTabs/moreTabs), pour ne pas faire déborder la
       // barre à mesure que l'espace admin s'étoffe.
-      $primaryKeys  = ['dashboard', 'establishments', 'owners', 'payouts'];
+      $primaryKeys  = ['dashboard', 'establishments', 'owners', 'agents'];
       $primaryTabs  = array_values(array_filter($navItems, fn($i) => in_array($i['key'], $primaryKeys, true)));
       $moreTabs     = array_values(array_filter($navItems, fn($i) => !in_array($i['key'], $primaryKeys, true)));
       $onMoreTabPage = in_array($currentPage, array_column($moreTabs, 'key'), true);

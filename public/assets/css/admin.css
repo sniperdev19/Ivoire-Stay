@@ -36,3 +36,37 @@
 
 .admin-kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
 @media(max-width:900px) { .admin-kpi-grid { grid-template-columns:repeat(2, minmax(0,1fr)); } }
+
+/* ── Graphiques "Vue d'ensemble" (admin/dashboard.php) ── */
+.admin-trend-grid { }
+@media(max-width:700px) { .admin-trend-grid { grid-template-columns: 1fr !important; } }
+
+/* Carte d'occupation + top établissements (admin/establishments.php) — classe dédiée
+   (pas de grid-template-columns en style inline) pour échapper à la règle générique de
+   saas-responsive.css qui neutraliserait le ratio 1.4fr/1fr voulu ici. */
+.admin-analytics-grid { display:grid; grid-template-columns:1.4fr 1fr; gap:16px; }
+@media(max-width:900px) { .admin-analytics-grid { grid-template-columns: 1fr; } }
+
+/* Barres de tendance : la cible de survol/focus dépasse la barre peinte
+   (padding invisible) — jamais seulement les pixels colorés, cf. dataviz skill. */
+.chart-bar-hover { cursor:pointer; padding:2px; margin:-2px; box-sizing:content-box; }
+.chart-bar-hover:hover, .chart-bar-hover:focus-visible { opacity:0.75; outline:none; }
+
+/* Grille de colonnes (6 mois) — CSS Grid plutôt que flex : nombre de colonnes
+   fixe et explicite, aucune ambiguïté de sens (row/column) à débugger. */
+.chart-cols {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  align-items: end;
+  gap: 10px;
+}
+.chart-col {
+  display: grid;
+  grid-template-rows: 16px 90px 14px; /* valeur | piste (hauteur fixe) | mois */
+  row-gap: 6px;
+  justify-items: center;
+  min-width: 0;
+}
+.chart-col-value { font-size: 11px; font-weight: 700; color: #374151; align-self: end; }
+.chart-col-track { width: 100%; height: 90px; display: flex; align-items: flex-end; justify-content: center; }
+.chart-col-month { font-size: 10px; color: #9CA3AF; white-space: nowrap; align-self: start; }

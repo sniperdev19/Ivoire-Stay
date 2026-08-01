@@ -3,6 +3,7 @@
 namespace Services;
 
 use Core\Database;
+use Models\{Agent, AgentPayout, AgentBonusAward};
 
 /**
  * Automatisation "par code" des tâches quotidiennes — pas de cron/Task
@@ -22,7 +23,7 @@ use Core\Database;
  */
 class SchedulerService
 {
-    private const JOBS = ['daily_arrivals', 'expiring_subscriptions', 'establishment_freeze_sync', 'expire_pending_bookings', 'db_backup'];
+    private const JOBS = ['daily_arrivals', 'expiring_subscriptions', 'establishment_freeze_sync', 'expire_pending_bookings', 'db_backup', 'agent_monthly_bonus'];
     private const SUBSCRIPTION_REMINDER_WINDOW_DAYS = 3;
 
     public static function maybeRunDueJobs(): void
@@ -57,6 +58,7 @@ class SchedulerService
                 'establishment_freeze_sync' => self::runEstablishmentFreezeSync(),
                 'expire_pending_bookings'  => self::runExpirePendingBookings(),
                 'db_backup'                => self::runDbBackup(),
+                'agent_monthly_bonus'      => self::runAgentMonthlyBonus(),
                 default                    => 'job inconnu',
             };
             error_log("[SchedulerService] {$job} — {$summary}");
@@ -287,5 +289,70 @@ class SchedulerService
     public static function runDbBackup(bool $verbose = false): string
     {
         return BackupService::run($verbose);
+    }
+
+    /**
+     * Prime "top agent du mois" (cf. config/agent_bonuses.php) — évalue le mois
+     * calendaire PRÉCÉDENT (jamais le mois en cours, encore incomplet). Idempotent
+     * via agent_bonus_awards (scope_key = "<AAAA-MM>:<agent_id>") : si personne ne
+     * se connecte pendant plusieurs jours, le mois manqué est évalué en retard à la
+     * prochaine connexion — même compromis assumé que les autres jobs de cette classe.
+     * Ex æquo : tous les agents à égalité en tête touchent la prime, pas de tirage au sort.
+     */
+    public static function runAgentMonthlyBonus(bool $verbose = false): string
+    {
+        $log = fn(string $line) => $verbose ? print($line . "\n") : null;
+
+        if (!AGENTS_ENABLED) return 'agents désactivés';
+
+        $amount = CommissionService::monthlyTopAmount();
+        if ($amount <= 0) return 'montant "top du mois" non configuré';
+
+        $month = (new \DateTime('first day of last month'))->format('Y-m');
+
+        $already = Database::query(
+            "SELECT 1 FROM agent_bonus_awards WHERE type = 'monthly_top' AND scope_key LIKE ? LIMIT 1",
+            ["{$month}:%"]
+        )->fetchColumn();
+        if ($already) return "mois {$month} déjà évalué";
+
+        $rows = Database::query(
+            "SELECT agent_id, COUNT(*) as cnt FROM agent_referrals
+             WHERE created_at >= ? AND created_at < DATE_ADD(?, INTERVAL 1 MONTH)
+             GROUP BY agent_id ORDER BY cnt DESC",
+            ["{$month}-01", "{$month}-01"]
+        )->fetchAll();
+
+        if (!$rows) return "aucun référencement en {$month}, pas de gagnant";
+
+        $max     = (int) $rows[0]['cnt'];
+        $winners = array_filter($rows, fn($r) => (int) $r['cnt'] === $max);
+
+        $awarded = 0;
+        foreach ($winners as $row) {
+            $agentId = (int) $row['agent_id'];
+            $agent   = Agent::find($agentId);
+            if (!$agent) continue;
+
+            $awardId = AgentBonusAward::tryAward($agentId, 'monthly_top', "{$month}:{$agentId}", $amount);
+            if (!$awardId) continue;
+
+            $payoutId = AgentPayout::create([
+                'agent_id'              => $agentId,
+                'plan'                  => null,
+                'label'                 => "Prime : top agent du mois ({$month})",
+                'amount'                => $amount,
+                'mobile_money_operator' => $agent['operateur_money'],
+                'mobile_money_number'   => $agent['numero'],
+                'status'                => 'pending',
+            ]);
+            AgentBonusAward::assignPayout($awardId, $payoutId);
+            NotificationService::agentPayoutReady($agent['nom'], 'Prime "top agent du mois"', $amount, $payoutId);
+            $awarded++;
+
+            $log("→ {$agent['nom']} : {$max} référencement(s) en {$month} — prime top du mois");
+        }
+
+        return "{$awarded} agent(s) récompensé(s) pour {$month} ({$max} référencement(s) chacun)";
     }
 }

@@ -141,6 +141,15 @@ body {
 .ag-badge-pending { background: rgba(201,168,76,0.15); color: #8a6d1f; }
 .ag-badge-paid { background: rgba(45,106,79,0.15); color: var(--mid); }
 .ag-badge-rejected { background: rgba(200,60,60,0.12); color: #a33; }
+.ag-badge-open { background: rgba(27,67,50,0.08); color: rgba(27,67,50,0.55); }
+.ag-badge-locked { background: rgba(27,67,50,0.05); color: rgba(27,67,50,0.35); }
+
+/* ── Primes (dashboard.php) ── */
+.ag-bonus-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid rgba(27,67,50,0.06); }
+.ag-bonus-row:last-child { border-bottom: none; }
+.ag-bonus-title { font-size: 13px; font-weight: 600; }
+.ag-bonus-desc { font-size: 12px; color: rgba(27,67,50,0.5); margin-top: 2px; }
+.ag-bonus-amount { font-size: 13px; font-weight: 700; color: var(--mid); white-space: nowrap; }
 
 /* ── Modal scan ── */
 .ag-modal-bg {

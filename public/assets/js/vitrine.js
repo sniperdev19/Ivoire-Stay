@@ -55,50 +55,30 @@ function newsletterFooterForm(baseUrl) {
 }
 
 /**
- * Store global partagé entre le bandeau d'annonce et la nav flottante
- * (composants Alpine frères, pas parent/enfant — un store est le moyen le
- * plus simple de les faire communiquer sans tout restructurer). La nav lit
- * $store.vitrineChrome.bannerHeight pour décaler son "top" fixe exactement
- * de la hauteur réelle du bandeau (mesurée, jamais devinée) quand il est visible.
+ * Popup d'annonce plateforme, affiché au chargement de la vitrine
+ * (src/templates/vitrine/layout.php). L'annonce active (Announcement::
+ * activeOne()) est résolue et injectée côté PHP directement dans x-data —
+ * le bloc entier n'est même pas rendu par le layout s'il n'y en a aucune,
+ * donc pas d'appel réseau ni de popup vide le temps qu'un fetch réponde.
+ * La fermeture est mémorisée par ID (localStorage) pour ne plus jamais
+ * réafficher CETTE annonce précise, tout en réapparaissant automatiquement
+ * si une NOUVELLE annonce est publiée plus tard.
  */
-document.addEventListener('alpine:init', () => {
-  Alpine.store('vitrineChrome', { bannerHeight: 0 });
-});
-
-/**
- * Bandeau d'annonce plateforme en haut de la vitrine (src/templates/vitrine/
- * layout.php). Charge l'annonce active (Announcement::activeOne()) et permet
- * de la fermer — la fermeture est mémorisée par ID (localStorage) pour ne
- * plus jamais réafficher CETTE annonce précise, tout en réapparaissant
- * automatiquement si une NOUVELLE annonce est publiée plus tard.
- */
-function vitrineAnnouncementBanner(baseUrl) {
+function vitrineAnnouncementPopup(announcement) {
   return {
-    announcement: null,
-    dismissed:    false,
+    announcement,
+    open: false,
 
-    async init() {
-      try {
-        const res  = await fetch(baseUrl + '/api/public/announcements');
-        const data = await res.json();
-        if (data.success && data.data) {
-          this.announcement = data.data;
-          const dismissedId = localStorage.getItem('afristay_announcement_dismissed');
-          this.dismissed = String(dismissedId) === String(this.announcement.id);
-        }
-      } catch (e) { /* pas de bandeau si l'API échoue — pas bloquant */ }
-      this.$nextTick(() => this.syncHeight());
-    },
-
-    syncHeight() {
-      Alpine.store('vitrineChrome').bannerHeight = (this.announcement && !this.dismissed) ? this.$el.offsetHeight : 0;
+    init() {
+      const dismissedId = localStorage.getItem('afristay_announcement_dismissed');
+      if (String(dismissedId) !== String(this.announcement.id)) {
+        this.open = true;
+      }
     },
 
     dismiss() {
-      if (!this.announcement) return;
       localStorage.setItem('afristay_announcement_dismissed', String(this.announcement.id));
-      this.dismissed = true;
-      this.$nextTick(() => this.syncHeight());
+      this.open = false;
     },
   };
 }

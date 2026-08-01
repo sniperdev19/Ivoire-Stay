@@ -384,24 +384,48 @@ elseif (preg_match('#/newsletter/desabonnement#', $uri)) $pageName = 'newsletter
     'booking'  => '/search',
   ];
   $activePath = $activeMap[$pageName] ?? '/';
+
+  /* Vérifiée et rendue côté PHP (pas en JS après coup) : s'il n'y a aucune
+     annonce active, rien n'est injecté dans la page — ni le composant Alpine,
+     ni le moindre appel réseau. Ça évite toute apparition de la popup vide
+     le temps qu'un fetch réponde. */
+  $activeAnnouncement = \Models\Announcement::activeOne();
   ?>
-  <!-- Bandeau d'annonce plateforme (Announcement::activeOne()) — sa hauteur réelle
-       (mesurée, pas devinée) décale le "top" de la nav flottante fixe ci-dessous
-       via $store.vitrineChrome, pour ne jamais se superposer à elle. -->
-  <div x-data="vitrineAnnouncementBanner('<?= $base ?>')" x-init="init()"
-    x-show="announcement && !dismissed" x-cloak
-    style="position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 40px;background:#1B4332;color:#F6EFE6;font-size:13px;">
-    <strong x-text="announcement?.title"></strong>
-    <span style="opacity:0.85;" x-text="announcement?.message"></span>
-    <button type="button" @click="dismiss()" aria-label="Fermer"
-      style="margin-left:auto;background:none;border:none;color:#F6EFE6;opacity:0.7;cursor:pointer;font-size:16px;line-height:1;">✕</button>
+  <?php if ($activeAnnouncement): ?>
+  <!-- Popup d'annonce plateforme (Announcement::activeOne()), affiché une fois
+       au chargement — overlay, donc n'a aucun impact sur la mise en page ni
+       sur la position de la nav flottante ci-dessous (contrairement à
+       l'ancien bandeau fixe en haut de page). -->
+  <div x-data='vitrineAnnouncementPopup(<?= json_encode($activeAnnouncement, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>)' x-init="init()"
+    x-show="open" x-cloak x-transition.opacity @keydown.escape.window="dismiss()"
+    style="position:fixed;inset:0;z-index:200;background:rgba(15,43,32,0.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:grid;place-items:center;padding:20px;">
+    <div @click.outside="dismiss()"
+      style="position:relative;width:100%;max-width:400px;background:#FAF7F2;border-radius:20px;padding:36px 28px 28px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.35);">
+      <button type="button" @click="dismiss()" aria-label="Fermer"
+        style="position:absolute;top:14px;right:14px;background:none;border:none;color:rgba(27,67,50,0.4);cursor:pointer;font-size:18px;line-height:1;padding:6px;">✕</button>
+
+      <div class="font-display" style="font-size:22px;font-weight:600;margin-bottom:18px;">
+        <span style="color:#1B4332;">Afri</span> <span style="color:#C9A84C;">Stay</span>
+      </div>
+
+      <div style="width:44px;height:44px;border-radius:50%;background:rgba(201,168,76,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:20px;">📢</div>
+
+      <h3 style="font-size:16px;font-weight:700;color:#1B4332;margin:0 0 8px;" x-text="announcement?.title"></h3>
+      <p x-show="announcement?.message" style="font-size:13px;color:rgba(27,67,50,0.65);line-height:1.6;margin:0 0 22px;" x-text="announcement?.message"></p>
+
+      <button type="button" @click="dismiss()"
+        style="background:#1B4332;color:#fff;border:none;border-radius:50px;padding:11px 28px;font-size:13px;font-weight:600;cursor:pointer;">
+        Compris
+      </button>
+    </div>
   </div>
+  <?php endif; ?>
 
   <header x-data="vitrineNav()" x-init="init()" @keydown.escape.window="mobileOpen = false">
     <nav style="position:fixed;top:0;left:0;right:0;width:100%;background:transparent;padding:18px 40px;z-index:50;"
       :style="scrolled
-      ? 'position:fixed;top:' + (16 + $store.vitrineChrome.bannerHeight) + 'px;left:50%;transform:translateX(-50%);width:calc(100% - 48px);max-width:1100px;background:rgba(250,247,242,0.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(201,168,76,0.2);border-radius:60px;box-shadow:0 8px 32px rgba(27,67,50,0.12);padding:8px 24px;z-index:50;transition:all 0.4s cubic-bezier(0.4,0,0.2,1);'
-      : 'position:fixed;top:' + $store.vitrineChrome.bannerHeight + 'px;left:0;right:0;width:100%;background:transparent;border:none;border-radius:0;box-shadow:none;padding:18px 40px;z-index:50;transition:all 0.4s cubic-bezier(0.4,0,0.2,1);'">
+      ? 'position:fixed;top:16px;left:50%;transform:translateX(-50%);width:calc(100% - 48px);max-width:1100px;background:rgba(250,247,242,0.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(201,168,76,0.2);border-radius:60px;box-shadow:0 8px 32px rgba(27,67,50,0.12);padding:8px 24px;z-index:50;transition:all 0.4s cubic-bezier(0.4,0,0.2,1);'
+      : 'position:fixed;top:0;left:0;right:0;width:100%;background:transparent;border:none;border-radius:0;box-shadow:none;padding:18px 40px;z-index:50;transition:all 0.4s cubic-bezier(0.4,0,0.2,1);'">
       <div class="v-nav-inner">
 
         <!-- Logo -->
@@ -522,8 +546,8 @@ elseif (preg_match('#/newsletter/desabonnement#', $uri)) $pageName = 'newsletter
         <div>
           <h4 class="font-display" style="font-size:20px;margin-bottom:14px;font-weight:400;">Contact</h4>
           <p style="color:rgba(246,239,230,0.65);">Yamoussoukro, Côte d'Ivoire</p>
-          <p style="margin-top:8px;color:rgba(246,239,230,0.65);">support@afristay.ci</p>
-          <p style="margin-top:4px;color:rgba(246,239,230,0.65);">+225 01 61 95 90 80</p>
+          <p style="margin-top:8px;color:rgba(246,239,230,0.65);"><?= htmlspecialchars(\Core\Settings::get('contact_email', 'afristay24@gmail.com')) ?></p>
+          <p style="margin-top:4px;color:rgba(246,239,230,0.65);"><?= htmlspecialchars(\Core\Settings::get('contact_phone', '+225 01 61 95 90 80')) ?></p>
         </div>
       </div>
     </div>

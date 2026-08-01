@@ -3,7 +3,7 @@
 namespace Controllers;
 
 use Core\{Request, Response, RateLimiter};
-use Models\{Agent, AgentEstablishment, AgentReferral, AgentPayout, Establishment};
+use Models\{Agent, AgentEstablishment, AgentReferral, AgentPayout, AgentBonusAward, Establishment};
 use Services\{AuthService, CommissionService};
 
 /**
@@ -261,17 +261,90 @@ class AgentController
         $agent   = Agent::find($agentId);
         if (!$agent) Response::notFound('Agent introuvable');
 
-        $plans = require BASE_PATH . '/config/plans.php';
-
         Response::success([
             'agent'          => Agent::safe($agent),
             'establishments' => AgentEstablishment::forAgent($agentId),
             'referrals'      => AgentReferral::forAgent($agentId),
             'payouts'        => AgentPayout::findByAgent($agentId),
             'progress'       => [
-                'pro'      => ['count' => AgentReferral::countPending($agentId, 'pro'), 'target' => CommissionService::BATCH_SIZE, 'reward' => $plans['pro']['agent_reward_per_5'] ?? 0],
-                'business' => ['count' => AgentReferral::countPending($agentId, 'business'), 'target' => CommissionService::BATCH_SIZE, 'reward' => $plans['business']['agent_reward_per_5'] ?? 0],
+                'pro'      => $this->batchProgress($agentId, 'pro'),
+                'business' => $this->batchProgress($agentId, 'business'),
             ],
+            'bonuses' => $this->bonusesSummary($agentId),
         ]);
+    }
+
+    /** Progression vers le prochain lot de 5 pour un plan — forfait effectif (Core\Settings). */
+    private function batchProgress(int $agentId, string $plan): array
+    {
+        return [
+            'count'  => AgentReferral::countPending($agentId, $plan),
+            'target' => CommissionService::BATCH_SIZE,
+            'reward' => CommissionService::rewardForPlan($plan),
+        ];
+    }
+
+    /** État des 4 primes ponctuelles pour le dashboard agent (montants effectifs, Core\Settings). */
+    private function bonusesSummary(int $agentId): array
+    {
+        $myAwards  = AgentBonusAward::forAgent($agentId);
+        $myTypes   = array_column($myAwards, 'type');
+
+        $firstTo5Status = in_array('first_to_5', $myTypes, true)
+            ? 'won'
+            : (AgentBonusAward::existsForType('first_to_5') ? 'claimed_by_other' : 'open');
+
+        $lastMonth   = (new \DateTime('first day of last month'))->format('Y-m');
+        $lastMonthKey = "{$lastMonth}:{$agentId}";
+        $wonLastMonth = (bool) array_filter(
+            $myAwards,
+            fn($a) => $a['type'] === 'monthly_top' && $a['scope_key'] === $lastMonthKey
+        );
+
+        // Rang de l'agent connecté sur le mois EN COURS (pas le mois dernier évalué
+        // par le job) — donne une indication en temps réel, avant l'attribution
+        // effective de la prime au début du mois suivant.
+        $thisMonthStart = (new \DateTime('first day of this month'))->format('Y-m-d');
+        $nextMonthStart = (new \DateTime('first day of next month'))->format('Y-m-d');
+        $ranking = AgentReferral::rankingBetween($thisMonthStart, $nextMonthStart);
+
+        $myRank = null;
+        $myCountThisMonth = 0;
+        foreach ($ranking as $i => $row) {
+            if ((int) $row['agent_id'] === $agentId) {
+                $myRank = $i + 1;
+                $myCountThisMonth = (int) $row['cnt'];
+                break;
+            }
+        }
+
+        $firstTo5    = CommissionService::firstTo5Config();
+        $fastConv    = CommissionService::fastConversionConfig();
+
+        return [
+            'first_to_5' => [
+                'amount'   => $firstTo5['amount'],
+                'target'   => $firstTo5['target'],
+                'progress' => AgentReferral::countTotal($agentId),
+                'status'   => $firstTo5Status,
+            ],
+            'first_business' => [
+                'amount' => CommissionService::firstBusinessAmount(),
+                'status' => in_array('first_business', $myTypes, true) ? 'won' : 'open',
+            ],
+            'fast_conversion' => [
+                'amount' => $fastConv['amount'],
+                'days'   => $fastConv['days'],
+                'count'  => count(array_filter($myTypes, fn($t) => $t === 'fast_conversion')),
+            ],
+            'monthly_top' => [
+                'amount'         => CommissionService::monthlyTopAmount(),
+                'count'          => count(array_filter($myTypes, fn($t) => $t === 'monthly_top')),
+                'won_last'       => $wonLastMonth,
+                'rank'           => $myRank,
+                'rank_referrals' => $myCountThisMonth,
+                'total_ranked'   => count($ranking),
+            ],
+        ];
     }
 }

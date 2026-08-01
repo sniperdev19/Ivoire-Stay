@@ -4,7 +4,7 @@
 
   <div style="margin-bottom:20px;">
     <h1 style="font-size:22px;font-weight:700;color:#111827;margin:0;">Agents commerciaux</h1>
-    <p style="margin:6px 0 0;color:#9CA3AF;">Agents référents, établissements rattachés et versements par palier de 5 abonnements</p>
+    <p style="margin:6px 0 0;color:#9CA3AF;">Agents référents, versements par lot de 5 abonnements et primes ponctuelles</p>
   </div>
 
   <div class="saas-card" style="padding:0;overflow:hidden;margin-bottom:24px;">
@@ -40,15 +40,15 @@
     </select>
   </div>
 
-  <div class="saas-card" style="padding:0;overflow:hidden;">
+  <div class="saas-card" style="padding:0;overflow:hidden;margin-bottom:24px;">
     <div style="overflow-x:auto;">
       <table class="saas-table" style="width:100%;">
-        <thead><tr><th>Agent</th><th>Plan</th><th>Date</th><th>Montant</th><th>Mobile Money</th><th>Statut</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Agent</th><th>Motif</th><th>Date</th><th>Montant</th><th>Mobile Money</th><th>Statut</th><th>Actions</th></tr></thead>
         <tbody>
           <template x-for="p in payouts" :key="p.id">
             <tr>
               <td style="font-weight:600;color:#111827;" x-text="p.agent_nom"></td>
-              <td x-text="p.plan === 'pro' ? 'Pro' : 'Business'"></td>
+              <td x-text="p.label || (p.plan === 'pro' ? 'Pro' : 'Business')"></td>
               <td x-text="formatDate(p.created_at)"></td>
               <td style="font-weight:700;color:#111827;" x-text="formatPrice(p.amount)"></td>
               <td><span x-text="operatorLabel(p.mobile_money_operator)"></span> · <span style="color:#9CA3AF;" x-text="p.mobile_money_number"></span></td>
@@ -66,6 +66,32 @@
           </template>
           <template x-if="!loadingPayouts && payouts.length === 0">
             <tr><td colspan="7" style="text-align:center;padding:40px;color:#9CA3AF;font-size:13px;">Aucun versement.</td></tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="margin-bottom:12px;">
+    <h2 style="font-size:16px;font-weight:700;color:#111827;margin:0;">Primes décernées</h2>
+    <p style="margin:4px 0 0;color:#9CA3AF;font-size:13px;">Premier arrivé, premier client Business, conversion rapide, top du mois — cf. config/agent_bonuses.php</p>
+  </div>
+
+  <div class="saas-card" style="padding:0;overflow:hidden;">
+    <div style="overflow-x:auto;">
+      <table class="saas-table" style="width:100%;">
+        <thead><tr><th>Agent</th><th>Prime</th><th>Montant</th><th>Décernée le</th></tr></thead>
+        <tbody>
+          <template x-for="b in bonuses" :key="b.id">
+            <tr>
+              <td style="font-weight:600;color:#111827;" x-text="b.agent_nom"></td>
+              <td x-text="bonusTypeLabel(b.type)"></td>
+              <td style="font-weight:700;color:#111827;" x-text="formatPrice(b.amount)"></td>
+              <td style="color:#9CA3AF;font-size:13px;" x-text="formatDate(b.awarded_at)"></td>
+            </tr>
+          </template>
+          <template x-if="!loadingBonuses && bonuses.length === 0">
+            <tr><td colspan="4" style="text-align:center;padding:40px;color:#9CA3AF;font-size:13px;">Aucune prime décernée pour l'instant.</td></tr>
           </template>
         </tbody>
       </table>

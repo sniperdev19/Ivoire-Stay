@@ -38,7 +38,7 @@ $router->get('/admin/establishments', 'AdminPageController@establishments');
 $router->get('/admin/owners',         'AdminPageController@owners');
 $router->get('/admin/payouts',        'AdminPageController@payouts');
 $router->get('/admin/agents',         'AdminPageController@agents');
-$router->get('/admin/backups',        'AdminPageController@backups');
+$router->get('/admin/settings',       'AdminPageController@settings');
 $router->get('/admin/notifications',     'AdminPageController@notifications');
 $router->get('/admin/contact-messages',  'AdminPageController@contactMessages');
 $router->get('/admin/newsletter',        'AdminPageController@newsletter');
@@ -165,12 +165,17 @@ $router->post('/api/payouts/{id}/reject', 'PayoutController@reject',   ['auth', 
 // ─── API Admin — agents commerciaux (fonctionnalité temporaire) ───────────────
 $router->get('/api/admin/agents',                'AgentAdminController@agents',   ['auth', 'role:superadmin']);
 $router->get('/api/admin/agent-payouts',         'AgentAdminController@payouts',  ['auth', 'role:superadmin']);
+$router->get('/api/admin/agent-bonuses',         'AgentAdminController@bonuses',  ['auth', 'role:superadmin']);
 $router->post('/api/admin/agent-payouts/{id}/pay',    'AgentAdminController@markPaid', ['auth', 'role:superadmin']);
 $router->post('/api/admin/agent-payouts/{id}/reject', 'AgentAdminController@reject',   ['auth', 'role:superadmin']);
 
 // ─── API Admin plateforme (superadmin uniquement) ──────────────────────────────
 $router->get('/api/admin/overview', 'AdminController@overview', ['auth', 'role:superadmin']);
 $router->get('/api/admin/owners',   'AdminController@owners',   ['auth', 'role:superadmin']);
+$router->get('/api/admin/owners/{id}/establishments', 'AdminController@ownerEstablishments', ['auth', 'role:superadmin']);
+$router->get('/api/admin/establishments-analytics', 'AdminController@establishmentsAnalytics', ['auth', 'role:superadmin']);
+$router->get('/api/admin/settings', 'AdminSettingsController@index',  ['auth', 'role:superadmin']);
+$router->put('/api/admin/settings', 'AdminSettingsController@update', ['auth', 'role:superadmin']);
 $router->post('/api/admin/notifications/broadcast', 'AdminController@broadcastNotification', ['auth', 'role:superadmin']);
 
 // ─── API Messages de contact (superadmin uniquement) ───────────────────────────
