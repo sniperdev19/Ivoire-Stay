@@ -819,7 +819,14 @@
               Un agent commercial Afristay peut scanner ce code pour être identifié comme celui qui vous a fait inscrire.
             </p>
             <div id="qr-code-canvas" style="display:flex;justify-content:center;margin-bottom:12px;"></div>
-            <p x-show="qrCodeToken" style="font-size:11px;color:#9CA3AF;word-break:break-all;">Code : <span x-text="qrCodeToken"></span></p>
+            <div x-show="qrCodeToken" style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;">
+              <p style="font-size:11px;color:#9CA3AF;word-break:break-all;margin:0;">Code : <span x-text="qrCodeToken"></span></p>
+              <button type="button" @click="copyQrCode()" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#B8860B;background:#FEF3C7;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copier
+              </button>
+            </div>
+            <p style="font-size:11px;color:#9CA3AF;margin-top:8px;">Vous pouvez aussi envoyer ce code à votre agent s'il n'est pas sur place.</p>
           </div>
         </template>
         <template x-if="qrAgentLinked">

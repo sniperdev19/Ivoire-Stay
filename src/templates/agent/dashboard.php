@@ -20,20 +20,17 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
 </head>
 <body x-data="agentDashboardPage('<?= $base_url ?>')" x-init="init()">
 
+  <div class="ag-shell">
+
   <header class="ag-header">
     <div class="ag-brand">
-      <div class="ag-brand-sq">AS</div>
+      <div class="ag-brand-sq" x-text="initials"></div>
       <div class="ag-brand-text">
         <span class="ag-brand-title" x-text="agent.nom ? ('Bonjour, ' + agent.nom) : 'Espace agent'"></span>
         <span class="ag-brand-sub">Bienvenue dans votre espace agent</span>
       </div>
     </div>
     <div class="ag-header-actions">
-      <a href="<?= $base_url ?>/agent/profile" class="ag-icon-btn" title="Mon profil">
-        <svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-        </svg>
-      </a>
       <button class="ag-logout" @click="logout()">
         <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -48,22 +45,78 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
     <!-- ═══ Vue : Accueil ═══ -->
     <template x-if="activeView === 'home'">
       <div>
-        <button class="ag-scan-btn" @click="openScanner()">
-          <span class="ag-scan-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h4v4H4V4zm0 12h4v4H4v-4zm12-12h4v4h-4V4zm0 5h4v11h-4V9zM9 4h1v6H9V4zM4 11h6v1H4v-1zm5 3h1v6H9v-6zm-5 2h1v1H4v-1z"/>
-            </svg>
-          </span>
-          <span class="ag-scan-text">
-            <strong>Scanner le QR code d'un établissement</strong>
-            <span>Scannez le QR code pour rattacher un établissement et commencer à gagner des primes.</span>
-          </span>
-          <span class="ag-scan-chevron">
-            <svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
-          </span>
-        </button>
+        <div class="ag-hero">
+          <button type="button" class="ag-hero-qr" @click="openScanner()">
+            <span class="ag-hero-qr-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3.75" y="3.75" width="6" height="6" rx="1.2"/>
+                <rect x="3.75" y="14.25" width="6" height="6" rx="1.2"/>
+                <rect x="14.25" y="3.75" width="6" height="6" rx="1.2"/>
+                <path d="M14.25 14.25h2.25v2.25h-2.25zM19.5 14.25h1.5v1.5h-1.5zM14.25 19.5h1.5v1.5h-1.5zM17.25 17.25h1.5v1.5h-1.5zM19.5 19.5h1.5v1.5h-1.5z"/>
+              </svg>
+            </span>
+            <span class="ag-hero-qr-pill">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              Scanner
+            </span>
+            <span class="ag-hero-qr-hint">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 5l7 7-7 7"/>
+              </svg>
+            </span>
+          </button>
+          <p class="ag-hero-caption">Scannez le QR code d'un établissement pour le rattacher et commencer à gagner des primes.</p>
+        </div>
+
+        <div class="ag-quick-grid">
+          <button type="button" class="ag-quick-item" @click="setView('establishments')">
+            <span class="ag-quick-icon ag-quick-icon-a">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m-1 4h1m4-4h1m-1 4h1M9 21v-4h6v4"/>
+              </svg>
+            </span>
+            <span class="ag-quick-label">Établissements</span>
+          </button>
+          <button type="button" class="ag-quick-item" @click="setView('history')">
+            <span class="ag-quick-icon ag-quick-icon-b">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </span>
+            <span class="ag-quick-label">Historique</span>
+          </button>
+          <button type="button" class="ag-quick-item" @click="setView('ranking')">
+            <span class="ag-quick-icon ag-quick-icon-c">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0V4zM7 6H4v2a3 3 0 003 3M17 6h3v2a3 3 0 01-3 3"/>
+              </svg>
+            </span>
+            <span class="ag-quick-label">Classement</span>
+          </button>
+          <button type="button" class="ag-quick-item" @click="setView('bonuses')">
+            <span class="ag-quick-icon ag-quick-icon-e">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 12 20 22 4 22 4 12"></polyline>
+                <rect x="2" y="7" width="20" height="5"></rect>
+                <line x1="12" y1="22" x2="12" y2="7"></line>
+                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
+                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
+              </svg>
+            </span>
+            <span class="ag-quick-label">Primes</span>
+          </button>
+          <a href="<?= $base_url ?>/agent/profile" class="ag-quick-item">
+            <span class="ag-quick-icon ag-quick-icon-d">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+            </span>
+            <span class="ag-quick-label">Profil</span>
+          </a>
+        </div>
 
         <div class="ag-progress-grid">
           <template x-for="plan in ['pro','business']" :key="plan">
@@ -85,71 +138,14 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
         </div>
 
         <div class="ag-section">
-          <div class="ag-section-head">
-            <h2>Primes</h2>
-            <a href="#" class="ag-section-link" @click.prevent="setView('history')">Voir toutes les primes →</a>
-          </div>
-          <div class="ag-list">
-            <div class="ag-bonus-row">
-              <span class="ag-bonus-icon">🏁</span>
-              <div class="ag-bonus-body">
-                <div class="ag-bonus-title">Premier arrivé</div>
-                <div class="ag-bonus-desc" x-text="`Le premier agent à ${bonuses.first_to_5?.target || 5} établissements payants (${bonuses.first_to_5?.progress || 0}/${bonuses.first_to_5?.target || 5})`"></div>
-              </div>
-              <div class="ag-bonus-side">
-                <div class="ag-bonus-amount" x-text="formatFcfa(bonuses.first_to_5?.amount)"></div>
-                <span class="ag-badge" :class="{
-                    'ag-badge-paid':   bonuses.first_to_5?.status === 'won',
-                    'ag-badge-locked': bonuses.first_to_5?.status === 'claimed_by_other',
-                    'ag-badge-open':   bonuses.first_to_5?.status === 'open',
-                  }" x-text="{ won: 'Remportée', claimed_by_other: 'Déjà prise', open: 'À gagner' }[bonuses.first_to_5?.status] || ''"></span>
-              </div>
-            </div>
-            <div class="ag-bonus-row">
-              <span class="ag-bonus-icon">💎</span>
-              <div class="ag-bonus-body">
-                <div class="ag-bonus-title">Premier client Business</div>
-                <div class="ag-bonus-desc">Le tout premier établissement Business que vous faites signer</div>
-              </div>
-              <div class="ag-bonus-side">
-                <div class="ag-bonus-amount" x-text="formatFcfa(bonuses.first_business?.amount)"></div>
-                <span class="ag-badge" :class="bonuses.first_business?.status === 'won' ? 'ag-badge-paid' : 'ag-badge-open'"
-                  x-text="bonuses.first_business?.status === 'won' ? 'Remportée' : 'À gagner'"></span>
-              </div>
-            </div>
-            <div class="ag-bonus-row">
-              <span class="ag-bonus-icon">⚡</span>
-              <div class="ag-bonus-body">
-                <div class="ag-bonus-title">Conversion rapide</div>
-                <div class="ag-bonus-desc" x-text="`Établissement payant dans les ${bonuses.fast_conversion?.days || 7} j après le scan`"></div>
-              </div>
-              <div class="ag-bonus-side">
-                <div class="ag-bonus-amount" x-text="formatFcfa(bonuses.fast_conversion?.amount)"></div>
-                <span class="ag-badge" :class="bonuses.fast_conversion?.count > 0 ? 'ag-badge-paid' : 'ag-badge-pending'"
-                  x-text="bonuses.fast_conversion?.count > 0 ? ('Gagnée ' + bonuses.fast_conversion.count + ' fois') : 'Pas encore gagnée'"></span>
-              </div>
-            </div>
-            <div class="ag-bonus-row">
-              <span class="ag-bonus-icon">🏆</span>
-              <div class="ag-bonus-body">
-                <div class="ag-bonus-title">Top agent du mois</div>
-                <div class="ag-bonus-desc" x-text="`Le plus de référencements payants sur le mois (${bonuses.monthly_top?.rank_referrals || 0} ce mois-ci)`"></div>
-                <div class="ag-bonus-desc" x-show="bonuses.monthly_top?.won_last" style="color:var(--mid);">Gagnée le mois dernier</div>
-              </div>
-              <div class="ag-bonus-side">
-                <div class="ag-bonus-amount" x-text="formatFcfa(bonuses.monthly_top?.amount)"></div>
-                <span class="ag-badge" :class="bonuses.monthly_top?.rank === 1 ? 'ag-badge-paid' : 'ag-badge-neutral'"
-                  x-text="bonuses.monthly_top?.rank ? ('#' + bonuses.monthly_top.rank + ' sur ' + bonuses.monthly_top.total_ranked) : 'Pas classé'"></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="ag-section">
           <h2>Établissements rattachés (<span x-text="establishments.length"></span>)</h2>
           <template x-if="establishments.length === 0">
             <div class="ag-empty-card">
-              <div class="ag-empty-illu">🏠</div>
+              <div class="ag-empty-illu">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m-1 4h1m4-4h1m-1 4h1M9 21v-4h6v4"/>
+                </svg>
+              </div>
               <div class="ag-empty-title">Aucun établissement rattaché pour le moment.</div>
               <div class="ag-empty-sub">Scannez un QR code pour commencer.</div>
             </div>
@@ -174,6 +170,10 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
     <!-- ═══ Vue : Mes établissements ═══ -->
     <template x-if="activeView === 'establishments'">
       <div class="ag-section">
+        <button type="button" class="ag-back-btn" @click="setView('home')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          Retour
+        </button>
         <h2>Mes établissements (<span x-text="establishments.length"></span>)</h2>
         <div class="ag-list">
           <template x-if="establishments.length === 0">
@@ -192,9 +192,71 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
       </div>
     </template>
 
+    <!-- ═══ Vue : Primes ═══ -->
+    <template x-if="activeView === 'bonuses'">
+      <div class="ag-section">
+        <button type="button" class="ag-back-btn" @click="setView('home')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          Retour
+        </button>
+        <h2>Primes</h2>
+        <div class="ag-bonus-cards">
+          <div class="ag-bonus-card ag-bonus-card-a">
+            <span class="ag-bonus-card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 3v18M5 4c1.5-1 3.5-1 5 0s3.5 1 5 0 3.5-1 5 0v9c-1.5 1-3.5 1-5 0s-3.5-1-5 0-3.5 1-5 0V4z"/>
+              </svg>
+            </span>
+            <div class="ag-bonus-card-label">Premier arrivé</div>
+            <div class="ag-bonus-card-amount" x-text="formatFcfa(bonuses.first_to_5?.amount)"></div>
+            <div class="ag-bonus-card-desc" x-text="`${bonuses.first_to_5?.progress || 0}/${bonuses.first_to_5?.target || 5} établissements payants`"></div>
+            <span class="ag-bonus-card-badge" x-text="{ won: 'Remportée', claimed_by_other: 'Déjà prise', open: 'À gagner' }[bonuses.first_to_5?.status] || ''"></span>
+          </div>
+          <div class="ag-bonus-card ag-bonus-card-c">
+            <span class="ag-bonus-card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 3h12l3 5-9 13L3 8l3-5z"/>
+                <path d="M3 8h18M9 3l3 5 3-5M9 8l3 13 3-13"/>
+              </svg>
+            </span>
+            <div class="ag-bonus-card-label">Premier client Business</div>
+            <div class="ag-bonus-card-amount" x-text="formatFcfa(bonuses.first_business?.amount)"></div>
+            <div class="ag-bonus-card-desc">1er établissement Business signé</div>
+            <span class="ag-bonus-card-badge" x-text="bonuses.first_business?.status === 'won' ? 'Remportée' : 'À gagner'"></span>
+          </div>
+          <div class="ag-bonus-card ag-bonus-card-d">
+            <span class="ag-bonus-card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13 2L3 14h7l-1 8 11-14h-7l1-8z"/>
+              </svg>
+            </span>
+            <div class="ag-bonus-card-label">Conversion rapide</div>
+            <div class="ag-bonus-card-amount" x-text="formatFcfa(bonuses.fast_conversion?.amount)"></div>
+            <div class="ag-bonus-card-desc" x-text="`Payant sous ${bonuses.fast_conversion?.days || 7} j après le scan`"></div>
+            <span class="ag-bonus-card-badge" x-text="bonuses.fast_conversion?.count > 0 ? ('Gagnée ' + bonuses.fast_conversion.count + ' fois') : 'Pas encore gagnée'"></span>
+          </div>
+          <div class="ag-bonus-card ag-bonus-card-e">
+            <span class="ag-bonus-card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0V4zM7 6H4v2a3 3 0 003 3M17 6h3v2a3 3 0 01-3 3"/>
+              </svg>
+            </span>
+            <div class="ag-bonus-card-label">Top agent du mois</div>
+            <div class="ag-bonus-card-amount" x-text="formatFcfa(bonuses.monthly_top?.amount)"></div>
+            <div class="ag-bonus-card-desc" x-text="`${bonuses.monthly_top?.rank_referrals || 0} référencement(s) ce mois-ci`"></div>
+            <span class="ag-bonus-card-badge" x-text="bonuses.monthly_top?.rank ? ('#' + bonuses.monthly_top.rank + ' sur ' + bonuses.monthly_top.total_ranked) : 'Pas classé'"></span>
+          </div>
+        </div>
+      </div>
+    </template>
+
     <!-- ═══ Vue : Historique ═══ -->
     <template x-if="activeView === 'history'">
       <div class="ag-section">
+        <button type="button" class="ag-back-btn" @click="setView('home')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          Retour
+        </button>
         <h2>Historique</h2>
         <div class="ag-list">
           <template x-if="history.length === 0">
@@ -220,6 +282,10 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
     <!-- ═══ Vue : Classement ═══ -->
     <template x-if="activeView === 'ranking'">
       <div class="ag-section">
+        <button type="button" class="ag-back-btn" @click="setView('home')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          Retour
+        </button>
         <h2>Classement du mois</h2>
         <div class="ag-bonus-desc" style="margin-bottom:12px;" x-text="'Le plus de référencements payants ce mois-ci remporte ' + formatFcfa(bonuses.monthly_top?.amount)"></div>
         <div class="ag-list">
@@ -243,39 +309,14 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
 
   </div>
 
-  <nav class="ag-bottom-nav">
-    <button class="ag-bnav-item" :class="activeView === 'home' ? 'active' : ''" @click="setView('home')">
-      <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7m-9-9v18h6a2 2 0 002-2v-9m-8 9H5a2 2 0 01-2-2v-9"/>
-      </svg>
-      Accueil
-    </button>
-    <button class="ag-bnav-item" :class="activeView === 'establishments' ? 'active' : ''" @click="setView('establishments')">
-      <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m-1 4h1m4-4h1m-1 4h1M9 21v-4h6v4"/>
-      </svg>
-      Mes établissements
-    </button>
-    <button class="ag-bnav-item" :class="activeView === 'history' ? 'active' : ''" @click="setView('history')">
-      <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
-      Historique
-    </button>
-    <button class="ag-bnav-item" :class="activeView === 'ranking' ? 'active' : ''" @click="setView('ranking')">
-      <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0V4zM7 6H4v2a3 3 0 003 3M17 6h3v2a3 3 0 01-3 3"/>
-      </svg>
-      Classement
-    </button>
-  </nav>
+  </div>
 
   <!-- ═══ Modal scan QR ═══ -->
   <div class="ag-modal-bg" x-show="showScanner" x-cloak @click.self="closeScanner()">
     <div class="ag-modal">
       <h3>Scanner le QR code</h3>
 
-      <div class="ag-video-wrap" x-show="!cameraError">
+      <div class="ag-video-wrap" x-show="!cameraError && !showManualEntry">
         <video x-ref="video" autoplay playsinline muted></video>
       </div>
 
@@ -283,13 +324,22 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
         <div class="ag-scan-feedback" :class="scanOk ? 'ok' : 'err'" x-text="scanFeedback"></div>
       </template>
 
-      <div class="ag-manual-fallback" x-show="cameraError">
+      <div class="ag-manual-fallback" x-show="cameraError || showManualEntry">
         <p style="font-size:13px;margin-bottom:8px;color:rgba(27,67,50,0.6);">
-          Caméra indisponible. Entrez le code affiché sous le QR de l'établissement :
+          <template x-if="cameraError">
+            <span>Caméra indisponible. Entrez le code affiché sous le QR de l'établissement :</span>
+          </template>
+          <template x-if="!cameraError">
+            <span>Établissement éloigné ? Entrez le code qu'il vous a transmis :</span>
+          </template>
         </p>
         <input type="text" x-model="manualToken" placeholder="Code de l'établissement">
         <button class="ag-btn ag-btn-gold" @click="submitScan(manualToken)">Valider</button>
       </div>
+
+      <button type="button" class="ag-btn ag-btn-ghost" x-show="!cameraError" @click="showManualEntry = !showManualEntry" style="width:100%;margin-top:10px;font-size:13px;">
+        <span x-text="showManualEntry ? 'Revenir au scan caméra' : 'Saisir le code manuellement'"></span>
+      </button>
 
       <div style="display:flex;gap:10px;margin-top:14px;">
         <button class="ag-btn ag-btn-ghost" @click="closeScanner()" style="flex:1;">Fermer</button>
