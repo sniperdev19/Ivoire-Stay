@@ -81,6 +81,7 @@ $router->post('/api/agent/register', 'AgentController@register');
 $router->post('/api/agent/login',    'AgentController@login');
 $router->post('/api/agent/logout',   'AgentController@logout', ['auth', 'role:agent']);
 $router->get('/api/agent/me',        'AgentController@me',     ['auth', 'role:agent']);
+$router->get('/api/agent/ranking',   'AgentController@ranking', ['auth', 'role:agent']);
 $router->post('/api/agent/scan',     'AgentController@scanQr', ['auth', 'role:agent']);
 $router->put('/api/agent/profile',          'AgentController@updateProfile',  ['auth', 'role:agent']);
 $router->post('/api/agent/change-password', 'AgentController@changePassword', ['auth', 'role:agent']);

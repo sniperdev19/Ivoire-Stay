@@ -22,17 +22,27 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
   <header class="ag-header">
     <div class="ag-brand">
       <div class="ag-brand-sq">AS</div>
-      <span x-text="agent.nom ? ('Bonjour, ' + agent.nom) : 'Espace agent'"></span>
+      <div class="ag-brand-text">
+        <span class="ag-brand-title" x-text="agent.nom ? ('Bonjour, ' + agent.nom) : 'Espace agent'"></span>
+        <span class="ag-brand-sub">Mon profil</span>
+      </div>
     </div>
-    <button class="ag-logout" @click="logout()">Déconnexion</button>
+    <div class="ag-header-actions">
+      <a href="<?= $base_url ?>/agent/dashboard" class="ag-icon-btn" title="Tableau de bord">
+        <svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7m-9-9v18h6a2 2 0 002-2v-9m-8 9H5a2 2 0 01-2-2v-9"/>
+        </svg>
+      </a>
+      <button class="ag-logout" @click="logout()">
+        <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+        Déconnexion
+      </button>
+    </div>
   </header>
 
-  <nav class="ag-tabs">
-    <a href="<?= $base_url ?>/agent/dashboard" class="ag-tab">Tableau de bord</a>
-    <a href="<?= $base_url ?>/agent/profile" class="ag-tab active">Mon profil</a>
-  </nav>
-
-  <div class="ag-container">
+  <div class="ag-container" style="padding-bottom:60px;">
 
     <div class="ag-section">
       <h2>Informations</h2>

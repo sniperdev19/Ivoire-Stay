@@ -266,11 +266,30 @@ class AgentController
             'establishments' => AgentEstablishment::forAgent($agentId),
             'referrals'      => AgentReferral::forAgent($agentId),
             'payouts'        => AgentPayout::findByAgent($agentId),
+            'bonusAwards'    => AgentBonusAward::forAgent($agentId),
             'progress'       => [
                 'pro'      => $this->batchProgress($agentId, 'pro'),
                 'business' => $this->batchProgress($agentId, 'business'),
             ],
             'bonuses' => $this->bonusesSummary($agentId),
+        ]);
+    }
+
+    /** GET /api/agent/ranking — classement nominatif du mois en cours (vue "Classement" du dashboard). */
+    public function ranking(Request $req, array $params = []): void
+    {
+        $this->guardEnabled();
+
+        $agentId = (int) ($_REQUEST['_user']['agent_id'] ?? 0);
+
+        $thisMonthStart = (new \DateTime('first day of this month'))->format('Y-m-d');
+        $nextMonthStart = (new \DateTime('first day of next month'))->format('Y-m-d');
+        $ranking = AgentReferral::rankingWithNames($thisMonthStart, $nextMonthStart, 10);
+
+        Response::success([
+            'ranking'      => $ranking,
+            'my_agent_id'  => $agentId,
+            'reward'       => CommissionService::monthlyTopAmount(),
         ]);
     }
 
