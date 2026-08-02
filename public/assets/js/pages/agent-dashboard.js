@@ -19,6 +19,7 @@ function agentDashboardPage(baseUrl) {
 
     showScanner:  false,
     cameraError:  false,
+    showManualEntry: false,
     manualToken:  '',
     scanFeedback: '',
     scanOk:       false,
@@ -34,6 +35,12 @@ function agentDashboardPage(baseUrl) {
       const cached = localStorage.getItem('agent');
       if (cached) { try { this.agent = JSON.parse(cached); } catch (_) {} }
       this.load();
+    },
+
+    get initials() {
+      const words = (this.agent.nom || '').trim().split(/\s+/).filter(Boolean);
+      if (!words.length) return 'AS';
+      return words.slice(0, 2).map(w => w[0].toUpperCase()).join('');
     },
 
     formatFcfa(v) {
@@ -139,6 +146,7 @@ function agentDashboardPage(baseUrl) {
     async openScanner() {
       this.showScanner  = true;
       this.cameraError  = false;
+      this.showManualEntry = false;
       this.scanFeedback = '';
       this.manualToken  = '';
 

@@ -26,6 +26,12 @@ function agentProfilePage(baseUrl) {
       this.load();
     },
 
+    get initials() {
+      const words = (this.agent.nom || '').trim().split(/\s+/).filter(Boolean);
+      if (!words.length) return 'AS';
+      return words.slice(0, 2).map(w => w[0].toUpperCase()).join('');
+    },
+
     fillForm() {
       this.form.nom             = this.agent.nom             || '';
       this.form.numero          = this.agent.numero          || '';

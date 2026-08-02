@@ -657,6 +657,16 @@ function settingsPage(baseUrl, onlinePaymentsEnabled) {
     }
   },
 
+  async copyQrCode() {
+    if (!this.qrCodeToken) return;
+    try {
+      await navigator.clipboard.writeText(this.qrCodeToken);
+      this.showToast('Code copié.', 'success');
+    } catch (e) {
+      this.showToast('Impossible de copier le code.', 'error');
+    }
+  },
+
   // ── Membres d'équipe (rôle receptionist) ──────────────────────────────
   teamMembers: [],
   teamLoading: true,
