@@ -4,7 +4,7 @@ namespace Controllers;
 
 use Core\{Request, Response, Database};
 use Models\{Establishment, User};
-use Services\NotificationService;
+use Services\{NotificationService, PlanPricingService};
 
 /**
  * Vue d'ensemble plateforme réservée au superadmin (propriétaire d'AfriStay).
@@ -14,7 +14,6 @@ class AdminController
 {
     public function overview(Request $req, array $params = []): void
     {
-        $plans     = require BASE_PATH . '/config/plans.php';
         $breakdown = Establishment::planBreakdown();
 
         $mrr    = 0;
@@ -23,7 +22,7 @@ class AdminController
             $plan  = $row['effective_plan'];
             $count = (int) $row['count'];
             $byPlan[$plan] = $count;
-            $mrr += $count * ($plans[$plan]['prices']['monthly'] ?? 0);
+            $mrr += $count * PlanPricingService::price($plan, 'monthly');
         }
 
         Response::success([

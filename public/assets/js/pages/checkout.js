@@ -81,6 +81,27 @@ function checkoutPage(baseUrl) {
         this.prorationCredit = 0;
       }
 
+      // Prix effectifs (Core\Settings, /admin/settings) — remplace les montants
+      // par défaut ci-dessus si un admin les a modifiés depuis config/plans.php.
+      // Pas bloquant : en cas d'échec, les montants par défaut restent affichés
+      // (le montant réellement facturé, lui, est toujours calculé côté serveur
+      // dans SubscriptionController::initiate() — jamais depuis ce fetch).
+      try {
+        const res  = await fetch(this.api + '/api/subscriptions/plans');
+        const data = await res.json();
+        if (data.success && data.data) {
+          for (const key of ['pro', 'business']) {
+            const prices = data.data[key]?.prices;
+            if (!prices || !this.plans[key]) continue;
+            this.plans[key].prices = prices;
+            this.plans[key].monthlyEq = {
+              monthly: prices.monthly,
+              yearly:  Math.round(prices.yearly / 12),
+            };
+          }
+        }
+      } catch (e) { /* montants par défaut conservés */ }
+
       // Retour depuis Genius Pay après un paiement refusé/annulé (error_url) : on
       // interroge /verify pour que le statut 'pending' initial soit bien remplacé
       // par 'failed' côté DB, plutôt que de rester "en attente" indéfiniment.
