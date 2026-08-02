@@ -200,7 +200,7 @@
     <div class="hm-how-divider"></div>
     <div class="hm-how-step">
       <div class="hm-how-step-num">03</div>
-      <div class="hm-how-step-body"><h3 class="hm-how-step-title">Payez avec Mobile Money</h3><p class="hm-how-step-desc">Orange Money, MTN Money ou Wave — réglez votre séjour en toute sécurité, sans carte bancaire.</p></div>
+      <div class="hm-how-step-body"><h3 class="hm-how-step-title">Payez avec Mobile Money</h3><p class="hm-how-step-desc">Orange Money, MTN Money ou Wave. Réglez votre séjour en toute sécurité, sans carte bancaire.</p></div>
     </div>
   </div>
 </section>

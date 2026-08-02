@@ -23,7 +23,7 @@
     style="display:flex;align-items:flex-start;gap:12px;background:#FEF2F2;border:1px solid rgba(220,38,38,0.25);border-radius:12px;padding:14px 16px;margin-bottom:20px;">
     <span style="font-size:18px;line-height:1;">🧊</span>
     <div style="font-size:13px;color:#991B1B;">
-      <strong>Établissement gelé</strong> — la limite d'établissements de votre plan actuel est dépassée.
+      <strong>Établissement gelé.</strong> La limite d'établissements de votre plan actuel est dépassée.
       Impossible de créer une nouvelle réservation.
       <span x-show="!establishment?.frozen_hard_at || new Date(establishment.frozen_hard_at) > new Date()">
         La gestion des réservations déjà faites (encaisser, annuler, check-in, check-out) reste possible.
@@ -234,7 +234,7 @@
               <template x-if="bookingPayRemaining && bookingPayRemaining.remaining <= 0">
                 <div class="saas-pay-paid">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                  Facture soldée — payée intégralement
+                  Facture soldée, payée intégralement
                 </div>
               </template>
               <template x-if="bookingPayRemaining && bookingPayRemaining.remaining > 0">
@@ -408,7 +408,7 @@
 
             <!-- Client -->
             <div x-show="form.public_client_id" style="padding:10px 14px;background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.15);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-              <span style="font-size:13px;color:#1D4ED8;font-weight:600;">Client existant sélectionné — coordonnées pré-remplies</span>
+              <span style="font-size:13px;color:#1D4ED8;font-weight:600;">Client existant sélectionné, coordonnées pré-remplies</span>
               <button type="button" @click="form.public_client_id=''" style="background:none;border:none;color:#1D4ED8;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;">Changer</button>
             </div>
 
@@ -416,7 +416,7 @@
             <div x-show="!form.public_client_id" style="position:relative;">
               <label class="room-field-label">
                 <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                Client existant <span style="font-weight:400;color:#6B7280;">(nom ou téléphone — optionnel)</span>
+                Client existant <span style="font-weight:400;color:#6B7280;">(nom ou téléphone, optionnel)</span>
               </label>
               <input type="text" class="saas-input" x-model="clientSearch" placeholder="Rechercher un client déjà enregistré…" autocomplete="off" />
               <div x-show="clientSuggestions.length > 0" style="position:absolute;z-index:20;left:0;right:0;margin-top:4px;background:white;border:1px solid rgba(0,0,0,0.08);border-radius:10px;box-shadow:0 12px 30px rgba(15,23,42,0.12);overflow:hidden;">

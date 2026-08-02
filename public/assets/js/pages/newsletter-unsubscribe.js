@@ -23,7 +23,7 @@ function newsletterUnsubscribePage(baseUrl) {
         this.message = data.message || (this.success ? 'Vous avez été désabonné(e).' : 'Lien invalide.');
       } catch (e) {
         this.success = false;
-        this.message = 'Erreur réseau — réessayez plus tard.';
+        this.message = 'Erreur réseau, réessayez plus tard.';
       } finally {
         this.loading = false;
       }

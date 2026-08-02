@@ -25,7 +25,7 @@
     style="display:flex;align-items:flex-start;gap:12px;background:#FEF2F2;border:1px solid rgba(220,38,38,0.25);border-radius:12px;padding:14px 16px;margin-bottom:20px;">
     <span style="font-size:18px;line-height:1;">🧊</span>
     <div style="font-size:13px;color:#991B1B;">
-      <strong>Établissement gelé</strong> — la limite d'établissements de votre plan actuel est dépassée.
+      <strong>Établissement gelé.</strong> La limite d'établissements de votre plan actuel est dépassée.
       Impossible d'ajouter une nouvelle chambre. Mettez à niveau votre abonnement pour le réactiver.
     </div>
   </div>
@@ -410,7 +410,7 @@
           <div class="room-modal-v2-section-title">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5a1 1 0 01.707.293l8 8a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-8-8A1 1 0 015 9V4a1 1 0 011-1z"/></svg>
             Tarifs
-            <span x-show="roomTypeMode==='existing' && !selectedRoomType" style="font-weight:400;font-size:12px;color:#9CA3AF;">— sélectionnez un type pour voir ses tarifs</span>
+            <span x-show="roomTypeMode==='existing' && !selectedRoomType" style="font-weight:400;font-size:12px;color:#9CA3AF;">Sélectionnez un type pour voir ses tarifs</span>
           </div>
 
           <div class="room-modal-v2-grid3">

@@ -76,7 +76,7 @@ class PayoutController
             $freshUser = User::find((int) ($requester['id'] ?? 0));
             if (empty($freshUser['email_verified_at'])) {
                 Response::error(
-                    "Vérifiez votre adresse email avant de demander un retrait — cette action déplace des fonds réels et nécessite un compte sécurisé. Un bandeau en haut de page vous permet de renvoyer le lien de confirmation.",
+                    "Vérifiez votre adresse email avant de demander un retrait. Cette action déplace des fonds réels et nécessite un compte sécurisé. Un bandeau en haut de page vous permet de renvoyer le lien de confirmation.",
                     403
                 );
             }

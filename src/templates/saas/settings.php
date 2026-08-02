@@ -172,7 +172,7 @@
               </div>
             </template>
             <template x-if="!form.latitude || !form.longitude">
-              <p class="stg-locate-empty">Aucune position enregistrée. Cliquez sur le bouton pour localiser votre établissement — cela permettra à vos clients de le retrouver facilement sur la carte de votre vitrine.</p>
+              <p class="stg-locate-empty">Aucune position enregistrée. Cliquez sur le bouton pour localiser votre établissement, cela permettra à vos clients de le retrouver facilement sur la carte de votre vitrine.</p>
             </template>
           </div>
           <button type="button" class="btn-saas-secondary stg-locate-btn" @click="locateMe()" :disabled="locating">
@@ -229,7 +229,7 @@
               <span x-show="!onlinePaymentComingSoon && onlinePaymentLocked" class="stg-pro-badge">PRO</span>
             </div>
             <p class="stg-payment-toggle-desc" x-show="onlinePaymentComingSoon">
-              Fonctionnalité en cours de développement — disponible prochainement. Vos clients règlent pour l'instant sur place.
+              Fonctionnalité en cours de développement, disponible prochainement. Vos clients règlent pour l'instant sur place.
             </p>
             <p class="stg-payment-toggle-desc" x-show="!onlinePaymentComingSoon && !onlinePaymentLocked && !creatingEstab">
               Désactivez pour n'accepter que le paiement sur place : vos clients devront régler directement à l'arrivée, sans option de paiement en ligne sur votre vitrine.

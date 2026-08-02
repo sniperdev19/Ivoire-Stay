@@ -3,8 +3,8 @@
 $plans = \Services\PlanPricingService::effectivePlans();
 
 $featureLabels = [
-    'invoices'                => 'Comptabilité — Factures',
-    'payments'                => 'Comptabilité — Paiements',
+    'invoices'                => 'Comptabilité : Factures',
+    'payments'                => 'Comptabilité : Paiements',
     'expenses'                => 'Dépenses',
     'reports'                 => 'Rapports',
     'pdf'                     => 'Export PDF (factures)',
@@ -71,7 +71,7 @@ $modules = [
                 'steps' => [
                     'Cliquez sur « + Nouvelle réservation ».',
                     'Choisissez la chambre et le type de séjour (nuit, week-end, ou passage à l\'heure).',
-                    "Renseignez les dates (ou la durée pour un passage) — la date de départ se pré-remplit automatiquement selon le type de séjour.",
+                    "Renseignez les dates (ou la durée pour un passage). La date de départ se pré-remplit automatiquement selon le type de séjour.",
                     "Recherchez un client déjà enregistré (son nom ou son numéro suffit, ses coordonnées se remplissent automatiquement) ou saisissez un nouveau client.",
                     'Indiquez le nombre de voyageurs, la source (manuel, téléphone, en ligne) et des notes si besoin.',
                     'Cochez « Encaisser un paiement à la création » pour prendre l\'acompte ou le montant total immédiatement.',
@@ -114,7 +114,7 @@ $modules = [
                 'title' => "Changer rapidement le statut d'une chambre",
                 'steps' => [
                     'Cliquez sur le statut affiché en haut de la carte (Disponible, Occupée, Ménage, Maintenance, Bloquée).',
-                    "Choisissez le nouveau statut dans le menu — pas besoin d'ouvrir la fiche complète.",
+                    "Choisissez le nouveau statut dans le menu, pas besoin d'ouvrir la fiche complète.",
                     "Une chambre non « Disponible » disparaît automatiquement de la vitrine publique tant qu'elle n'est pas remise à ce statut.",
                 ],
             ],
@@ -148,7 +148,7 @@ $modules = [
             'KPI : total factures, montant TTC, factures payées, encaissé, en attente',
             'Onglet Factures : recherche, filtre par statut (Brouillon/Envoyée/Payée), téléchargement PDF, envoi par email',
             'Onglet Paiements : filtre par méthode (Mobile Money/Espèces/Carte/Virement) et par statut',
-            'Une facture est déjà créée automatiquement à chaque réservation — pas besoin de tout saisir à la main',
+            'Une facture est déjà créée automatiquement à chaque réservation, pas besoin de tout saisir à la main',
         ],
         'workflows' => [
             [
@@ -202,7 +202,7 @@ $modules = [
                 'steps' => [
                     'Cliquez sur « + Demander un retrait » (actif uniquement si un solde est disponible).',
                     'Indiquez le montant (plafonné au solde disponible), l\'opérateur Mobile Money (Orange, Wave, MTN) et le numéro.',
-                    'Envoyez la demande — elle est traitée manuellement par l\'équipe AfriStay puis marquée « Payé » une fois le virement effectué.',
+                    'Envoyez la demande. Elle est traitée manuellement par l\'équipe AfriStay puis marquée « Payé » une fois le virement effectué.',
                 ],
             ],
         ],
@@ -230,7 +230,7 @@ $modules = [
     [
         'name' => 'Paramètres', 'anchor' => 'settings', 'plan' => null, 'role' => 'owner',
         'icon' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
-        'desc' => "Configuration de l'établissement, de l'équipe, de l'abonnement et du compte — 4 onglets.",
+        'desc' => "Configuration de l'établissement, de l'équipe, de l'abonnement et du compte (4 onglets).",
         'points' => [
             "Général : identité, localisation, contact, activation du paiement en ligne (Pro+) et du boost (Business), description, photos",
             "Membres : liste de l'équipe (nom, email, téléphone, rôle), ajout/modification/suppression de réceptionnistes",
@@ -432,10 +432,10 @@ $modules = [
           </div>
           <div class="docs-role-card">
             <div class="docs-role-name">Réceptionniste (membre d'équipe)</div>
-            <p>Accès aux opérations quotidiennes : réservations (création, modification, check-in/out), encaissement de paiements, consultation des chambres et clients. Pas d'accès à la Comptabilité, aux Dépenses, aux Retraits, aux Rapports ni aux Paramètres — ces sections apparaissent grisées avec un cadenas dans le menu.</p>
+            <p>Accès aux opérations quotidiennes : réservations (création, modification, check-in/out), encaissement de paiements, consultation des chambres et clients. Pas d'accès à la Comptabilité, aux Dépenses, aux Retraits, aux Rapports ni aux Paramètres, ces sections apparaissent grisées avec un cadenas dans le menu.</p>
           </div>
         </div>
-        <p class="docs-footnote">Ces restrictions sont appliquées à la fois dans le menu et sur le serveur — un membre d'équipe ne peut pas y accéder même en devinant l'adresse d'une page.</p>
+        <p class="docs-footnote">Ces restrictions sont appliquées à la fois dans le menu et sur le serveur. Un membre d'équipe ne peut pas y accéder même en devinant l'adresse d'une page.</p>
       </section>
 
     </div>

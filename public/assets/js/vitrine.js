@@ -46,7 +46,7 @@ function newsletterFooterForm(baseUrl) {
         if (this.msgOk) this.email = '';
       } catch (e) {
         this.msgOk   = false;
-        this.message = 'Erreur réseau — réessayez plus tard.';
+        this.message = 'Erreur réseau, réessayez plus tard.';
       } finally {
         this.sending = false;
       }

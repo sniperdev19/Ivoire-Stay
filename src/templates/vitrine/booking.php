@@ -75,7 +75,7 @@
     <button type="button" class="bk-success-action" x-show="guestPushSupported && !guestPushEnabled" @click="enableGuestPushReminder()">
       <span>🔔</span> Recevoir un rappel
     </button>
-    <p x-show="guestPushEnabled" style="color:#16A34A;font-size:13px;font-weight:600;margin:0;">✓ Rappel activé — vous serez notifié la veille</p>
+    <p x-show="guestPushEnabled" style="color:#16A34A;font-size:13px;font-weight:600;margin:0;">✓ Rappel activé. Vous serez notifié la veille.</p>
 
     <a :href="bookingPdfUrl()" x-show="bookingPdfUrl()" class="bk-success-action">
       <span>📄</span> Télécharger le PDF
@@ -232,7 +232,7 @@
         <div x-show="isPassage" x-transition class="bk-passage-block">
           <div class="bk-passage-badge">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z"/></svg>
-            Forfait passage — même jour
+            Forfait passage (même jour)
           </div>
           <p class="bk-passage-hint">Vous avez sélectionné la même date pour l'arrivée et le départ. Choisissez la durée de votre séjour en heures.</p>
           <div class="bk-field" style="max-width:260px;">
@@ -333,7 +333,7 @@
         </div>
       </template>
       <template x-if="room?.online_payment_enabled === false">
-        <div class="bk-label" style="margin-bottom:16px;">Le paiement en ligne arrive bientôt — réglez votre séjour directement sur place pour l'instant.</div>
+        <div class="bk-label" style="margin-bottom:16px;">Le paiement en ligne arrive bientôt. Réglez votre séjour directement sur place pour l'instant.</div>
       </template>
 
       <!-- Méthode Mobile Money (uniquement si paiement en ligne) -->

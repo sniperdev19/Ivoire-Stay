@@ -165,7 +165,7 @@ class InvoiceController
         // possible une fois le délai de grâce dépassé (phase A l'autorisait encore).
         $estab = Establishment::find($inv['establishment_id']);
         if (PlanGate::isHardFrozen($estab ?? [])) {
-            Response::error("Cet établissement est totalement gelé (délai de grâce dépassé) — plus aucune action possible. Mettez à niveau votre abonnement pour le réactiver.", 403);
+            Response::error("Cet établissement est totalement gelé (délai de grâce dépassé), plus aucune action possible. Mettez à niveau votre abonnement pour le réactiver.", 403);
         }
 
         $invoiceId = (int) $data['invoice_id'];

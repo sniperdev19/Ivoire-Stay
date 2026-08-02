@@ -60,7 +60,7 @@ function agentRegisterPage(baseUrl) {
     async submit() {
       this.error = null;
       if (!this.form.nom.trim())                                      { this.error = 'Le nom est requis.'; return; }
-      if (!this.isValidCiPhone(this.form.numero))                     { this.error = 'Téléphone invalide — 10 chiffres commençant par 01, 05 ou 07.'; return; }
+      if (!this.isValidCiPhone(this.form.numero))                     { this.error = 'Téléphone invalide : 10 chiffres commençant par 01, 05 ou 07.'; return; }
       if (!this.form.operateur_money)                                 { this.error = "Choisissez un opérateur Mobile Money."; return; }
       if (this.form.password.length < 8)                              { this.error = 'Mot de passe : 8 caractères minimum.'; return; }
       if (!/[a-zA-Z]/.test(this.form.password) || !/\d/.test(this.form.password)) {

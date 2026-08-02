@@ -46,7 +46,7 @@
              buildMap() ajoute les marqueurs uniquement quand des coordonnées existent, cf. admin-establishments.js. -->
         <div id="admin-occupancy-map" style="height:360px;border-radius:12px;overflow:hidden;"></div>
         <template x-if="citiesWithGeo.length === 0">
-          <p style="margin:10px 0 0;font-size:11px;color:#9CA3AF;">Aucun établissement géolocalisé pour le moment — la carte affiche la vue par défaut.</p>
+          <p style="margin:10px 0 0;font-size:11px;color:#9CA3AF;">Aucun établissement géolocalisé pour le moment. La carte affiche la vue par défaut.</p>
         </template>
         <template x-if="citiesWithoutGeo.length > 0">
           <div style="margin-top:10px;font-size:11px;color:#9CA3AF;">

@@ -146,7 +146,7 @@ function settingsPage(baseUrl, onlinePaymentsEnabled) {
       if (data.success) {
         this.showToast(this.form.online_payment_enabled
           ? 'Paiement en ligne réactivé.'
-          : 'Paiement en ligne désactivé — vos clients paieront sur place.', 'success');
+          : 'Paiement en ligne désactivé. Vos clients paieront sur place.', 'success');
       } else {
         this.form.online_payment_enabled = previous;
         this.showToast(data.message ?? 'Erreur lors de la mise à jour.', 'error');
