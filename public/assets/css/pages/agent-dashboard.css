@@ -6,9 +6,13 @@
 
 :root {
   --gold: #C9A84C;
+  --gold-dark: #A67C2E;
   --forest: #1B4332;
   --cream: #FAF7F2;
   --mid: #2D6A4F;
+  --biz: #2563EB;
+  --biz-dark: #1D4ED8;
+  --warn: #B45309;
 }
 
 body {
@@ -29,13 +33,26 @@ body {
 
 .ag-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
 .ag-brand-sq {
-  width: 32px; height: 32px; border-radius: 8px;
-  background: linear-gradient(135deg, var(--gold), #A67C2E);
+  width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
   display: flex; align-items: center; justify-content: center;
   font-size: 13px; color: var(--forest); font-weight: 800;
 }
+.ag-brand-text { display: flex; flex-direction: column; gap: 1px; }
+.ag-brand-title { font-size: 15px; }
+.ag-brand-sub { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.7); }
 
+.ag-header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ag-icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 8px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  text-decoration: none;
+}
 .ag-logout {
+  display: flex; align-items: center; gap: 6px;
   background: rgba(255,255,255,0.1);
   border: 1px solid rgba(255,255,255,0.2);
   color: white;
@@ -45,25 +62,7 @@ body {
   cursor: pointer;
 }
 
-/* ── Onglets (dashboard / profil) ── */
-.ag-tabs {
-  display: flex;
-  gap: 4px;
-  background: white;
-  border-bottom: 1px solid rgba(27,67,50,0.08);
-  padding: 0 20px;
-}
-.ag-tab {
-  padding: 12px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(27,67,50,0.55);
-  text-decoration: none;
-  border-bottom: 2px solid transparent;
-}
-.ag-tab.active { color: var(--forest); border-bottom-color: var(--gold); }
-
-.ag-container { max-width: 960px; margin: 0 auto; padding: 24px 20px 60px; }
+.ag-container { max-width: 960px; margin: 0 auto; padding: 24px 20px 96px; }
 
 /* ── Formulaires (profil) ── */
 .ag-card {
@@ -98,16 +97,27 @@ body {
 
 .ag-scan-btn {
   width: 100%;
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  background: linear-gradient(135deg, var(--gold), #A67C2E);
+  display: flex; align-items: center; gap: 14px; text-align: left;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
   color: var(--forest);
-  font-weight: 700;
-  font-size: 15px;
   padding: 16px;
   border: none;
   border-radius: 14px;
   cursor: pointer;
   margin-bottom: 24px;
+}
+.ag-scan-icon {
+  flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px;
+  background: rgba(255,255,255,0.85);
+  display: flex; align-items: center; justify-content: center;
+}
+.ag-scan-text { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.ag-scan-text strong { font-size: 15px; font-weight: 700; }
+.ag-scan-text span { font-size: 12px; color: rgba(27,67,50,0.75); font-weight: 500; line-height: 1.4; }
+.ag-scan-chevron {
+  flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.85);
+  display: flex; align-items: center; justify-content: center;
 }
 
 .ag-progress-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
@@ -119,14 +129,27 @@ body {
   padding: 18px;
   border: 1px solid rgba(27,67,50,0.08);
 }
-.ag-progress-card h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(27,67,50,0.6); margin-bottom: 10px; }
-.ag-progress-bar-track { height: 8px; background: rgba(27,67,50,0.08); border-radius: 99px; overflow: hidden; margin-bottom: 8px; }
+.ag-plan-head { margin-bottom: 12px; }
+.ag-plan-pill {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  padding: 4px 10px; border-radius: 99px;
+  background: rgba(45,106,79,0.1); color: var(--mid);
+}
+.is-business .ag-plan-pill { background: rgba(37,99,235,0.1); color: var(--biz); }
+.ag-plan-count { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
+.ag-progress-bar-track { height: 6px; background: rgba(27,67,50,0.08); border-radius: 99px; overflow: hidden; margin-bottom: 14px; }
 .ag-progress-bar-fill { height: 100%; background: var(--gold); border-radius: 99px; }
-.ag-progress-meta { display: flex; justify-content: space-between; font-size: 12px; color: rgba(27,67,50,0.6); }
-.ag-progress-reward { font-size: 12px; color: var(--mid); margin-top: 6px; }
+.is-business .ag-progress-bar-fill { background: var(--biz); }
+.ag-plan-foot-label { font-size: 11px; color: rgba(27,67,50,0.5); margin-bottom: 2px; }
+.ag-plan-foot-amount { font-size: 16px; font-weight: 800; color: var(--mid); }
+.is-business .ag-plan-foot-amount { color: var(--biz); }
+.ag-plan-foot-sub { font-size: 11px; color: rgba(27,67,50,0.45); margin-top: 2px; }
 
 .ag-section { margin-bottom: 28px; }
 .ag-section h2 { font-size: 15px; margin-bottom: 12px; }
+.ag-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.ag-section-head h2 { margin-bottom: 0; }
+.ag-section-link { font-size: 12px; font-weight: 600; color: var(--mid); text-decoration: none; white-space: nowrap; }
 
 .ag-list { background: white; border-radius: 14px; border: 1px solid rgba(27,67,50,0.08); overflow: hidden; }
 .ag-list-row {
@@ -137,19 +160,51 @@ body {
 .ag-list-row:last-child { border-bottom: none; }
 .ag-list-empty { padding: 24px 16px; text-align: center; font-size: 13px; color: rgba(27,67,50,0.45); }
 
-.ag-badge { font-size: 11px; padding: 3px 9px; border-radius: 99px; font-weight: 600; }
-.ag-badge-pending { background: rgba(201,168,76,0.15); color: #8a6d1f; }
+.ag-empty-card {
+  background: white; border-radius: 14px; border: 1px solid rgba(27,67,50,0.08);
+  padding: 36px 20px; text-align: center;
+}
+.ag-empty-illu { font-size: 28px; margin-bottom: 10px; opacity: 0.6; }
+.ag-empty-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.ag-empty-sub { font-size: 12px; color: rgba(27,67,50,0.5); }
+
+.ag-badge { font-size: 11px; padding: 3px 9px; border-radius: 99px; font-weight: 600; white-space: nowrap; }
+.ag-badge-pending { background: rgba(180,83,9,0.12); color: var(--warn); }
 .ag-badge-paid { background: rgba(45,106,79,0.15); color: var(--mid); }
 .ag-badge-rejected { background: rgba(200,60,60,0.12); color: #a33; }
-.ag-badge-open { background: rgba(27,67,50,0.08); color: rgba(27,67,50,0.55); }
+.ag-badge-open { background: rgba(45,106,79,0.12); color: var(--mid); }
+.ag-badge-neutral { background: rgba(27,67,50,0.08); color: rgba(27,67,50,0.55); }
 .ag-badge-locked { background: rgba(27,67,50,0.05); color: rgba(27,67,50,0.35); }
 
 /* ── Primes (dashboard.php) ── */
-.ag-bonus-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid rgba(27,67,50,0.06); }
+.ag-bonus-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid rgba(27,67,50,0.06); }
 .ag-bonus-row:last-child { border-bottom: none; }
+.ag-bonus-icon {
+  flex-shrink: 0; width: 32px; height: 32px; border-radius: 9px; font-size: 14px;
+  background: rgba(27,67,50,0.05);
+  display: flex; align-items: center; justify-content: center;
+}
+.ag-bonus-body { flex: 1; min-width: 0; }
+.ag-bonus-side { text-align: right; flex-shrink: 0; }
 .ag-bonus-title { font-size: 13px; font-weight: 600; }
 .ag-bonus-desc { font-size: 12px; color: rgba(27,67,50,0.5); margin-top: 2px; }
-.ag-bonus-amount { font-size: 13px; font-weight: 700; color: var(--mid); white-space: nowrap; }
+.ag-bonus-amount { font-size: 13px; font-weight: 700; color: var(--mid); white-space: nowrap; margin-bottom: 4px; }
+
+/* ── Barre de navigation basse (Accueil / Établissements / Historique / Classement) ── */
+.ag-bottom-nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: flex; background: white; border-top: 1px solid rgba(27,67,50,0.08);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.ag-bnav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 4px 10px; border: none; background: none; cursor: pointer;
+  font-size: 10px; font-weight: 600; color: rgba(27,67,50,0.45);
+  font-family: inherit;
+}
+.ag-bnav-item.active { color: var(--forest); }
+.ag-bnav-item.active svg { color: var(--gold-dark); }
 
 /* ── Modal scan ── */
 .ag-modal-bg {
