@@ -1,4 +1,14 @@
-﻿<?php $base = $base_url ?? rtrim(APP_URL, '/'); ?>
+﻿<?php
+$base = $base_url ?? rtrim(APP_URL, '/');
+
+$proMonthly      = \Services\PlanPricingService::price('pro', 'monthly');
+$proYearly       = \Services\PlanPricingService::price('pro', 'yearly');
+$proYearlyPerMo  = round($proYearly / 12);
+$bizMonthly      = \Services\PlanPricingService::price('business', 'monthly');
+$bizYearly       = \Services\PlanPricingService::price('business', 'yearly');
+$bizYearlyPerMo  = round($bizYearly / 12);
+$fmt = fn($n) => number_format($n, 0, ',', ' ');
+?>
 
 <div class="pricing-page" x-data="pricingPage()">
 
@@ -75,9 +85,9 @@
         <div class="pr-plan-name">Premium</div>
         <p class="pr-plan-tagline">Pour les établissements qui veulent accélérer.</p>
         <div class="pr-price-block">
-          <div class="pr-price"><span x-text="annual ? '7 200' : '9 000'">9 000</span> <small>FCFA</small></div>
+          <div class="pr-price"><span x-text="annual ? '<?= $fmt($proYearlyPerMo) ?>' : '<?= $fmt($proMonthly) ?>'"><?= $fmt($proMonthly) ?></span> <small>FCFA</small></div>
           <div class="pr-price-period">/mois, HT</div>
-          <div class="pr-old-price" x-show="annual">9 000 FCFA/mois sans engagement annuel</div>
+          <div class="pr-old-price" x-show="annual"><?= $fmt($proMonthly) ?> FCFA/mois sans engagement annuel</div>
         </div>
         <div class="pr-divider"></div>
         <ul class="pr-feature-list">
@@ -122,9 +132,9 @@
         <div class="pr-plan-name">Premium+</div>
         <p class="pr-plan-tagline">Pour les groupes hôteliers et gestionnaires multi-sites.</p>
         <div class="pr-price-block">
-          <div class="pr-price"><span x-text="annual ? '16 000' : '20 000'">20 000</span> <small>FCFA</small></div>
+          <div class="pr-price"><span x-text="annual ? '<?= $fmt($bizYearlyPerMo) ?>' : '<?= $fmt($bizMonthly) ?>'"><?= $fmt($bizMonthly) ?></span> <small>FCFA</small></div>
           <div class="pr-price-period">/mois, HT</div>
-          <div class="pr-old-price" x-show="annual">20 000 FCFA/mois sans engagement annuel</div>
+          <div class="pr-old-price" x-show="annual"><?= $fmt($bizMonthly) ?> FCFA/mois sans engagement annuel</div>
         </div>
         <div class="pr-divider"></div>
         <ul class="pr-feature-list">

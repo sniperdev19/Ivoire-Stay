@@ -4,14 +4,14 @@ namespace Controllers;
 
 use Core\{Request, Response, Database, PlanGate, Guard};
 use Models\Establishment;
-use Services\{GeniusPayService, MailService, NotificationService, EstablishmentFreezeService, CommissionService};
+use Services\{GeniusPayService, MailService, NotificationService, EstablishmentFreezeService, CommissionService, PlanPricingService};
 
 class SubscriptionController
 {
     // ─── GET /api/subscriptions/plans ────────────────────────────────────────
     public function plans(Request $req, array $params = []): void
     {
-        Response::success(require BASE_PATH . '/config/plans.php');
+        Response::success(PlanPricingService::effectivePlans());
     }
 
     /**
@@ -219,7 +219,7 @@ class SubscriptionController
             Response::error('Plan invalide');
         }
 
-        $fullAmount = $plans[$plan]['prices'][$billing] ?? 0;
+        $fullAmount = PlanPricingService::price($plan, $billing);
         if ($fullAmount <= 0) Response::error('Montant invalide');
 
         // Crédit de prorata sur le temps restant d'un abonnement payant en cours (upgrade/downgrade/changement de période)

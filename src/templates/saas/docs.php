@@ -1,6 +1,6 @@
 <?php /** @var string $base_url */ if (!isset($base_url)) $base_url = rtrim(APP_URL, "/"); ?>
 <?php
-$plans = require BASE_PATH . '/config/plans.php';
+$plans = \Services\PlanPricingService::effectivePlans();
 
 $featureLabels = [
     'invoices'                => 'Comptabilité — Factures',

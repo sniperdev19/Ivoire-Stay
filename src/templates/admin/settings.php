@@ -106,6 +106,33 @@
         </div>
       </div>
 
+      <!-- Prix des abonnements -->
+      <div style="padding:16px 0;border-bottom:1px solid #F3F4F6;">
+        <div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:2px;">Prix des abonnements</div>
+        <div style="font-size:12px;color:#9CA3AF;margin-bottom:14px;">Montants en FCFA — s'appliquent aux prochains paiements (page /tarifs, checkout, espace hôtelier), jamais aux abonnements déjà payés</div>
+
+        <div style="display:grid;gap:14px;grid-template-columns:1fr 1fr;margin-bottom:14px;">
+          <div>
+            <label class="saas-label">Pro — mensuel</label>
+            <input class="saas-input" type="number" min="1" step="500" x-model.number="settings.plan_price_pro_monthly">
+          </div>
+          <div>
+            <label class="saas-label">Pro — annuel</label>
+            <input class="saas-input" type="number" min="1" step="500" x-model.number="settings.plan_price_pro_yearly">
+          </div>
+        </div>
+        <div style="display:grid;gap:14px;grid-template-columns:1fr 1fr;">
+          <div>
+            <label class="saas-label">Business — mensuel</label>
+            <input class="saas-input" type="number" min="1" step="500" x-model.number="settings.plan_price_business_monthly">
+          </div>
+          <div>
+            <label class="saas-label">Business — annuel</label>
+            <input class="saas-input" type="number" min="1" step="500" x-model.number="settings.plan_price_business_yearly">
+          </div>
+        </div>
+      </div>
+
       <!-- Primes agents commerciaux -->
       <div style="padding:16px 0;">
         <div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:2px;">Primes agents commerciaux</div>

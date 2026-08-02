@@ -3,6 +3,7 @@
 namespace Controllers;
 
 use Core\{Request, Response, Settings};
+use Services\PlanPricingService;
 
 /**
  * Réglages plateforme (superadmin uniquement) — /admin/settings, section
@@ -18,6 +19,12 @@ class AdminSettingsController
         'bonus_fast_conversion_amount', 'bonus_monthly_top_amount',
     ];
 
+    /** Prix des plans payants : jamais 0 (contrairement aux primes, qui peuvent l'être pour se désactiver). */
+    private const PRICE_KEYS = [
+        'plan_price_pro_monthly', 'plan_price_pro_yearly',
+        'plan_price_business_monthly', 'plan_price_business_yearly',
+    ];
+
     private const INT_KEYS = ['bonus_first_to_5_target', 'bonus_fast_conversion_days'];
 
     public function index(Request $req, array $params = []): void
@@ -29,6 +36,11 @@ class AdminSettingsController
             'agents_enabled' => AGENTS_ENABLED,
             'contact_email'  => Settings::get('contact_email', 'afristay24@gmail.com'),
             'contact_phone'  => Settings::get('contact_phone', '+225 01 61 95 90 80'),
+
+            'plan_price_pro_monthly'      => PlanPricingService::price('pro', 'monthly'),
+            'plan_price_pro_yearly'       => PlanPricingService::price('pro', 'yearly'),
+            'plan_price_business_monthly' => PlanPricingService::price('business', 'monthly'),
+            'plan_price_business_yearly'  => PlanPricingService::price('business', 'yearly'),
 
             'agent_reward_pro'      => Settings::getFloat('agent_reward_pro', (float) ($plans['pro']['agent_reward_per_5'] ?? 0)),
             'agent_reward_business' => Settings::getFloat('agent_reward_business', (float) ($plans['business']['agent_reward_per_5'] ?? 0)),
@@ -66,6 +78,14 @@ class AdminSettingsController
             if (!isset($data[$key])) continue;
             if (!is_numeric($data[$key]) || (float) $data[$key] < 0) {
                 Response::error("Montant invalide : {$key}");
+            }
+            Settings::set($key, (string) (float) $data[$key]);
+        }
+
+        foreach (self::PRICE_KEYS as $key) {
+            if (!isset($data[$key])) continue;
+            if (!is_numeric($data[$key]) || (float) $data[$key] <= 0) {
+                Response::error("Prix invalide : {$key}");
             }
             Settings::set($key, (string) (float) $data[$key]);
         }
