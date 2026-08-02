@@ -176,8 +176,30 @@ class SubscriptionController
     }
 
     /**
+     * Nouvelle échéance après paiement confirmé. Deux cas :
+     * - Renouvellement (même plan que celui déjà enregistré, cf. `establishments.plan`,
+     *   qu'il soit encore valide ou déjà expiré) : le nouveau mois/année s'ajoute À LA
+     *   SUITE de l'échéance actuelle si elle n'est pas encore passée ("payer le mois
+     *   prochain", pas repartir de zéro) — sinon (déjà expiré) repart d'aujourd'hui.
+     * - Changement de plan (upgrade/downgrade) : prend effet immédiatement, comme avant
+     *   — l'échéance repart toujours d'aujourd'hui, le crédit de prorata (voir
+     *   prorationCredit ci-dessous) compense le temps non consommé de l'ancien plan.
+     */
+    private function renewedExpiry(array $estab, string $plan, int $months): string
+    {
+        $base = time();
+        if (($estab['plan'] ?? null) === $plan && !empty($estab['plan_expires_at'])) {
+            $currentExpiry = strtotime($estab['plan_expires_at']);
+            if ($currentExpiry > $base) $base = $currentExpiry;
+        }
+        return date('Y-m-d H:i:s', strtotime("+{$months} months", $base));
+    }
+
+    /**
      * Crédit de prorata (en FCFA) sur le temps restant de l'abonnement payant en cours,
      * à déduire du prochain paiement lors d'un changement de plan/période en cours de cycle.
+     * Ne s'applique PAS à un renouvellement du même plan (voir renewedExpiry ci-dessus) :
+     * le temps restant n'est alors jamais sacrifié, juste prolongé — pas de "prorata" à créditer.
      */
     private function prorationCredit(array $estab): float
     {
@@ -222,9 +244,11 @@ class SubscriptionController
         $fullAmount = PlanPricingService::price($plan, $billing);
         if ($fullAmount <= 0) Response::error('Montant invalide');
 
-        // Crédit de prorata sur le temps restant d'un abonnement payant en cours (upgrade/downgrade/changement de période)
-        $credit = $this->prorationCredit($estab);
-        $amount = max(0, $fullAmount - $credit);
+        // Renouvellement du même plan : prix plein, le temps restant est prolongé plutôt
+        // que sacrifié (voir renewedExpiry). Changement de plan : crédit de prorata comme avant.
+        $isRenewal = ($plan === ($estab['plan'] ?? null));
+        $credit    = $isRenewal ? 0.0 : $this->prorationCredit($estab);
+        $amount    = max(0, $fullAmount - $credit);
 
         $reference = 'SYNC-' . $estab['id'] . '-' . strtoupper($plan) . '-' . time();
 
@@ -239,7 +263,7 @@ class SubscriptionController
 
             $months    = $billing === 'yearly' ? 12 : 1;
             $startedAt = date('Y-m-d H:i:s');
-            $expiresAt = date('Y-m-d H:i:s', strtotime("+$months months"));
+            $expiresAt = $this->renewedExpiry($estab, $plan, $months);
 
             Database::query(
                 "INSERT INTO subscriptions (establishment_id, plan, billing, amount, status, started_at, expires_at)
@@ -341,18 +365,19 @@ class SubscriptionController
         $internalStatus = GeniusPayService::mapStatus($txStatus ?: $gpEvent);
 
         if ($internalStatus === 'active') {
-            $months   = $sub['billing'] === 'yearly' ? 12 : 1;
+            $months    = $sub['billing'] === 'yearly' ? 12 : 1;
             $startedAt = date('Y-m-d H:i:s');
-            $expiresAt = date('Y-m-d H:i:s', strtotime("+$months months"));
+
+            $estabRow  = Database::query(
+                "SELECT plan, plan_expires_at FROM establishments WHERE id = ?", [$sub['establishment_id']]
+            )->fetch();
+            $prevPlan  = $estabRow['plan'] ?? null;
+            $expiresAt = $this->renewedExpiry($estabRow ?: [], $sub['plan'], $months);
 
             Database::query(
                 "UPDATE subscriptions SET status = 'active', started_at = ?, expires_at = ? WHERE id = ?",
                 [$startedAt, $expiresAt, $sub['id']]
             );
-
-            $prevPlan = Database::query(
-                "SELECT plan FROM establishments WHERE id = ?", [$sub['establishment_id']]
-            )->fetchColumn();
 
             Database::query(
                 "UPDATE establishments SET plan = ?, plan_expires_at = ? WHERE id = ?",
@@ -438,16 +463,17 @@ class SubscriptionController
             if ($internalStatus === 'active') {
                 $months    = $sub['billing'] === 'yearly' ? 12 : 1;
                 $startedAt = date('Y-m-d H:i:s');
-                $expiresAt = date('Y-m-d H:i:s', strtotime("+$months months"));
+
+                $estabRow  = Database::query(
+                    "SELECT plan, plan_expires_at FROM establishments WHERE id = ?", [$sub['establishment_id']]
+                )->fetch();
+                $prevPlan  = $estabRow['plan'] ?? null;
+                $expiresAt = $this->renewedExpiry($estabRow ?: [], $sub['plan'], $months);
 
                 Database::query(
                     "UPDATE subscriptions SET status = 'active', started_at = ?, expires_at = ? WHERE id = ?",
                     [$startedAt, $expiresAt, $sub['id']]
                 );
-
-                $prevPlan = Database::query(
-                    "SELECT plan FROM establishments WHERE id = ?", [$sub['establishment_id']]
-                )->fetchColumn();
 
                 Database::query(
                     "UPDATE establishments SET plan = ?, plan_expires_at = ? WHERE id = ?",

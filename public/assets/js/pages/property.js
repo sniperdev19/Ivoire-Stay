@@ -175,7 +175,7 @@ function propertyPage(apiBase, propertyId) {
       return this.apiBase + '/' + (clean.startsWith('assets/') ? clean : 'assets/' + clean);
     },
 
-    /* Galerie établissement : jusqu'à 3 photos (établissement_photos), repli sur cover_photo */
+    /* Galerie établissement : jusqu'à 10 photos (establishment_photos), repli sur cover_photo */
     get galleryPhotos() {
       const list = Array.isArray(this.property?.photos) ? this.property.photos.map(p => p.file_path) : [];
       if (list.length) return list;
@@ -193,7 +193,7 @@ function propertyPage(apiBase, propertyId) {
       return room?.cover_photo ? [room.cover_photo] : [];
     },
 
-    /* Défilement tactile (swipe) — galerie héro de l'établissement */
+    /* Défilement tactile (swipe) — galerie héro ET lightbox de l'établissement (même geste). */
     heroTouchStartX: 0,
     swipeHero(e) {
       const len = this.galleryPhotos.length;
@@ -201,6 +201,24 @@ function propertyPage(apiBase, propertyId) {
       const dx = e.changedTouches[0].clientX - this.heroTouchStartX;
       if (Math.abs(dx) < 40) return;
       this.activePhoto = dx < 0 ? (this.activePhoto + 1) % len : (this.activePhoto - 1 + len) % len;
+    },
+
+    /* Lightbox plein écran (galerie photos dédiée) — ouverte depuis le bouton
+       héro "X photos" ou en cliquant une vignette de la section Galerie. */
+    openLightbox(idx) {
+      this.activePhoto = idx;
+      this.lightboxOpen = true;
+    },
+    closeLightbox() {
+      this.lightboxOpen = false;
+    },
+    nextPhoto() {
+      const len = this.galleryPhotos.length;
+      if (len) this.activePhoto = (this.activePhoto + 1) % len;
+    },
+    prevPhoto() {
+      const len = this.galleryPhotos.length;
+      if (len) this.activePhoto = (this.activePhoto - 1 + len) % len;
     },
 
     bookRoom(room) {

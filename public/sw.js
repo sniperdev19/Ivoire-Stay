@@ -110,38 +110,51 @@ self.addEventListener('fetch', (event) => {
   if (new URL(req.url).origin !== self.location.origin) return; // pas de cross-origin (CDN, Google Fonts)
 
   event.respondWith((async () => {
-    try {
-      const fresh = await fetch(req);
-      // Met en cache les réponses OK (hors API JSON pour rester frais)
-      if (fresh && fresh.ok && !req.url.includes('/api/')) {
-        const cache = await caches.open(CACHE);
-        cache.put(req, fresh.clone());
-      }
-      return fresh;
-    } catch (e) {
-      const cached = await caches.match(req);
-      if (cached) return cached;
-      if (req.mode === 'navigate') {
-        // Repli navigation vers /login précisément : page en cache.
-        if (req.url.split('?')[0] === LOGIN_URL) {
-          const fallback = await caches.match('login');
-          if (fallback) return fallback;
+    // Jusqu'à 2 tentatives réseau avant de considérer la requête en échec —
+    // absorbe les micro-coupures réseau (bascule d'antenne, wifi ↔ 4G...).
+    // Sans ça, une ressource jamais encore mise en cache (typiquement le CSS
+    // lors de la toute première visite d'un appareil, cache vide) échouait
+    // intégralement au moindre accroc réseau au lieu de simplement réessayer
+    // — d'où des pages qui s'affichaient sans style et qu'un rechargement
+    // manuel suffisait à corriger (l'utilisateur refaisait à la main ce que
+    // cette boucle fait maintenant automatiquement).
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const fresh = await fetch(req);
+        // Met en cache les réponses OK (hors API JSON pour rester frais)
+        if (fresh && fresh.ok && !req.url.includes('/api/')) {
+          const cache = await caches.open(CACHE);
+          cache.put(req, fresh.clone());
         }
-        // Toute autre page jamais mise en cache (ex. première visite hors
-        // ligne d'une page SaaS) : ne PAS servir le shell login — un
-        // utilisateur déjà connecté croirait avoir été déconnecté. On sert
-        // une page neutre invitant à réessayer une fois reconnecté.
-        return new Response(OFFLINE_HTML, {
-          status: 200,
-          headers: { 'Content-Type': 'text/html; charset=utf-8' },
-        });
+        return fresh;
+      } catch (e) {
+        if (attempt === 1) continue; // micro-coupure probable : on retente une fois immédiatement
       }
-      // Ne jamais rejeter la promesse de respondWith() (Chrome logue alors un
-      // "Uncaught (in promise)" bruyant en console pour chaque requête
-      // échouée) : on résout avec une Response de type erreur réseau, qui
-      // fait échouer le fetch() côté page exactement pareil (TypeError),
-      // sans le bruit console côté Service Worker.
-      return Response.error();
     }
+
+    // Les deux tentatives réseau ont échoué : repli hors-ligne habituel.
+    const cached = await caches.match(req);
+    if (cached) return cached;
+    if (req.mode === 'navigate') {
+      // Repli navigation vers /login précisément : page en cache.
+      if (req.url.split('?')[0] === LOGIN_URL) {
+        const fallback = await caches.match('login');
+        if (fallback) return fallback;
+      }
+      // Toute autre page jamais mise en cache (ex. première visite hors
+      // ligne d'une page SaaS) : ne PAS servir le shell login — un
+      // utilisateur déjà connecté croirait avoir été déconnecté. On sert
+      // une page neutre invitant à réessayer une fois reconnecté.
+      return new Response(OFFLINE_HTML, {
+        status: 200,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      });
+    }
+    // Ne jamais rejeter la promesse de respondWith() (Chrome logue alors un
+    // "Uncaught (in promise)" bruyant en console pour chaque requête
+    // échouée) : on résout avec une Response de type erreur réseau, qui
+    // fait échouer le fetch() côté page exactement pareil (TypeError),
+    // sans le bruit console côté Service Worker.
+    return Response.error();
   })());
 });

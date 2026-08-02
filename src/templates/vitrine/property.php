@@ -46,12 +46,10 @@ $pid  = (int) ($property_id ?? 0);
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
         Retour aux résultats
       </a>
-      <div x-show="galleryPhotos.length > 1" class="prop-hero-thumbs">
-        <template x-for="(photo, idx) in galleryPhotos" :key="idx">
-          <button type="button" class="prop-hero-thumb" :class="activePhoto === idx ? 'prop-hero-thumb-active' : ''"
-                  @click="activePhoto = idx" :style="'background-image:url(' + photoUrl(photo) + ')'"></button>
-        </template>
-      </div>
+      <button type="button" x-show="galleryPhotos.length > 0" class="prop-hero-photos-btn" @click="openLightbox(activePhoto)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span x-text="galleryPhotos.length + ' photo' + (galleryPhotos.length > 1 ? 's' : '')"></span>
+      </button>
       <div class="prop-hero-content">
         <div class="prop-hero-left">
           <div class="prop-hero-rule"></div>
@@ -109,6 +107,44 @@ $pid  = (int) ($property_id ?? 0);
       <div class="prop-stat">
         <span class="prop-stat-label">Annulation gratuite</span>
         <div class="prop-stat-value" style="font-size:20px;padding-top:4px;">Sous 24h</div>
+      </div>
+    </div>
+
+    <!-- GALERIE PHOTOS (catalogue dédié — jusqu'à 10 photos, cf. establishment_photos) -->
+    <section class="prop-gallery" x-show="galleryPhotos.length > 0">
+      <div class="prop-gallery-header">
+        <div class="prop-gallery-rule"></div>
+        <span class="prop-gallery-tag">Galerie photos</span>
+        <div class="prop-gallery-rule"></div>
+      </div>
+      <div class="prop-gallery-grid">
+        <template x-for="(photo, idx) in galleryPhotos" :key="idx">
+          <button type="button" class="prop-gallery-thumb" @click="openLightbox(idx)"
+                  :style="'background-image:url(' + photoUrl(photo) + ')'"
+                  :aria-label="'Voir la photo ' + (idx + 1)"></button>
+        </template>
+      </div>
+    </section>
+
+    <!-- LIGHTBOX PLEIN ÉCRAN -->
+    <div x-show="lightboxOpen" x-cloak class="prop-lightbox" @click.self="closeLightbox()"
+         @keydown.escape.window="closeLightbox()"
+         @keydown.arrow-right.window="lightboxOpen && nextPhoto()"
+         @keydown.arrow-left.window="lightboxOpen && prevPhoto()">
+      <button type="button" class="prop-lightbox-close" @click="closeLightbox()" aria-label="Fermer">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      <button type="button" x-show="galleryPhotos.length > 1" class="prop-lightbox-arrow prop-lightbox-prev" @click="prevPhoto()" aria-label="Photo précédente">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <div class="prop-lightbox-stage" @touchstart.passive="heroTouchStartX = $event.touches[0].clientX" @touchend="swipeHero($event)">
+        <img :src="photoUrl(heroPhoto)" alt="" class="prop-lightbox-img">
+      </div>
+      <button type="button" x-show="galleryPhotos.length > 1" class="prop-lightbox-arrow prop-lightbox-next" @click="nextPhoto()" aria-label="Photo suivante">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </button>
+      <div class="prop-lightbox-counter" x-show="galleryPhotos.length > 1">
+        <span x-text="(activePhoto + 1) + ' / ' + galleryPhotos.length"></span>
       </div>
     </div>
 

@@ -151,7 +151,7 @@ class EstablishController
         $count = (int) Database::query(
             "SELECT COUNT(*) FROM establishment_photos WHERE establishment_id = ?", [$id]
         )->fetchColumn();
-        if ($count >= 3) Response::error('Maximum 3 photos par établissement');
+        if ($count >= 10) Response::error('Maximum 10 photos par établissement');
 
         $file = $req->file('photo');
         if (!$file) Response::error('Aucun fichier envoyé');
