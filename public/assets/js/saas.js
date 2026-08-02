@@ -172,7 +172,7 @@ function saasLayout(baseUrl) {
           this.verificationError = data.message || "Impossible d'envoyer l'email pour le moment.";
         }
       } catch {
-        this.verificationError = 'Erreur réseau — réessayez.';
+        this.verificationError = 'Erreur réseau, réessayez.';
       } finally {
         this.resendingVerification = false;
       }

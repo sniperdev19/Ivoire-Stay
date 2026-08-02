@@ -74,7 +74,7 @@
 
   <div style="margin-bottom:12px;">
     <h2 style="font-size:16px;font-weight:700;color:#111827;margin:0;">Primes décernées</h2>
-    <p style="margin:4px 0 0;color:#9CA3AF;font-size:13px;">Premier arrivé, premier client Business, conversion rapide, top du mois — cf. config/agent_bonuses.php</p>
+    <p style="margin:4px 0 0;color:#9CA3AF;font-size:13px;">Premier arrivé, premier client Business, conversion rapide, top du mois.</p>
   </div>
 
   <div class="saas-card" style="padding:0;overflow:hidden;">

@@ -55,7 +55,7 @@ class AgentController
         }
 
         if (!$this->isValidCiPhone((string) $data['numero'])) {
-            Response::error('Numéro invalide — 10 chiffres commençant par 01, 05 ou 07');
+            Response::error('Numéro invalide : 10 chiffres commençant par 01, 05 ou 07');
         }
         if (!in_array($data['operateur_money'], self::OPERATORS, true)) {
             Response::error('Opérateur Mobile Money invalide');
@@ -189,7 +189,7 @@ class AgentController
         if ($nom === '') Response::error('Le nom est requis');
         if (mb_strlen($nom) > 150) Response::error('Nom trop long (150 caractères max)');
         if (!$this->isValidCiPhone($numero)) {
-            Response::error('Numéro invalide — 10 chiffres commençant par 01, 05 ou 07');
+            Response::error('Numéro invalide : 10 chiffres commençant par 01, 05 ou 07');
         }
         if (!in_array($operateur, self::OPERATORS, true)) {
             Response::error('Opérateur Mobile Money invalide');

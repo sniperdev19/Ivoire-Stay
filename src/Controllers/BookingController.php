@@ -22,7 +22,7 @@ class BookingController
     {
         $estab = Establishment::find($estabId);
         if (PlanGate::isHardFrozen($estab ?? [])) {
-            Response::error("Cet établissement est totalement gelé (délai de grâce dépassé) — plus aucune action possible. Mettez à niveau votre abonnement pour le réactiver.", 403);
+            Response::error("Cet établissement est totalement gelé (délai de grâce dépassé), plus aucune action possible. Mettez à niveau votre abonnement pour le réactiver.", 403);
         }
     }
 
@@ -65,7 +65,7 @@ class BookingController
         // le owner n'a pas remis son abonnement à niveau.
         $estab = Establishment::find($room['establishment_id']);
         if (PlanGate::isFrozen($estab ?? [])) {
-            Response::error("Cet établissement dépasse la limite d'établissements de votre plan actuel — impossible d'ajouter une nouvelle réservation. Mettez à niveau votre abonnement pour le réactiver.", 403);
+            Response::error("Cet établissement dépasse la limite d'établissements de votre plan actuel, impossible d'ajouter une nouvelle réservation. Mettez à niveau votre abonnement pour le réactiver.", 403);
         }
 
         if ($bookingType === 'passage') {

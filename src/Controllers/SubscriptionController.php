@@ -107,7 +107,7 @@ class SubscriptionController
         $this->notifyPlanChange($estab, $currentPlan, 'starter');
         EstablishmentFreezeService::recompute((int) $estab['owner_id']);
 
-        Response::success(null, 'Abonnement annulé — vous êtes repassé au plan Starter');
+        Response::success(null, 'Abonnement annulé. Vous êtes repassé au plan Starter.');
     }
 
     // ─── POST /api/subscriptions/downgrade  { plan: 'starter'|'pro' } ────────
@@ -123,7 +123,7 @@ class SubscriptionController
 
         if (!isset($plans[$target])) Response::error('Plan invalide');
         if ($this->planRank($target) >= $this->planRank($currentPlan)) {
-            Response::error("Ce n'est pas une rétrogradation — utilisez la page d'abonnement pour mettre à niveau");
+            Response::error("Ce n'est pas une rétrogradation, utilisez la page d'abonnement pour mettre à niveau");
         }
 
         Database::query(
@@ -259,7 +259,7 @@ class SubscriptionController
             }
             EstablishmentFreezeService::recompute((int) $estab['owner_id']);
 
-            Response::success(['activated' => true], 'Abonnement activé — entièrement couvert par votre crédit de prorata');
+            Response::success(['activated' => true], 'Abonnement activé, entièrement couvert par votre crédit de prorata');
             return;
         }
 

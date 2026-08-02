@@ -145,7 +145,7 @@
           <!-- Taux TVA & montant HT pour création manuelle -->
           <div style="display:grid;grid-template-columns:1fr 120px;gap:12px;">
             <div x-show="!editing">
-              <label class="saas-label">Montant HT (optionnel — calculé auto)</label>
+              <label class="saas-label">Montant HT (optionnel, calculé automatiquement)</label>
               <input class="saas-input" type="number" x-model.number="form.amount_ht" placeholder="Laissez vide pour utiliser le montant de la réservation" />
             </div>
             <div x-show="editing">

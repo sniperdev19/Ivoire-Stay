@@ -9,6 +9,8 @@ function adminSettingsPage(baseUrl) {
   return {
     ...saasHelpers,
 
+    activeTab: 'profile',
+
     async init() {
       this.profileForm = { name: this.currentUser.name || '', phone: this.currentUser.phone || '' };
       await Promise.all([this.loadBackups(), this.loadPlatformSettings()]);
@@ -153,11 +155,28 @@ function adminSettingsPage(baseUrl) {
       }
     },
 
-    // ── Réglages plateforme ─────────────────────────────────────────────────
+    // ── Réglages plateforme (carrousel, même pattern que l'onglet Général du SaaS) ──
     settingsLoading: true,
     settingsSaving: false,
     settingsError: null,
     settings: {},
+    settingsCardIndex: 0,
+    settingsSections: ['agents', 'contact', 'prices', 'bonuses'],
+    settingsSectionLabels: {
+      agents:  'Agents commerciaux',
+      contact: 'Coordonnées de contact',
+      prices:  'Prix des abonnements',
+      bonuses: 'Primes agents commerciaux',
+    },
+
+    // Prix annuel = mensuel × 12 avec 20% de remise — même taux que le badge
+    // "–20%" affiché sur /tarifs (vitrine/pricing.php) : le champ annuel est
+    // désactivé côté template, jamais saisi à la main, pour ne jamais dériver
+    // de ce taux annoncé publiquement.
+    syncYearlyPrice(plan) {
+      const monthly = Number(this.settings['plan_price_' + plan + '_monthly']) || 0;
+      this.settings['plan_price_' + plan + '_yearly'] = Math.round(monthly * 12 * 0.8);
+    },
 
     async loadPlatformSettings() {
       this.settingsLoading = true;

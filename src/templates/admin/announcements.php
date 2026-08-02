@@ -4,7 +4,7 @@
 
   <div style="margin-bottom:20px;">
     <h1 style="font-size:22px;font-weight:700;color:#111827;margin:0;">Annonces vitrine</h1>
-    <p style="margin:6px 0 0;color:#9CA3AF;">Bandeau affiché en haut de la vitrine publique — une seule annonce active à la fois est affichée.</p>
+    <p style="margin:6px 0 0;color:#9CA3AF;">Bandeau affiché en haut de la vitrine publique. Une seule annonce active à la fois est affichée.</p>
   </div>
 
   <div class="saas-card" style="max-width:640px;margin-bottom:24px;">

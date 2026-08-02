@@ -108,7 +108,7 @@ class RoomController
         // plan effectif (voir EstablishmentFreezeService) — plus d'ajout tant que
         // le owner n'a pas remis son abonnement à niveau.
         if (PlanGate::isFrozen($estab ?? [])) {
-            Response::error("Cet établissement dépasse la limite d'établissements de votre plan actuel — impossible d'ajouter une nouvelle chambre. Mettez à niveau votre abonnement pour le réactiver.", 403);
+            Response::error("Cet établissement dépasse la limite d'établissements de votre plan actuel, impossible d'ajouter une nouvelle chambre. Mettez à niveau votre abonnement pour le réactiver.", 403);
         }
 
         $currentCount = (int) Database::query("SELECT COUNT(*) FROM rooms WHERE establishment_id = ?", [$estabId])->fetchColumn();

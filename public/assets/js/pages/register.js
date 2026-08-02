@@ -81,7 +81,7 @@ function registerPage(baseUrl) {
       if (!this.form.name.trim())                                   return void (this.error = 'Nom complet requis.');
       if (!this.form.email.match(/^[^@]+@[^@]+\.[^@]+$/))          return void (this.error = 'Email invalide.');
       if (!this.form.phone.trim())                                   return void (this.error = 'Téléphone requis.');
-      if (!this.isValidCiPhone(this.form.phone))                    return void (this.error = 'Téléphone invalide — 10 chiffres commençant par 01, 05 ou 07.');
+      if (!this.isValidCiPhone(this.form.phone))                    return void (this.error = 'Téléphone invalide : 10 chiffres commençant par 01, 05 ou 07.');
       if (this.form.password.length < 8)                            return void (this.error = 'Mot de passe : 8 caractères minimum.');
       if (!/[a-zA-Z]/.test(this.form.password) || !/\d/.test(this.form.password))
                                                                        return void (this.error = 'Mot de passe : au moins une lettre et un chiffre.');
@@ -92,7 +92,7 @@ function registerPage(baseUrl) {
     async submit() {
       this.error = null;
       if (!this.form.establishment_name.trim()) { this.error = "Nom de l'établissement requis."; return; }
-      if (!this.form.establishment_city.trim()) { this.error = "Ville requise — sans elle, votre établissement n'apparaîtra pas dans les recherches."; return; }
+      if (!this.form.establishment_city.trim()) { this.error = "Ville requise, sans elle votre établissement n'apparaîtra pas dans les recherches."; return; }
       this.loading = true;
       try {
         const res  = await fetch(base + '/api/auth/register', {
