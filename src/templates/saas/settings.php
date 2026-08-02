@@ -317,7 +317,7 @@
 
       <!-- Carte : Photos (auto-enregistrées à l'ajout/suppression) -->
       <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'photos'">
-        <div class="stg-group-label">Photos <span class="stg-label-optional">(3 maximum)</span></div>
+        <div class="stg-group-label">Photos <span class="stg-label-optional">(10 maximum)</span></div>
         <div class="stg-photo-grid">
           <template x-for="photo in photos" :key="photo.id">
             <div class="stg-photo-slot stg-photo-filled">
@@ -326,7 +326,7 @@
               <button type="button" class="stg-photo-remove" @click="removePhoto(photo.id)" :disabled="photoDeleting === photo.id" title="Supprimer">✕</button>
             </div>
           </template>
-          <template x-if="photos.length < 3">
+          <template x-if="photos.length < 10">
             <label class="stg-photo-slot stg-photo-empty" :class="photoUploading ? 'stg-photo-loading' : ''">
               <input type="file" accept="image/jpeg,image/png,image/webp" style="display:none;" @change="addPhoto($event)" :disabled="photoUploading">
               <div x-show="photoUploading" class="stg-btn-spinner"></div>
@@ -499,10 +499,18 @@
             <template x-if="subscription?.plan === p">
               <div>
                 <div class="stg-plan-active">✓ Plan actif</div>
-                <div x-show="p !== 'starter'" style="display:flex;gap:8px;margin-top:10px;">
-                  <button type="button" x-show="p === 'business'" class="btn-saas-secondary" style="flex:1;font-size:12px;padding:8px 10px;" :disabled="planActionLoading" @click="downgradeSubscription('pro')">Rétrograder en Pro</button>
-                  <button type="button" class="btn-saas-secondary" style="flex:1;font-size:12px;padding:8px 10px;color:#DC2626;" :disabled="planActionLoading" @click="cancelSubscription()">Annuler l'abonnement</button>
-                </div>
+                <template x-if="p !== 'starter'">
+                  <div style="margin-top:10px;">
+                    <button type="button" class="btn-saas-primary" style="width:100%;"
+                            @click="window.location='<?= $base_url ?>/saas/checkout?plan=' + p">
+                      Renouveler mon abonnement →
+                    </button>
+                    <div style="display:flex;gap:8px;margin-top:8px;">
+                      <button type="button" x-show="p === 'business'" class="btn-saas-secondary" style="flex:1;font-size:12px;padding:8px 10px;" :disabled="planActionLoading" @click="downgradeSubscription('pro')">Rétrograder en Pro</button>
+                      <button type="button" class="btn-saas-secondary" style="flex:1;font-size:12px;padding:8px 10px;color:#DC2626;" :disabled="planActionLoading" @click="cancelSubscription()">Annuler l'abonnement</button>
+                    </div>
+                  </div>
+                </template>
               </div>
             </template>
           </div>

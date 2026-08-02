@@ -13,7 +13,8 @@ function checkoutPage(baseUrl) {
 
     loading: false,
     error: null,
-    prorationCredit: 0,
+    rawProrationCredit: 0,
+    currentPlan: null,
 
     plans: {
       pro: {
@@ -46,6 +47,11 @@ function checkoutPage(baseUrl) {
 
     get current()     { return this.plans[this.plan] || this.plans.pro; },
     get fullPrice()   { return this.current.prices[this.billing]; },
+    // Renouvellement du même plan que celui déjà actif : prix plein, comme
+    // SubscriptionController::initiate() côté serveur (le temps restant est
+    // prolongé plutôt que sacrifié, donc rien à créditer) — ne montrer/déduire
+    // le crédit de prorata que lors d'un véritable changement de plan.
+    get prorationCredit() { return this.plan === this.currentPlan ? 0 : this.rawProrationCredit; },
     get total()       { return Math.max(0, this.fullPrice - this.prorationCredit); },
     get monthlyEq()   { return this.current.monthlyEq[this.billing]; },
     get periodLabel() {
@@ -76,9 +82,12 @@ function checkoutPage(baseUrl) {
       try {
         const res  = await fetch(this.api + '/api/subscriptions/status', { headers: { Authorization: 'Bearer ' + this.token } });
         const data = await res.json();
-        if (data.success) this.prorationCredit = Number(data.data?.proration_credit) || 0;
+        if (data.success) {
+          this.rawProrationCredit = Number(data.data?.proration_credit) || 0;
+          this.currentPlan = data.data?.plan || null;
+        }
       } catch (e) {
-        this.prorationCredit = 0;
+        this.rawProrationCredit = 0;
       }
 
       // Prix effectifs (Core\Settings, /admin/settings) — remplace les montants
