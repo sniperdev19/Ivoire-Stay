@@ -77,7 +77,7 @@
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #F3F4F6;">
         <div>
           <div style="font-size:13px;font-weight:600;color:#111827;">Agents commerciaux</div>
-          <div style="font-size:12px;color:#9CA3AF;margin-top:2px;">Inscription, connexion et scan QR — coupe toute la fonctionnalité si désactivé</div>
+          <div style="font-size:12px;color:#9CA3AF;margin-top:2px;">Inscription, connexion et scan QR. Coupe toute la fonctionnalité si désactivé.</div>
         </div>
         <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;">
           <input type="checkbox" x-model="settings.agents_enabled" style="opacity:0;width:0;height:0;">
@@ -109,25 +109,25 @@
       <!-- Prix des abonnements -->
       <div style="padding:16px 0;border-bottom:1px solid #F3F4F6;">
         <div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:2px;">Prix des abonnements</div>
-        <div style="font-size:12px;color:#9CA3AF;margin-bottom:14px;">Montants en FCFA — s'appliquent aux prochains paiements (page /tarifs, checkout, espace hôtelier), jamais aux abonnements déjà payés</div>
+        <div style="font-size:12px;color:#9CA3AF;margin-bottom:14px;">Montants en FCFA. S'appliquent aux prochains paiements (page /tarifs, checkout, espace hôtelier), jamais aux abonnements déjà payés.</div>
 
         <div style="display:grid;gap:14px;grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div>
-            <label class="saas-label">Pro — mensuel</label>
+            <label class="saas-label">Prix mensuel Pro</label>
             <input class="saas-input" type="number" min="1" step="500" x-model.number="settings.plan_price_pro_monthly">
           </div>
           <div>
-            <label class="saas-label">Pro — annuel</label>
+            <label class="saas-label">Prix annuel Pro</label>
             <input class="saas-input" type="number" min="1" step="500" x-model.number="settings.plan_price_pro_yearly">
           </div>
         </div>
         <div style="display:grid;gap:14px;grid-template-columns:1fr 1fr;">
           <div>
-            <label class="saas-label">Business — mensuel</label>
+            <label class="saas-label">Prix mensuel Business</label>
             <input class="saas-input" type="number" min="1" step="500" x-model.number="settings.plan_price_business_monthly">
           </div>
           <div>
-            <label class="saas-label">Business — annuel</label>
+            <label class="saas-label">Prix annuel Business</label>
             <input class="saas-input" type="number" min="1" step="500" x-model.number="settings.plan_price_business_yearly">
           </div>
         </div>
@@ -136,26 +136,26 @@
       <!-- Primes agents commerciaux -->
       <div style="padding:16px 0;">
         <div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:2px;">Primes agents commerciaux</div>
-        <div style="font-size:12px;color:#9CA3AF;margin-bottom:14px;">Montants en FCFA — s'appliquent aux prochains versements, jamais rétroactivement</div>
+        <div style="font-size:12px;color:#9CA3AF;margin-bottom:14px;">Montants en FCFA. S'appliquent aux prochains versements, jamais rétroactivement.</div>
 
         <div style="display:grid;gap:14px;grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div>
-            <label class="saas-label">Forfait tous les 5 abonnements — Pro</label>
+            <label class="saas-label">Forfait Pro (tous les 5 abonnements)</label>
             <input class="saas-input" type="number" min="0" step="500" x-model.number="settings.agent_reward_pro">
           </div>
           <div>
-            <label class="saas-label">Forfait tous les 5 abonnements — Business</label>
+            <label class="saas-label">Forfait Business (tous les 5 abonnements)</label>
             <input class="saas-input" type="number" min="0" step="500" x-model.number="settings.agent_reward_business">
           </div>
         </div>
 
         <div style="display:grid;gap:14px;grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div>
-            <label class="saas-label">Prime « premier arrivé » — montant</label>
+            <label class="saas-label">Prime « premier arrivé » : montant</label>
             <input class="saas-input" type="number" min="0" step="500" x-model.number="settings.bonus_first_to_5_amount">
           </div>
           <div>
-            <label class="saas-label">Prime « premier arrivé » — établissements requis</label>
+            <label class="saas-label">Prime « premier arrivé » : établissements requis</label>
             <input class="saas-input" type="number" min="1" step="1" x-model.number="settings.bonus_first_to_5_target">
           </div>
         </div>
@@ -173,11 +173,11 @@
 
         <div style="display:grid;gap:14px;grid-template-columns:1fr 1fr;">
           <div>
-            <label class="saas-label">Prime « conversion rapide » — montant</label>
+            <label class="saas-label">Prime « conversion rapide » : montant</label>
             <input class="saas-input" type="number" min="0" step="500" x-model.number="settings.bonus_fast_conversion_amount">
           </div>
           <div>
-            <label class="saas-label">Prime « conversion rapide » — délai (jours)</label>
+            <label class="saas-label">Prime « conversion rapide » : délai (jours)</label>
             <input class="saas-input" type="number" min="1" step="1" x-model.number="settings.bonus_fast_conversion_days">
           </div>
         </div>
@@ -201,7 +201,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
       <div>
         <h2 style="font-size:15px;font-weight:700;color:#111827;margin:0;">Sauvegarde de la base de données</h2>
-        <p style="margin:4px 0 0;color:#9CA3AF;font-size:13px;">Dumps quotidiens de la base de données — 7 jours glissants</p>
+        <p style="margin:4px 0 0;color:#9CA3AF;font-size:13px;">Dumps quotidiens de la base de données (rétention 7 jours glissants)</p>
       </div>
       <button type="button" class="btn-saas-primary" @click="createBackup()" :disabled="creatingBackup">
         <span x-show="!creatingBackup">+ Sauvegarder maintenant</span>
