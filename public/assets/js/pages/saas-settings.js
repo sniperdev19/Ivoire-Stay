@@ -126,7 +126,7 @@ function settingsPage(baseUrl, onlinePaymentsEnabled) {
 
   savingPayment: false,
 
-  /* Le contrôle du paiement en ligne est réservé aux plans Premium (config/plans.php: online_payment_control) */
+  /* Le contrôle du paiement en ligne est réservé aux plans Pro/Business (config/plans.php: online_payment_control) */
   get onlinePaymentLocked() { return planUpgradeRequired('online_payment_control'); },
   /* Fonctionnalité en développement pour tout le monde, indépendamment du plan (v1) */
   get onlinePaymentComingSoon() { return !this.onlinePaymentsEnabled; },
@@ -365,7 +365,7 @@ function settingsPage(baseUrl, onlinePaymentsEnabled) {
       window.history.replaceState(null, '', window.location.pathname);
       if (planUpgradeRequired('multi_estab')) {
         this.activeTab = 'subscription';
-        this.showToast("Passez au plan Premium+ pour gérer plusieurs établissements.", 'error');
+        this.showToast("Passez au plan Business pour gérer plusieurs établissements.", 'error');
       } else {
         this.startAddEstablishment();
       }

@@ -35,15 +35,16 @@
     </div>
   </div>
 
-  <!-- Onglets statut -->
+  <!-- Filtre statut -->
   <div class="status-tabs-row">
-    <template x-for="s in ['all','pending','confirmed','checked_in','checked_out','cancelled']" :key="s">
-      <button type="button" class="status-tab" :class="{ active: filterStatus === s }"
-        @click="filterStatus = s; applyFilters()">
-        <span x-text="s === 'all' ? 'Toutes' : statusConfig(s).label"></span>
-        <span class="tab-count" x-text="countByStatus(s)"></span>
-      </button>
-    </template>
+    <label class="saas-label" style="max-width:280px;">
+      Statut
+      <select class="saas-input" x-model="filterStatus" @change="applyFilters()">
+        <template x-for="s in ['all','pending','confirmed','checked_in','checked_out','cancelled']" :key="s">
+          <option :value="s" x-text="(s === 'all' ? 'Toutes' : statusConfig(s).label) + ' (' + countByStatus(s) + ')'"></option>
+        </template>
+      </select>
+    </label>
   </div>
 
   <!-- Filtres -->
@@ -158,10 +159,13 @@
   <!-- ═══ MODAL DÉTAIL ═══ -->
   <div x-cloak x-show="showDetail" class="saas-modal-bg" @click.self="showDetail=false" @keydown.escape.window="showDetail=false">
     <div class="saas-modal booking-detail-modal" style="max-width:640px;" role="dialog" aria-modal="true">
-      <div class="saas-modal-header">
-        <div class="modal-header-info">
-          <p class="modal-eyebrow">Réservation #<span x-text="selectedBooking?.id"></span></p>
-          <h2 class="modal-title-lg" x-text="selectedBooking?.client_name"></h2>
+      <div class="saas-modal-header" style="flex-wrap:wrap;row-gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+          <div class="client-avatar" style="width:44px;height:44px;border-radius:12px;font-size:16px;flex-shrink:0;" :style="{ background: avatarBg(selectedBooking?.id) }" x-text="initials(selectedBooking?.client_name ?? '')"></div>
+          <div class="modal-header-info">
+            <p class="modal-eyebrow">Réservation #<span x-text="selectedBooking?.id"></span></p>
+            <h2 class="modal-title-lg" x-text="selectedBooking?.client_name"></h2>
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
           <span x-show="selectedBooking" :class="statusConfig(selectedBooking?.status).badge" x-text="statusConfig(selectedBooking?.status).label"></span>
@@ -177,18 +181,30 @@
         <div x-show="!detailLoading" style="display:grid;gap:18px;">
 
           <!-- Client / Chambre -->
-          <div class="booking-detail-card booking-detail-grid">
+          <div class="booking-detail-card booking-detail-grid booking-detail-split">
             <div>
               <p class="booking-detail-label">Client</p>
               <p class="booking-detail-value" x-text="selectedBooking?.client_name"></p>
-              <p class="booking-detail-meta" x-text="selectedBooking?.client_phone"></p>
-              <p x-show="selectedBooking?.client_email" class="booking-detail-meta" x-text="selectedBooking?.client_email"></p>
+              <p class="booking-detail-meta">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                <span x-text="selectedBooking?.client_phone"></span>
+              </p>
+              <p x-show="selectedBooking?.client_email" class="booking-detail-meta">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                <span x-text="selectedBooking?.client_email"></span>
+              </p>
             </div>
             <div>
               <p class="booking-detail-label">Chambre</p>
               <p class="booking-detail-value" x-text="'Chambre ' + selectedBooking?.room_number + (selectedBooking?.floor ? ' (étage ' + selectedBooking.floor + ')' : '')"></p>
-              <p class="booking-detail-meta" x-text="selectedBooking?.room_type"></p>
-              <p class="booking-detail-meta" x-text="(selectedBooking?.guests_count ?? 1) + ' voyageur' + ((selectedBooking?.guests_count ?? 1) > 1 ? 's' : '')"></p>
+              <p class="booking-detail-meta">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 18v-6a2 2 0 012-2h14a2 2 0 012 2v6M3 18v2M3 18h18m0 0v2M5 10V6a2 2 0 012-2h1a2 2 0 012 2v2"/></svg>
+                <span x-text="selectedBooking?.room_type"></span>
+              </p>
+              <p class="booking-detail-meta">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m5-4a4 4 0 100-8 4 4 0 000 8zm6.13-1.13A4 4 0 1013 8"/></svg>
+                <span x-text="(selectedBooking?.guests_count ?? 1) + ' voyageur' + ((selectedBooking?.guests_count ?? 1) > 1 ? 's' : '')"></span>
+              </p>
             </div>
           </div>
 
@@ -216,13 +232,13 @@
           </div>
 
           <!-- Montant + facture -->
-          <div class="booking-detail-card">
+          <div class="booking-detail-card booking-detail-card--amount">
             <div class="booking-detail-grid">
               <div>
                 <p class="booking-detail-label">Montant total</p>
                 <p class="booking-detail-amount" x-text="formatPrice(selectedBooking?.total_amount ?? selectedBooking?.total_price)"></p>
               </div>
-              <div x-show="selectedBooking?.invoice_number">
+              <div x-show="selectedBooking?.invoice_number" style="text-align:right;">
                 <p class="booking-detail-label">Facture</p>
                 <p class="booking-detail-invoice-number" x-text="selectedBooking?.invoice_number"></p>
                 <span :class="invoiceStatus(selectedBooking?.invoice_status).badge" style="margin-top:6px;" x-text="invoiceStatus(selectedBooking?.invoice_status).label"></span>
@@ -321,9 +337,15 @@
       </div>
 
       <div class="saas-modal-footer">
-        <button type="button" class="btn-saas-danger" @click="deleteBooking(selectedBooking.id)">Supprimer</button>
+        <button type="button" class="btn-saas-danger" @click="deleteBooking(selectedBooking.id)">
+          <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2m3 0l-.8 12.02A2 2 0 0116.207 21H7.793a2 2 0 01-1.995-1.98L5 7h14z"/></svg>
+          Supprimer
+        </button>
         <div style="display:flex;gap:10px;">
-          <button type="button" class="btn-saas-secondary" @click="duplicateBooking(selectedBooking)">Dupliquer</button>
+          <button type="button" class="btn-saas-secondary" @click="duplicateBooking(selectedBooking)">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Dupliquer
+          </button>
           <button type="button" class="btn-saas-secondary" @click="showDetail=false">Fermer</button>
         </div>
       </div>
@@ -346,8 +368,22 @@
             </div>
           </div>
 
-          <div style="display:grid;gap:18px;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+          <div class="create-steps">
+            <div class="create-step" :class="{ active: createStep === 1, done: createStep > 1 }">
+              <span class="create-step-num" x-text="createStep > 1 ? '✓' : '1'"></span> Réservation
+            </div>
+            <div class="create-step-line" :class="{ done: createStep > 1 }"></div>
+            <div class="create-step" :class="{ active: createStep === 2, done: createStep > 2 }">
+              <span class="create-step-num" x-text="createStep > 2 ? '✓' : '2'"></span> Client
+            </div>
+            <div class="create-step-line" :class="{ done: createStep > 2 }"></div>
+            <div class="create-step" :class="{ active: createStep === 3 }">
+              <span class="create-step-num">3</span> Détails
+            </div>
+          </div>
+
+          <div style="display:grid;gap:18px;" x-show="createStep === 1">
+            <div class="form-grid-2col">
               <div>
                 <label class="room-field-label">
                   <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M5 15h14"/></svg>
@@ -373,39 +409,83 @@
               </div>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
-              <div>
-                <label class="room-field-label">
-                  <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                  Date d'arrivée *
-                </label>
-                <input type="date" class="saas-input" x-model="form.check_in" required />
-              </div>
-              <div x-show="form.booking_type !== 'passage'">
-                <label class="room-field-label">
-                  <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                  Date de départ *
-                </label>
-                <input type="date" class="saas-input" x-model="form.check_out" :required="form.booking_type !== 'passage'" />
-              </div>
-              <!-- Heures si passage -->
-              <div x-show="form.booking_type === 'passage'">
-                <label class="room-field-label">
-                  <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  Durée <span style="font-weight:400;color:#6B7280;">(heures)</span> *
-                </label>
-                <select class="saas-input" x-model.number="form.hours" :required="form.booking_type === 'passage'">
-                  <option value="1">1 heure</option>
-                  <option value="2">2 heures</option>
-                  <option value="3" selected>3 heures</option>
-                  <option value="4">4 heures</option>
-                  <option value="6">6 heures</option>
-                  <option value="8">8 heures</option>
-                  <option value="12">12 heures</option>
-                </select>
+            <div>
+              <label class="room-field-label">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Dates du séjour *
+              </label>
+              <div class="bk-availability">
+                <div class="bk-avail-header">
+                  <button type="button" class="bk-avail-nav" @click="calPrevMonth()" :disabled="isCurrentCalMonth()" aria-label="Mois précédent">‹</button>
+                  <span class="bk-avail-month" x-text="calMonthLabel()"></span>
+                  <button type="button" class="bk-avail-nav" @click="calNextMonth()" aria-label="Mois suivant">›</button>
+                </div>
+
+                <p class="bk-avail-hint" x-show="!form.room_id" style="margin-bottom:10px;">Sélectionnez une chambre pour vérifier les disponibilités.</p>
+
+                <div class="bk-avail-legend">
+                  <span><i class="bk-avail-dot bk-avail-dot-free"></i>Disponible</span>
+                  <span><i class="bk-avail-dot bk-avail-dot-booked"></i>Déjà réservé</span>
+                  <span><i class="bk-avail-dot bk-avail-dot-selected"></i>Sélectionné</span>
+                </div>
+                <div class="bk-avail-grid">
+                  <template x-for="(d, dowIdx) in ['L','M','M','J','V','S','D']" :key="dowIdx">
+                    <div class="bk-avail-dow" x-text="d"></div>
+                  </template>
+                  <template x-for="(cell, i) in calDays()" :key="i">
+                    <button type="button" class="bk-avail-cell"
+                            :class="{
+                              'bk-avail-empty':    !cell,
+                              'bk-avail-booked':   cell && cell.booked,
+                              'bk-avail-past':     cell && cell.past,
+                              'bk-avail-in-range': cell && cell.inRange,
+                              'bk-avail-selected': cell && (cell.date === form.check_in || cell.date === form.check_out)
+                            }"
+                            :disabled="!cell || cell.booked || cell.past"
+                            :title="cell && cell.booked ? 'Déjà réservé' : ''"
+                            @click="cell && calSelectDate(cell.date)"
+                            x-text="cell ? cell.day : ''">
+                    </button>
+                  </template>
+                </div>
+
+                <p class="bk-avail-hint" x-show="calAvailabilityLoading">Chargement du planning…</p>
+
+                <template x-if="!calAvailabilityLoading && form.booking_type !== 'passage'">
+                  <p class="bk-avail-hint">
+                    <span x-show="!form.check_in">Cliquez sur une date d'arrivée.</span>
+                    <span x-show="form.check_in && !form.check_out">Arrivée : <strong x-text="formatDate(form.check_in)"></strong> — cliquez sur la date de départ.</span>
+                    <span x-show="form.check_in && form.check_out">Séjour : <strong x-text="formatDate(form.check_in)"></strong> → <strong x-text="formatDate(form.check_out)"></strong></span>
+                  </p>
+                </template>
+                <template x-if="!calAvailabilityLoading && form.booking_type === 'passage'">
+                  <p class="bk-avail-hint">
+                    <span x-show="!form.check_in">Cliquez sur la date du passage.</span>
+                    <span x-show="form.check_in">Date : <strong x-text="formatDate(form.check_in)"></strong></span>
+                  </p>
+                </template>
               </div>
             </div>
 
+            <!-- Heures si passage -->
+            <div x-show="form.booking_type === 'passage'" style="max-width:260px;">
+              <label class="room-field-label">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Durée <span style="font-weight:400;color:#6B7280;">(heures)</span> *
+              </label>
+              <select class="saas-input" x-model.number="form.hours" :required="form.booking_type === 'passage'">
+                <option value="1">1 heure</option>
+                <option value="2">2 heures</option>
+                <option value="3" selected>3 heures</option>
+                <option value="4">4 heures</option>
+                <option value="6">6 heures</option>
+                <option value="8">8 heures</option>
+                <option value="12">12 heures</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:grid;gap:18px;" x-show="createStep === 2">
             <!-- Client -->
             <div x-show="form.public_client_id" style="padding:10px 14px;background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.15);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
               <span style="font-size:13px;color:#1D4ED8;font-weight:600;">Client existant sélectionné, coordonnées pré-remplies</span>
@@ -429,7 +509,7 @@
               </div>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+            <div class="form-grid-2col">
               <div>
                 <label class="room-field-label">
                   <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
@@ -445,7 +525,7 @@
                 <input type="text" class="saas-input" x-model="form.last_name" required placeholder="Kobenan" :disabled="!!form.public_client_id" />
               </div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+            <div class="form-grid-2col">
               <div>
                 <label class="room-field-label">
                   <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
@@ -461,8 +541,31 @@
                 <input type="email" class="saas-input" x-model="form.client_email" placeholder="email@exemple.com" :disabled="!!form.public_client_id" />
               </div>
             </div>
+            <div class="form-grid-2col">
+              <div>
+                <label class="room-field-label">
+                  <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16v14H4V5zm0 4h16M8 3v4"/></svg>
+                  Type de pièce <span style="font-weight:400;color:#6B7280;">(optionnel)</span>
+                </label>
+                <select class="saas-input" x-model="form.id_doc_type" :disabled="!!form.public_client_id">
+                  <option value="">Sélectionner…</option>
+                  <option value="CNI">Carte Nationale d'Identité</option>
+                  <option value="Passeport">Passeport</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+              <div>
+                <label class="room-field-label">
+                  <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h3m-7 4h10a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v14l3-2 3 2z"/></svg>
+                  Numéro de pièce <span style="font-weight:400;color:#6B7280;">(optionnel)</span>
+                </label>
+                <input type="text" class="saas-input" x-model="form.id_doc_number" placeholder="Ex : CI001234567" :disabled="!!form.public_client_id" />
+              </div>
+            </div>
+          </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+          <div style="display:grid;gap:18px;" x-show="createStep === 3">
+            <div class="form-grid-2col">
               <div>
                 <label class="room-field-label">
                   <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/></svg>
@@ -503,7 +606,7 @@
                 <span style="font-weight:600;color:#111827;font-size:14px;">Encaisser un paiement à la création</span>
               </label>
 
-              <div x-show="form.record_payment" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;">
+              <div x-show="form.record_payment" class="form-grid-2col" style="margin-top:14px;">
                 <div>
                   <label class="saas-label">Montant encaissé</label>
                   <select class="saas-input" x-model="form.payment_type">
@@ -535,8 +638,15 @@
          </div>
 
           <div class="type-modal-footer">
-            <button type="button" class="btn-saas-secondary" @click="showCreate=false" :disabled="createLoading">Annuler</button>
-            <button type="submit" class="btn-saas-primary" :disabled="createLoading">
+            <button type="button" class="btn-saas-secondary" @click="createStep > 1 ? createStep-- : (showCreate=false)" :disabled="createLoading">
+              <span x-text="createStep > 1 ? 'Précédent' : 'Annuler'"></span>
+            </button>
+            <button type="button" class="btn-saas-primary" x-show="createStep < 3"
+              @click="createStep++" :disabled="(createStep === 1 && !canProceedStep1) || (createStep === 2 && !canProceedStep2)">
+              Suivant
+              <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+            <button type="submit" class="btn-saas-primary" x-show="createStep === 3" :disabled="createLoading">
               <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               <span x-show="!createLoading">Créer la réservation</span>
               <span x-show="createLoading">Création…</span>
@@ -544,67 +654,6 @@
           </div>
         </div>
 
-        <!-- Colonne droite : aperçu live -->
-        <div class="type-preview-panel">
-          <div class="type-preview-live"><span class="type-preview-dot"></span> Fiche de facturation en direct</div>
-
-          <div class="type-preview-card">
-            <div class="room-preview-image" :style="selectedRoomPhotoUrl ? { backgroundImage: 'url(' + selectedRoomPhotoUrl + ')' } : {}">
-              <span class="room-preview-badge">
-                <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                <span x-text="selectedRoomForBooking ? 'Chambre ' + selectedRoomForBooking.number : 'Chambre —'"></span>
-              </span>
-              <span class="room-preview-status-pill" style="color:#92400E;background:rgba(217,119,6,0.15);" x-text="typeLabel(form.booking_type).toUpperCase()"></span>
-            </div>
-            <div class="type-preview-info">
-              <span class="booking-source-pill">
-                <svg xmlns="http://www.w3.org/2000/svg" style="width:12px;height:12px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h1A1.5 1.5 0 0113 9.5v0a1.5 1.5 0 001.5 1.5h.5a2 2 0 012 2v0a2 2 0 002 2h1.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span x-text="sourceLabel(form.source)"></span>
-              </span>
-
-              <div class="booking-preview-section-label" style="margin-top:16px;">Fiche client</div>
-              <div class="booking-client-row">
-                <span class="booking-client-avatar">?</span>
-                <div>
-                  <div class="booking-client-name" x-text="bookingClientName || 'Client non renseigné'"></div>
-                  <div class="booking-client-sub" x-text="form.client_phone || 'Téléphone obligatoire'"></div>
-                </div>
-              </div>
-
-              <div class="booking-preview-section-label" style="margin-top:18px;">Calcul des prestations</div>
-              <div class="booking-calc-box">
-                <div class="booking-calc-row">
-                  <span>Tarif de la catégorie :</span>
-                  <strong x-text="formatPrice(bookingRate)"></strong>
-                </div>
-                <div class="booking-calc-row">
-                  <span>Durée du séjour :</span>
-                  <strong x-text="bookingDurationLabel"></strong>
-                </div>
-                <div class="booking-calc-row">
-                  <span>Nombre d'occupants :</span>
-                  <strong x-text="(form.guests_count || 1) + ' voyageur' + (form.guests_count > 1 ? 's' : '')"></strong>
-                </div>
-                <div class="booking-calc-row total">
-                  <span>Total estimé :</span>
-                  <strong x-text="formatPrice(bookingEstimatedTotal)"></strong>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="type-financial-panel">
-            <div class="type-financial-title" style="display:flex;align-items:center;gap:8px;">
-              <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-.34-.02-.675-.058-1.006z"/></svg>
-              PMS intégration sécurisée
-            </div>
-            <div style="font-size:13px;line-height:1.6;color:rgba(255,255,255,0.75);">
-              La création affectera cette chambre
-              <span x-text="selectedRoomForBooking ? ('n°' + selectedRoomForBooking.number) : ''"></span>
-              comme occupée ou réservée selon la date choisie.
-            </div>
-          </div>
-        </div>
       </div>
     </form>
   </div>

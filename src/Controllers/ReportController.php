@@ -184,12 +184,15 @@ class ReportController
     {
         $in = implode(',', array_fill(0, count($estabIds), '?'));
 
+        // Une réservation annulée après encaissement ne doit plus compter
+        // dans le CA (voir Payment::totalByEstablishment, même règle).
         $revenue = (float) Database::query(
             "SELECT COALESCE(SUM(p.amount), 0)
              FROM payments p
              JOIN bookings b ON b.id = p.booking_id
              JOIN rooms r ON r.id = b.room_id
              WHERE r.establishment_id IN ($in) AND p.status = 'completed'
+               AND b.status != 'cancelled'
                AND DATE(p.paid_at) BETWEEN ? AND ?",
             [...$estabIds, $from, $to]
         )->fetchColumn();
@@ -213,6 +216,7 @@ class ReportController
              JOIN bookings b ON b.id = i.booking_id
              JOIN rooms r ON r.id = b.room_id
              WHERE r.establishment_id IN ($in) AND i.status = 'paid'
+               AND b.status != 'cancelled'
                AND DATE(i.issued_at) BETWEEN ? AND ?",
             [...$estabIds, $from, $to]
         )->fetchColumn();
@@ -239,6 +243,7 @@ class ReportController
              LEFT JOIN users u ON u.id = b.user_id
              LEFT JOIN invoices i ON i.id = p.invoice_id
              WHERE r.establishment_id IN ($in) AND p.status = 'completed'
+               AND b.status != 'cancelled'
                AND DATE(p.paid_at) BETWEEN ? AND ?
              ORDER BY p.paid_at DESC LIMIT 5",
             [...$estabIds, $from, $to]

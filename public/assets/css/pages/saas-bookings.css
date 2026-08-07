@@ -6,28 +6,64 @@
     display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;
   }
 
-  .status-tab {
-    display:inline-flex;align-items:center;gap:6px;
-    padding:8px 16px;border-radius:10px;
-    font-size:13px;font-weight:500;
-    cursor:pointer;border:1px solid transparent;
-    transition:all 0.2s;white-space:nowrap;
-    background:transparent;color:#6B7280;
+  /* Modale création réservation : champs par paire, toujours 2 colonnes
+     (y compris mobile) — classe dédiée pour échapper à la règle générique
+     de saas-responsive.css (@media 560px) qui écrase les grilles inline
+     en 1 colonne. */
+  .form-grid-2col { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+
+  /* Étapes de la modale de création (Réservation → Client → Détails) */
+  .create-steps { display:flex; align-items:center; margin:16px 0 20px; }
+  .create-step {
+    display:flex; align-items:center; gap:6px; flex-shrink:0;
+    font-size:12px; font-weight:600; color:#9CA3AF; white-space:nowrap;
   }
-  .status-tab:hover { background:rgba(0,0,0,0.04); }
-  .status-tab.active {
-    background:white;color:#111827;
-    border-color:rgba(0,0,0,0.1);
-    box-shadow:0 1px 4px rgba(0,0,0,0.08);
+  .create-step.active { color:#111827; }
+  .create-step.done { color:#16A34A; }
+  .create-step-num {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:20px; height:20px; border-radius:50%; flex-shrink:0;
+    font-size:11px; font-weight:700; background:#F3F4F6; color:#9CA3AF;
   }
-  .status-tab .tab-count {
-    background:rgba(0,0,0,0.08);color:#6B7280;
-    font-size:11px;font-weight:700;
-    padding:1px 6px;border-radius:50px;
+  .create-step.active .create-step-num { background:#C9A84C; color:white; }
+  .create-step.done .create-step-num { background:#DCFCE7; color:#16A34A; }
+  .create-step-line { flex:1 1 0%; height:1px; background:rgba(0,0,0,0.08); margin:0 10px; }
+  .create-step-line.done { background:#16A34A; }
+
+  /* Calendrier de sélection des dates — même principe que la vitrine
+     publique (src/templates/vitrine/booking.php, .bk-avail-*), repris
+     ici avec la palette SaaS. */
+  .bk-availability { margin:6px auto 0; padding:12px; background:#FAFAF8; border:1px solid rgba(0,0,0,0.06); border-radius:12px; max-width:340px; }
+  .bk-avail-header { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:8px; }
+  .bk-avail-month { font-size:12px; font-weight:700; color:#111827; text-transform:capitalize; min-width:110px; text-align:center; }
+  .bk-avail-nav {
+    width:20px; height:20px; border-radius:50%; border:1px solid rgba(0,0,0,0.1);
+    background:white; color:#111827; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:12px; line-height:1;
+    transition:all 0.15s;
   }
-  .status-tab.active .tab-count {
-    background:#C9A84C;color:white;
+  .bk-avail-nav:hover:not(:disabled) { background:#0f2b20; color:white; border-color:#0f2b20; }
+  .bk-avail-nav:disabled { opacity:0.3; cursor:not-allowed; }
+  .bk-avail-legend { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:8px; font-size:9.5px; color:#6B7280; }
+  .bk-avail-legend span { display:inline-flex; align-items:center; gap:4px; }
+  .bk-avail-dot { width:6px; height:6px; border-radius:2px; display:inline-block; }
+  .bk-avail-dot-free { background:rgba(22,163,74,0.15); border:1px solid rgba(22,163,74,0.3); }
+  .bk-avail-dot-booked { background:rgba(220,38,38,0.75); }
+  .bk-avail-dot-selected { background:#C9A84C; }
+  .bk-avail-grid { display:grid; grid-template-columns:repeat(7, 1fr); gap:2px; }
+  .bk-avail-dow { text-align:center; font-size:9px; font-weight:700; text-transform:uppercase; color:#9CA3AF; padding-bottom:3px; }
+  .bk-avail-cell {
+    aspect-ratio:1; border:none; background:rgba(0,0,0,0.03); border-radius:6px;
+    font-size:10.5px; color:#111827; cursor:pointer; transition:all 0.15s;
   }
+  .bk-avail-cell:hover:not(:disabled) { background:rgba(201,168,76,0.18); }
+  .bk-avail-cell.bk-avail-empty { background:transparent; cursor:default; pointer-events:none; }
+  .bk-avail-cell.bk-avail-past { color:rgba(0,0,0,0.2); cursor:not-allowed; }
+  .bk-avail-cell.bk-avail-booked { background:rgba(220,38,38,0.12); color:rgba(220,38,38,0.75); text-decoration:line-through; cursor:not-allowed; }
+  .bk-avail-cell.bk-avail-in-range { background:rgba(201,168,76,0.12); }
+  .bk-avail-cell.bk-avail-selected { background:#C9A84C; color:white; font-weight:700; }
+  .bk-avail-hint { text-align:center; font-size:10.5px; color:#6B7280; margin-top:8px; margin-bottom:0; }
+
   .booking-row { cursor:pointer;transition:background 0.15s; }
   .booking-row:hover td { background:rgba(201,168,76,0.03) !important; }
   .action-btn-success { background:#DCFCE7;color:#16a34a;border:1px solid rgba(22,163,74,0.2); }
@@ -73,49 +109,6 @@
   .booking-action-btn:hover { background:#F9FAFB; color:#111827; }
   .booking-action-btn.danger:hover { background:#FEF2F2; color:#DC2626; border-color:rgba(220,38,38,0.2); }
 
-  /* Modal création — aperçu facturation */
-  .booking-source-pill {
-    display:inline-flex; align-items:center; gap:6px;
-    font-size:12px; font-weight:600; color:#374151;
-    background:#F3F4F6; padding:5px 12px; border-radius:9999px;
-  }
-  .booking-preview-section-label {
-    font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
-    color:var(--saas-gold); margin-bottom:10px;
-  }
-  .booking-client-row { display:flex; align-items:center; gap:12px; }
-  .booking-client-avatar {
-    width:40px; height:40px; border-radius:50%; flex-shrink:0;
-    background:#F3F4F6; color:#9CA3AF; font-weight:700; font-size:16px;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .booking-client-name { font-size:14px; font-weight:700; color:#111827; }
-  .booking-client-sub { font-size:12px; color:#9CA3AF; margin-top:2px; }
-
-  .booking-calc-box { background:#FAFAF8; border:1px solid rgba(0,0,0,0.06); border-radius:12px; padding:14px 16px; }
-  .booking-calc-row {
-    display:flex; justify-content:space-between; align-items:center;
-    font-size:13px; color:#6B7280; padding:8px 0; border-bottom:1px solid rgba(0,0,0,0.05);
-  }
-  .booking-calc-row:first-child { padding-top:0; }
-  .booking-calc-row strong { color:#374151; font-weight:700; }
-  .booking-calc-row.total { border-bottom:none; padding-top:12px; }
-  .booking-calc-row.total strong { color:var(--saas-gold); font-size:16px; }
-
-  /* ── Mobile : onglets de statut en ligne défilante (au lieu d'un
-     retour à la ligne irrégulier) + boutons de filtre pleine largeur ── */
-  @media (max-width: 640px) {
-    .status-tabs-row {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      padding-bottom: 2px;
-    }
-    .status-tabs-row::-webkit-scrollbar { display: none; }
-    .status-tab { flex: 0 0 auto; }
-  }
-
   /* ── Modal détail réservation ─────────────────────────────── */
   .booking-detail-card {
     background: #F9FAFB; border: 1px solid rgba(0,0,0,0.05);
@@ -127,11 +120,27 @@
     text-transform: uppercase; color: #9CA3AF;
   }
   .booking-detail-value { margin: 0; font-size: 14px; font-weight: 600; color: #111827; }
-  .booking-detail-meta { margin: 4px 0 0; font-size: 13px; color: #6B7280; }
-  .booking-detail-amount { margin: 0; font-size: 22px; font-weight: 700; color: var(--saas-gold); }
+  .booking-detail-meta {
+    display: flex; align-items: center; gap: 6px;
+    margin: 6px 0 0; font-size: 13px; color: #6B7280;
+  }
+  .booking-detail-meta svg { width: 13px; height: 13px; color: #C4C9D4; flex-shrink: 0; }
+  .booking-detail-amount { margin: 0; font-size: 24px; font-weight: 800; color: var(--saas-gold); }
   .booking-detail-invoice-number {
     margin: 0; font-size: 13px; font-weight: 600; color: #111827;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  /* Séparateur discret entre les deux colonnes Client / Chambre */
+  .booking-detail-split > div:last-child {
+    padding-left: 16px; border-left: 1px dashed rgba(0,0,0,0.08);
+  }
+
+  /* Carte montant/facture : liseré doré pour la distinguer comme
+     information clé du récapitulatif. */
+  .booking-detail-card--amount {
+    border-left: 3px solid var(--saas-gold);
+    background: linear-gradient(180deg, rgba(201,168,76,0.06), #F9FAFB 55%);
   }
 
   .booking-detail-stay {
@@ -149,14 +158,22 @@
     color: #374151; background: #F3F4F6; padding: 4px 12px; border-radius: 50px;
   }
 
+  /* Actions du pied de modale : "Supprimer" (destructrice) isolée à
+     gauche, actions secondaires groupées à droite — plus lisible que le
+     flex-end générique de .saas-modal-footer. */
+  .booking-detail-modal .saas-modal-footer { justify-content: space-between; }
+
   @media (max-width: 560px) {
     .booking-detail-card { padding: 14px; }
     .booking-detail-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
     .booking-detail-stay { padding: 14px; }
     .booking-detail-name { font-size: 17px; }
     .booking-detail-amount { font-size: 19px; }
+    .booking-detail-split > div:last-child { padding-left: 12px; }
   }
   @media (max-width: 380px) {
     .booking-detail-stay-dates { flex-wrap: wrap; row-gap: 10px; }
     .booking-detail-stay-arrow { display: none; }
+    .booking-detail-split > div:last-child { padding-left: 0; border-left: none; }
+    .saas-modal-footer { flex-wrap: wrap; }
   }

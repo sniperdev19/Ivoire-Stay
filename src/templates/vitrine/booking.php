@@ -286,6 +286,21 @@
           <input type="tel" class="bk-input" placeholder="+225 01 23 45 67 89" x-model="form.phone" required>
           <span x-show="errors.phone" class="bk-error" x-text="errors.phone"></span>
         </div>
+        <div class="bk-field-row">
+          <div class="bk-field">
+            <label class="bk-label">Type de pièce <span style="font-weight:400;">(optionnel)</span></label>
+            <select class="bk-input bk-select" x-model="form.id_doc_type">
+              <option value="">Sélectionner…</option>
+              <option value="CNI">Carte Nationale d'Identité</option>
+              <option value="Passeport">Passeport</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label">Numéro de pièce <span style="font-weight:400;">(optionnel)</span></label>
+            <input type="text" class="bk-input" placeholder="Ex : CI001234567" x-model="form.id_doc_number">
+          </div>
+        </div>
         <div class="bk-form-nav">
           <button type="button" class="bk-btn-prev" @click="step=1">← Retour</button>
           <button type="submit" class="bk-btn-next">Étape suivante : Paiement →</button>

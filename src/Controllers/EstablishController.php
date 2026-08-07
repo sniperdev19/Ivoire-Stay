@@ -65,7 +65,7 @@ class EstablishController
                 'success'          => false,
                 'upgrade_required' => true,
                 'feature'          => 'multi_estab',
-                'message'          => "Votre abonnement ne permet qu'un seul établissement. Passez au plan Premium+ pour en gérer plusieurs.",
+                'message'          => "Votre abonnement ne permet qu'un seul établissement. Passez au plan Business pour en gérer plusieurs.",
             ], 403);
             exit;
         }

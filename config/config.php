@@ -69,6 +69,10 @@ define('VAPID_PUBLIC_KEY',  env('VAPID_PUBLIC_KEY',  ''));
 define('VAPID_PRIVATE_KEY', env('VAPID_PRIVATE_KEY', ''));
 define('VAPID_SUBJECT',     env('VAPID_SUBJECT',     'mailto:contact@example.com'));
 
+// Google Analytics (GA4) : identifiant de mesure (G-XXXXXXXXXX). Vide tant que
+// non configuré dans .env — le layout vitrine n'injecte alors aucun script.
+define('GA_MEASUREMENT_ID', env('GA_MEASUREMENT_ID', ''));
+
 // Error reporting
 if (APP_ENV === 'development') {
     error_reporting(E_ALL);

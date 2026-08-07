@@ -62,7 +62,7 @@
       </div>
     </div>
 
-    <!-- Bannière ajout d'un établissement supplémentaire (plan Premium+) -->
+    <!-- Bannière ajout d'un établissement supplémentaire (plan Business) -->
     <div x-show="addingEstab && !loading" class="stg-welcome" x-cloak>
       <div class="stg-welcome-emoji">🏨</div>
       <div>
@@ -235,7 +235,7 @@
               Désactivez pour n'accepter que le paiement sur place : vos clients devront régler directement à l'arrivée, sans option de paiement en ligne sur votre vitrine.
             </p>
             <p class="stg-payment-toggle-desc" x-show="!onlinePaymentComingSoon && onlinePaymentLocked">
-              Réservé aux plans Premium. Passez à niveau pour proposer le paiement en ligne à vos clients.
+              Réservé aux plans Pro et Business. Passez à niveau pour proposer le paiement en ligne à vos clients.
             </p>
             <p class="stg-payment-toggle-desc" x-show="!onlinePaymentComingSoon && !onlinePaymentLocked && creatingEstab">
               Disponible une fois votre établissement créé.
@@ -256,13 +256,13 @@
           <div class="stg-payment-toggle-info">
             <div class="stg-payment-toggle-title">
               Boost vitrine
-              <span x-show="boostLocked" class="stg-pro-badge">PREMIUM+</span>
+              <span x-show="boostLocked" class="stg-pro-badge">BUSINESS</span>
             </div>
             <p class="stg-payment-toggle-desc" x-show="!boostLocked && !creatingEstab">
               Mettez votre établissement en avant en tête des résultats de recherche publics, avant les établissements non boostés.
             </p>
             <p class="stg-payment-toggle-desc" x-show="boostLocked">
-              Réservé au plan Premium+. Passez à niveau pour être mis en avant dans la recherche.
+              Réservé au plan Business. Passez à niveau pour être mis en avant dans la recherche.
             </p>
             <p class="stg-payment-toggle-desc" x-show="!boostLocked && creatingEstab">
               Disponible une fois votre établissement créé.

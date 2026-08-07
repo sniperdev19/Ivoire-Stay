@@ -26,6 +26,7 @@ class Payment extends BaseModel
             "SELECT p.*,
                 i.invoice_number,
                 r.number as room_number,
+                b.status as booking_status,
                 COALESCE(CONCAT(pc.first_name, ' ', pc.last_name), u.name) as client_name
              FROM payments p
              JOIN bookings b ON b.id = p.booking_id
@@ -41,12 +42,16 @@ class Payment extends BaseModel
 
     public static function totalByEstablishment(int $estabId, string $month): float
     {
+        // Une réservation annulée après encaissement ne doit plus compter
+        // dans le CA — sinon le revenu reste gonflé indéfiniment par des
+        // paiements liés à des séjours qui n'auront jamais lieu.
         return (float) Database::query(
             "SELECT COALESCE(SUM(p.amount), 0)
              FROM payments p
              JOIN bookings b ON b.id = p.booking_id
              JOIN rooms r ON r.id = b.room_id
              WHERE r.establishment_id = ? AND p.status = 'completed'
+               AND b.status != 'cancelled'
                AND DATE_FORMAT(p.paid_at, '%Y-%m') = ?",
             [$estabId, $month]
         )->fetchColumn();

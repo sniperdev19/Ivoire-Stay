@@ -18,8 +18,8 @@ function checkoutPage(baseUrl) {
 
     plans: {
       pro: {
-        name: 'Premium',
-        nameEm: 'Premium.',
+        name: 'Pro',
+        nameEm: 'Pro.',
         tagline: 'Pour les établissements qui veulent accélérer.',
         prices:      { monthly: 9000,  yearly: 86400 },
         monthlyEq:   { monthly: 9000,  yearly: 7200  },
@@ -32,13 +32,13 @@ function checkoutPage(baseUrl) {
         ],
       },
       business: {
-        name: 'Premium+',
-        nameEm: 'Premium+.',
+        name: 'Business',
+        nameEm: 'Business.',
         tagline: 'Pour les groupes hôteliers et gestionnaires multi-sites.',
         prices:      { monthly: 20000, yearly: 192000 },
         monthlyEq:   { monthly: 20000, yearly: 16000  },
         features: [
-          'Tout le plan Premium inclus',
+          'Tout le plan Pro inclus',
           'Multi-établissements illimités',
           'Boost vitrine',
         ],

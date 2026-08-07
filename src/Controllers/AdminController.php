@@ -125,7 +125,8 @@ class AdminController
                  FROM payments p
                  JOIN bookings b ON b.id = p.booking_id
                  JOIN rooms r ON r.id = b.room_id
-                 WHERE p.status = 'completed' AND DATE(p.paid_at) BETWEEN ? AND LAST_DAY(?)
+                 WHERE p.status = 'completed' AND b.status != 'cancelled'
+                   AND DATE(p.paid_at) BETWEEN ? AND LAST_DAY(?)
                  GROUP BY r.establishment_id",
                 [$monthStart, $monthStart]
             )->fetchAll(),

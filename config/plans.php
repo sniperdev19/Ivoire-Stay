@@ -18,7 +18,7 @@ return [
         ],
     ],
     'pro' => [
-        'name'               => 'Premium',
+        'name'               => 'Pro',
         'max_rooms'          => PHP_INT_MAX,
         'max_establishments' => 1,
         'prices'             => ['monthly' => 9000, 'yearly' => 86400],
@@ -37,7 +37,7 @@ return [
         ],
     ],
     'business' => [
-        'name'               => 'Premium+',
+        'name'               => 'Business',
         'max_rooms'          => PHP_INT_MAX,
         'max_establishments' => PHP_INT_MAX,
         'prices'             => ['monthly' => 20000, 'yearly' => 192000],

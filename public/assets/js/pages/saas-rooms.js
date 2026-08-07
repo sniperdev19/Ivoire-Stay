@@ -18,11 +18,23 @@ function roomsPage(baseUrl) {
   filterType: '',
 
   showRoomModal: false,
+  roomStep: 1,
   editingRoom: null,
   roomForm: { number: '', floor: '', room_type_id: '', status: 'available', notes: '' },
   roomSaving: false,
   roomError: null,
   roomFormStatusMenu: false,
+
+  // ── Étapes du formulaire "Nouvelle chambre" ──────────────────────────
+  get canProceedRoomStep1() {
+    if (!(this.roomForm.number || '').trim()) return false;
+    if (this.roomTypeMode === 'existing') return !!this.roomForm.room_type_id;
+    return !!(this.newTypeForm.name || '').trim();
+  },
+  get canProceedRoomStep2() {
+    if (this.roomTypeMode === 'existing') return true;
+    return this.newTypeForm.base_price !== '' && this.newTypeForm.base_price !== null && Number(this.newTypeForm.base_price) >= 0;
+  },
 
   // Création à la volée d'un nouveau type de chambre depuis le formulaire "Chambre"
   roomTypeMode: 'existing', // 'existing' | 'new'
@@ -180,14 +192,27 @@ function roomsPage(baseUrl) {
     { value: 'Lit Queen Size',           label: 'Lit Queen Size' },
     { value: 'Lit King Size Impérial',   label: 'Lit King Size Im…' },
   ],
+  /* Liste élargie sur la base des équipements les plus proposés par les
+     hébergements en Côte d'Ivoire (climatisation/ventilateur, moustiquaire,
+     groupe électrogène pour les délestages, petit-déjeuner, parking…). */
   typeAmenityOptions: [
-    'Climatisation', 'Smart TV', 'DSTV / Canal+', 'Réfrigérateur', 'Wi-Fi',
+    'Climatisation', 'Ventilateur', 'Smart TV', 'DSTV / Canal+', 'Réfrigérateur', 'Wi-Fi',
     'Bain / Douche', 'Eau chaude', 'Coffre-fort', 'Mini bar', 'Balcon',
+    'Moustiquaire', 'Groupe électrogène', 'Petit-déjeuner inclus', 'Parking privé',
+    'Sèche-cheveux', 'Bureau de travail', 'Prises USB',
   ],
   toggleAmenity(name) {
     const i = this.typeForm.amenities.indexOf(name);
     if (i === -1) this.typeForm.amenities.push(name);
     else this.typeForm.amenities.splice(i, 1);
+  },
+
+  // ── Onglets du formulaire "Type de chambre" ──────────────────────────
+  get canProceedTypeTab1() {
+    return !!(this.typeForm.name || '').trim();
+  },
+  get canProceedTypeTab2() {
+    return this.typeForm.base_price !== '' && this.typeForm.base_price !== null && Number(this.typeForm.base_price) >= 0;
   },
 
   statusMenuRoom: null,
@@ -297,6 +322,7 @@ function roomsPage(baseUrl) {
     this.editingRoom = null;
     this.roomForm = { number: '', floor: '', room_type_id: '', status: 'available', notes: '' };
     this.roomError = null;
+    this.roomStep = 1;
     this.roomFormStatusMenu = false;
     this.resetNewTypeForm();
     this.roomPhotos = [];
@@ -316,6 +342,7 @@ function roomsPage(baseUrl) {
       notes:        room.notes        || '',
     };
     this.roomError = null;
+    this.roomStep = 1;
     this.roomFormStatusMenu = false;
     this.resetNewTypeForm();
     this.roomPhotos = [];

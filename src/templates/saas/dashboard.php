@@ -58,57 +58,57 @@
     <div class="kpi-grid">
 
       <div class="kpi-card kpi-gold">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">
-          <div style="width:42px;height:42px;border-radius:10px;background:rgba(201,168,76,0.12);display:grid;place-items:center;">
-            <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;">
+          <div style="width:24px;height:24px;border-radius:6px;background:rgba(201,168,76,0.12);display:grid;place-items:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
           </div>
         </div>
-        <div style="font-size:22px;font-weight:800;color:#111827;line-height:1;margin-bottom:4px;" x-text="formatPrice(stats?.revenue ?? 0)"></div>
-        <div style="font-size:12px;color:#6B7280;">Revenus ce mois</div>
-        <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,0.05);font-size:12px;color:#9CA3AF;">
+        <div style="font-size:15px;font-weight:800;color:#111827;line-height:1;margin-bottom:2px;" x-text="formatPrice(stats?.revenue ?? 0)"></div>
+        <div style="font-size:10px;color:#6B7280;">Revenus ce mois</div>
+        <div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(0,0,0,0.05);font-size:10px;color:#9CA3AF;">
           Reçus : <span style="color:#16A34A;font-weight:600;" x-text="formatPrice(stats?.payments_received ?? 0)"></span>
         </div>
       </div>
 
       <div class="kpi-card kpi-blue">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
-          <div style="width:42px;height:42px;border-radius:10px;background:rgba(37,99,235,0.1);display:grid;place-items:center;">
-            <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:#2563EB;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V9a2 2 0 012-2h2a2 2 0 012 2v10"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19h14"/></svg>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">
+          <div style="width:24px;height:24px;border-radius:6px;background:rgba(37,99,235,0.1);display:grid;place-items:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;color:#2563EB;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V9a2 2 0 012-2h2a2 2 0 012 2v10"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19h14"/></svg>
           </div>
-          <div style="font-size:22px;font-weight:800;color:#111827;" x-text="occupancyPct + '%' "></div>
+          <div style="font-size:15px;font-weight:800;color:#111827;" x-text="occupancyPct + '%' "></div>
         </div>
-        <div style="height:6px;background:rgba(0,0,0,0.06);border-radius:6px;overflow:hidden;margin-bottom:8px;">
+        <div style="height:4px;background:rgba(0,0,0,0.06);border-radius:6px;overflow:hidden;margin-bottom:4px;">
           <div :style="'width:' + occupancyPct + '%;height:100%;background:linear-gradient(90deg,#2563EB,#60A5FA);transition:width 1s ease;' "></div>
         </div>
-        <div style="font-size:12px;color:#6B7280;">Taux d'occupation</div>
-        <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,0.05);font-size:12px;color:#9CA3AF;">
+        <div style="font-size:10px;color:#6B7280;">Taux d'occupation</div>
+        <div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(0,0,0,0.05);font-size:10px;color:#9CA3AF;">
           <span style="color:#2563EB;font-weight:600;" x-text="stats?.total_rooms ?? 0"></span> chambres au total
         </div>
       </div>
 
       <div class="kpi-card kpi-green">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">
-          <div style="width:42px;height:42px;border-radius:10px;background:rgba(22,163,74,0.1);display:grid;place-items:center;">
-            <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:#16A34A;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/></svg>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;">
+          <div style="width:24px;height:24px;border-radius:6px;background:rgba(22,163,74,0.1);display:grid;place-items:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;color:#16A34A;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/></svg>
           </div>
-          <div style="background:#DCFCE7;color:#16A34A;padding:3px 8px;border-radius:9999px;font-size:11px;font-weight:600;">Actives</div>
+          <div style="background:#DCFCE7;color:#16A34A;padding:2px 6px;border-radius:9999px;font-size:9px;font-weight:600;">Actives</div>
         </div>
-        <div style="font-size:28px;font-weight:800;color:#111827;line-height:1;margin-bottom:4px;" x-text="stats?.active_bookings ?? 0"></div>
-        <div style="font-size:12px;color:#6B7280;">Réservations actives</div>
-        <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,0.05);font-size:12px;color:#9CA3AF;">
+        <div style="font-size:16px;font-weight:800;color:#111827;line-height:1;margin-bottom:2px;" x-text="stats?.active_bookings ?? 0"></div>
+        <div style="font-size:10px;color:#6B7280;">Réservations actives</div>
+        <div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(0,0,0,0.05);font-size:10px;color:#9CA3AF;">
           En attente : <span style="color:#D97706;font-weight:600;" x-text="(planning||[]).filter(p=>p.status==='pending').length"></span>
         </div>
       </div>
 
       <div class="kpi-card kpi-purple">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">
-          <div style="width:42px;height:42px;border-radius:10px;background:rgba(124,58,237,0.1);display:grid;place-items:center;">
-            <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:#7C3AED;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h1m4-4h1m-1 4h1"/></svg>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;">
+          <div style="width:24px;height:24px;border-radius:6px;background:rgba(124,58,237,0.1);display:grid;place-items:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;color:#7C3AED;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h1m4-4h1m-1 4h1"/></svg>
           </div>
-          <div style="font-size:22px;font-weight:800;color:#111827;"><span x-text="stats?.available_rooms ?? 0"></span><span style="font-size:14px;color:#9CA3AF;font-weight:400;"> / <span x-text="stats?.total_rooms ?? 0"></span></span></div>
+          <div style="font-size:15px;font-weight:800;color:#111827;"><span x-text="stats?.available_rooms ?? 0"></span><span style="font-size:11px;color:#9CA3AF;font-weight:400;"> / <span x-text="stats?.total_rooms ?? 0"></span></span></div>
         </div>
-        <div style="font-size:12px;color:#6B7280;margin-bottom:10px;">Chambres disponibles</div>
-        <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,0.05);font-size:12px;color:#9CA3AF;">
+        <div style="font-size:10px;color:#6B7280;margin-bottom:4px;">Chambres disponibles</div>
+        <div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(0,0,0,0.05);font-size:10px;color:#9CA3AF;">
           Bénéfice net : <span :style="{ color: (stats?.net_profit ?? 0) >= 0 ? '#16A34A' : '#DC2626' }" style="font-weight:600;" x-text="formatPrice(stats?.net_profit ?? 0)"></span>
         </div>
       </div>
@@ -195,53 +195,22 @@
       </div>
     </div>
 
-    <div class="bottom-grid">
-      <div class="saas-card">
-        <h3 style="font-size:15px;font-weight:700;color:#111827;margin:0 0 16px 0;">Actions rapides</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <?php
-            $actions = [
-              ['label'=>'Nouvelle réservation','icon'=>'M12 4v16m8-8H4','href'=>'/saas/bookings','color'=>'#C9A84C','bg'=>'rgba(201,168,76,0.08)'],
-              ['label'=>'Ajouter chambre','icon'=>'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5','href'=>'/saas/rooms','color'=>'#2563EB','bg'=>'rgba(37,99,235,0.08)'],
-              ['label'=>'Voir le planning','icon'=>'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z','href'=>'/saas/planning','color'=>'#16A34A','bg'=>'rgba(22,163,74,0.08)'],
-              ['label'=>'Rapports','icon'=>'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z','href'=>'/saas/reports','color'=>'#7C3AED','bg'=>'rgba(124,58,237,0.08)','guard'=>'canSeeFinance'],
-            ];
-          ?>
-          <?php foreach($actions as $a): ?>
-            <a href="<?= $base_url . $a['href'] ?>" style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px 10px;background:#F9FAFB;border:1px solid rgba(0,0,0,0.06);border-radius:12px;text-decoration:none;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(201,168,76,0.06)';this.style.borderColor='rgba(201,168,76,0.25)'" onmouseout="this.style.background='#F9FAFB';this.style.borderColor='rgba(0,0,0,0.06)'"
-              <?php if (!empty($a['guard'])): ?>
-              :class="{ 'saas-nav-locked': !<?= $a['guard'] ?> }"
-              @click="!<?= $a['guard'] ?> && $event.preventDefault()"
-              :title="!<?= $a['guard'] ?> ? 'Réservé au propriétaire' : ''"
-              <?php endif; ?>>
-              <div style="width:38px;height:38px;border-radius:10px;background:<?= $a['bg'] ?>;display:grid;place-items:center;">
-                <svg xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;color:<?= $a['color'] ?>;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<?= $a['icon'] ?>"/></svg>
-              </div>
-              <span style="font-size:12px;font-weight:500;color:#374151;"><?= htmlspecialchars($a['label']) ?></span>
-              <?php if (!empty($a['guard'])): ?>
-              <svg x-show="!<?= $a['guard'] ?>" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="position:absolute;top:8px;right:8px;width:13px;height:13px;color:#9CA3AF;">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              <?php endif; ?>
-            </a>
-          <?php endforeach; ?>
-        </div>
+    <div class="saas-card" x-show="canSeeFinance" style="max-width:520px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h3 style="font-size:15px;font-weight:700;color:#111827;margin:0;">Résumé financier</h3>
+        <a href="<?= $base_url ?>/saas/invoices" style="font-size:12px;color:#C9A84C;font-weight:500;text-decoration:none;">Facturation →</a>
       </div>
-
-      <div class="saas-card" x-show="canSeeFinance">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-          <h3 style="font-size:15px;font-weight:700;color:#111827;margin:0;">Résumé financier</h3>
-          <a href="<?= $base_url ?>/saas/invoices" style="font-size:12px;color:#C9A84C;font-weight:500;text-decoration:none;">Facturation →</a>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:#6B7280;">Revenus</span><span style="font-size:14px;font-weight:600;color:#111827;" x-text="formatPrice(stats?.revenue ?? 0)"></span></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:#6B7280;">Paiements reçus</span><span style="font-size:14px;font-weight:600;color:#16A34A;" x-text="formatPrice(stats?.payments_received ?? 0)"></span></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:#6B7280;">En attente</span><span style="font-size:14px;font-weight:600;color:#D97706;" x-text="formatPrice(stats?.payments_pending ?? 0)"></span></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:#6B7280;">Dépenses</span><span style="font-size:14px;font-weight:600;color:#DC2626;" x-text="formatPrice(stats?.expenses ?? 0)"></span></div>
-          <div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:12px;display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:14px;font-weight:700;color:#111827;">Bénéfice net</span>
-            <span :style="(stats?.net_profit ?? 0) >=0 ? 'color:#16A34A;font-size:16px;font-weight:800;' : 'color:#DC2626;font-size:16px;font-weight:800;'" x-text="formatPrice(stats?.net_profit ?? 0)"></span>
-          </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:#6B7280;">Revenus</span><span style="font-size:14px;font-weight:600;color:#111827;" x-text="formatPrice(stats?.revenue ?? 0)"></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:#6B7280;">Paiements reçus</span><span style="font-size:14px;font-weight:600;color:#16A34A;" x-text="formatPrice(stats?.payments_received ?? 0)"></span></div>
+        <template x-if="(stats?.payments_cancelled ?? 0) > 0">
+          <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:#6B7280;">Annulé</span><span style="font-size:14px;font-weight:600;color:#9CA3AF;text-decoration:line-through;" x-text="formatPrice(stats?.payments_cancelled ?? 0)"></span></div>
+        </template>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:#6B7280;">En attente</span><span style="font-size:14px;font-weight:600;color:#D97706;" x-text="formatPrice(stats?.payments_pending ?? 0)"></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:#6B7280;">Dépenses</span><span style="font-size:14px;font-weight:600;color:#DC2626;" x-text="formatPrice(stats?.expenses ?? 0)"></span></div>
+        <div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:12px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:14px;font-weight:700;color:#111827;">Bénéfice net</span>
+          <span :style="(stats?.net_profit ?? 0) >=0 ? 'color:#16A34A;font-size:16px;font-weight:800;' : 'color:#DC2626;font-size:16px;font-weight:800;'" x-text="formatPrice(stats?.net_profit ?? 0)"></span>
         </div>
       </div>
     </div>

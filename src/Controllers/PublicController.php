@@ -288,7 +288,7 @@ class PublicController
 
         $room['type_amenities'] = !empty($room['type_amenities']) ? json_decode($room['type_amenities'], true) : [];
 
-        // Le paiement en ligne est une fonctionnalité Premium (plans Pro/Business) :
+        // Le paiement en ligne est une fonctionnalité payante (plans Pro/Business) :
         // même si le flag est activé en base, il reste sans effet sur un plan Starter
         // (protège aussi contre un flag resté à 1 après un downgrade de plan).
         // ONLINE_PAYMENTS_ENABLED (verrou v1, config.php) passe outre tout le reste :

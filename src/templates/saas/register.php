@@ -142,11 +142,11 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
           <span class="rg-plan-badge badge-free">0 FCFA</span>
         </div>
         <div class="rg-plan" :class="plan === 'pro' ? 'rg-plan-active' : ''">
-          <span class="rg-plan-name">PREMIUM</span>
+          <span class="rg-plan-name">PRO</span>
           <span class="rg-plan-price">9 000 FCFA / mois</span>
         </div>
         <div class="rg-plan" :class="plan === 'business' ? 'rg-plan-active' : ''">
-          <span class="rg-plan-name">PREMIUM+</span>
+          <span class="rg-plan-name">BUSINESS</span>
           <span class="rg-plan-price">20 000 FCFA / mois</span>
         </div>
       </div>

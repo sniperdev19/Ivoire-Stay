@@ -2,7 +2,7 @@
 <?php ?>
 <!-- Rapports & Analyses — template injecté via $content -->
 
-<?php $pageJs = 'saas-reports'; ?>
+<?php $pageJs = 'saas-reports'; $pageCss = 'saas-reports'; ?>
 <div x-data="reportsPage('<?= $base_url ?>')"
  x-init="init()" @keydown.escape.window="loading=false">
 
@@ -43,7 +43,7 @@
       <!-- ══ VUE COMPARATIVE ══ -->
       <template x-if="viewMode === 'compare'">
         <div class="saas-card">
-          <h3 style="margin:0 0 12px;font-size:16px;">Comparatif entre établissements</h3>
+          <h3 class="report-section-title"><span class="report-section-dot"></span>Comparatif entre établissements</h3>
           <div style="overflow-x:auto;">
             <table class="saas-table" style="width:100%;">
               <thead><tr><th>Établissement</th><th>Revenus</th><th>Dépenses</th><th>Bénéfice net</th><th>Occupation</th></tr></thead>
@@ -80,21 +80,64 @@
       <div>
       <!-- ROW 1: 5 KPI -->
       <div class="saas-kpi-grid">
-        <div class="saas-card"><div style="display:flex;align-items:center;gap:10px;"><svg xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17l6-6 4 4 8-8"/></svg><div><div style="font-size:13px;color:#9CA3AF;">CA {{period}}</div><div style="font-size:18px;font-weight:800;color:#111827;" x-text="formatPrice(revenue)"></div></div></div></div>
+        <div class="saas-card report-kpi">
+          <div class="report-kpi-icon" style="background:rgba(201,168,76,0.12);color:#C9A84C;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17l6-6 4 4 8-8"/></svg>
+          </div>
+          <div class="report-kpi-body">
+            <p class="report-kpi-label" x-text="'CA ' + periodLabel"></p>
+            <p class="report-kpi-value" x-text="formatPrice(revenue)"></p>
+          </div>
+        </div>
 
-        <div class="saas-card"><div style="display:flex;align-items:center;gap:10px;"><svg xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;color:#DC2626;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2-1.343-2-3-2zM12 14v6"/></svg><div><div style="font-size:13px;color:#9CA3AF;">Dépenses</div><div style="font-size:18px;font-weight:800;color:#111827;" x-text="formatPrice(expTotal)"></div></div></div></div>
+        <div class="saas-card report-kpi">
+          <div class="report-kpi-icon" style="background:rgba(220,38,38,0.1);color:#DC2626;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M23 18l-9.5-9.5-5 5L1 6M17 18h6v-6"/></svg>
+          </div>
+          <div class="report-kpi-body">
+            <p class="report-kpi-label">Dépenses</p>
+            <p class="report-kpi-value" x-text="formatPrice(expTotal)"></p>
+          </div>
+        </div>
 
-        <div class="saas-card"><div style="display:flex;align-items:center;gap:10px;"><svg xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;color:#6B7280;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"/></svg><div><div style="font-size:13px;color:#9CA3AF;">Bénéfice net</div><div :style="{ color: netProfit>=0?'#16a34a':'#DC2626', 'font-weight': '800' }" style="font-size:18px;" x-text="formatPrice(netProfit)"></div></div></div></div>
+        <div class="saas-card report-kpi">
+          <div class="report-kpi-icon" :style="{ background: netProfit>=0?'rgba(22,163,74,0.1)':'rgba(220,38,38,0.1)', color: netProfit>=0?'#16a34a':'#DC2626' }">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <div class="report-kpi-body">
+            <p class="report-kpi-label">Bénéfice net</p>
+            <p class="report-kpi-value" :style="{ color: netProfit>=0?'#16a34a':'#DC2626' }" x-text="formatPrice(netProfit)"></p>
+          </div>
+        </div>
 
-        <div class="saas-card"><div style="display:flex;align-items:center;gap:10px;"><svg xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;color:#16a34a;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/></svg><div><div style="font-size:13px;color:#9CA3AF;">Encaissé</div><div style="font-size:18px;font-weight:800;color:#111827;" x-text="formatPrice(paidInv)"></div></div></div></div>
+        <div class="saas-card report-kpi">
+          <div class="report-kpi-icon" style="background:rgba(22,163,74,0.1);color:#16a34a;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          </div>
+          <div class="report-kpi-body">
+            <p class="report-kpi-label">Encaissé</p>
+            <p class="report-kpi-value" x-text="formatPrice(paidInv)"></p>
+          </div>
+        </div>
 
-        <div class="saas-card"><div style="display:flex;flex-direction:column;gap:8px;"><div style="display:flex;align-items:center;gap:10px;"><svg xmlns="http://www.w3.org/2000/svg" style="width:22px;height:22px;color:#2563EB;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18"/></svg><div><div style="font-size:13px;color:#9CA3AF;">Taux d'occupation</div><div style="font-size:18px;font-weight:800;color:#111827;" x-text="occupancy + '%' "></div></div></div><div style="height:8px;background:#F3F4F6;border-radius:6px;overflow:hidden;"><div :style="'height:100%;width:'+occupancy+'%;background:#2563EB;'"></div></div></div></div>
+        <div class="saas-card">
+          <div class="report-kpi" style="margin-bottom:12px;">
+            <div class="report-kpi-icon" style="background:rgba(37,99,235,0.1);color:#2563EB;">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><line x1="19" y1="5" x2="5" y2="19" stroke-width="2" stroke-linecap="round"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+            </div>
+            <div class="report-kpi-body">
+              <p class="report-kpi-label">Taux d'occupation</p>
+              <p class="report-kpi-value" x-text="occupancy + '%'"></p>
+            </div>
+          </div>
+          <div style="height:8px;background:#F3F4F6;border-radius:6px;overflow:hidden;"><div :style="'height:100%;width:'+occupancy+'%;background:#2563EB;'"></div></div>
+        </div>
       </div>
 
       <!-- ROW 2: left distribution, right summary -->
       <div style="display:grid;grid-template-columns:60% 40%;gap:12px;margin-bottom:12px;">
         <div class="saas-card">
-          <h3 style="margin:0 0 8px;font-size:16px;">Dépenses par catégorie</h3>
+          <h3 class="report-section-title"><span class="report-section-dot"></span>Dépenses par catégorie</h3>
           <div style="display:flex;flex-direction:column;gap:10px;">
             <template x-for="item in expByCategory" :key="item.cat">
               <div style="display:flex;align-items:center;gap:10px;">
@@ -109,7 +152,7 @@
         </div>
 
         <div class="saas-card">
-          <h3 style="margin:0 0 8px;font-size:16px;">Bilan "<span x-text="period"></span>"</h3>
+          <h3 class="report-section-title"><span class="report-section-dot"></span>Bilan <span x-text="periodLabel"></span></h3>
           <div style="display:flex;flex-direction:column;gap:12px;">
             <div><div style="font-size:12px;color:#9CA3AF;">Revenus bruts</div><div style="font-weight:800;color:#16a34a;" x-text="formatPrice(revenue)"></div></div>
             <div><div style="font-size:12px;color:#9CA3AF;">Factures payées</div><div style="font-weight:700;color:#16a34a;" x-text="formatPrice(paidInv)"></div></div>
@@ -121,9 +164,15 @@
             </div>
 
             <div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:12px;">
-              <div :style="netProfit>=0? 'background:rgba(16,185,129,0.06);padding:12px;border-radius:8px;':'background:rgba(220,38,38,0.06);padding:12px;border-radius:8px;'">
-                <div style="font-size:13px;color:#6B7280;">Résultat net</div>
-                <div style="font-size:20px;font-weight:800;" x-text="formatPrice(netProfit)"></div>
+              <div class="report-net-card" :style="{ background: netProfit>=0?'rgba(22,163,74,0.08)':'rgba(220,38,38,0.06)' }">
+                <div>
+                  <p class="report-net-label">Résultat net</p>
+                  <p class="report-net-value" :style="{ color: netProfit>=0?'#16a34a':'#DC2626' }" x-text="formatPrice(netProfit)"></p>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:26px;height:26px;flex-shrink:0;" :style="{ color: netProfit>=0?'#16a34a':'#DC2626' }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path x-show="netProfit>=0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+                  <path x-show="netProfit<0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                </svg>
               </div>
             </div>
 
@@ -134,7 +183,7 @@
 
       <!-- ROW 3: Paiements récents -->
       <div class="saas-card">
-        <h3 style="margin:0 0 12px;font-size:16px;">Paiements reçus</h3>
+        <h3 class="report-section-title"><span class="report-section-dot"></span>Paiements reçus</h3>
         <div style="overflow-x:auto;">
           <table class="saas-table" style="width:100%;">
             <thead><tr><th>Référence</th><th>Client</th><th>Montant</th><th>Méthode</th><th>Date</th></tr></thead>

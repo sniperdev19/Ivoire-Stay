@@ -62,6 +62,8 @@ function reportsPage(baseUrl) {
 
   async changePeriod(p) { this.period = p; await this.loadData(); },
 
+  get periodLabel() { return this.period === 'year' ? 'cette année' : 'ce mois'; },
+
   async exportPdf() {
     if (this.pdfLoading) return;
     this.pdfLoading = true;

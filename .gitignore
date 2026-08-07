@@ -55,3 +55,6 @@ database.sql
 
 # Dossier de staging pour l'hébergement (copie prête à téléverser, contient vendor/)
 /copy/
+
+# Documentation Docusaurus (site local uniquement, même convention que documentation/*.md)
+/docs-site/

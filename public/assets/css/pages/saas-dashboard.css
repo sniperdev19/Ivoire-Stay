@@ -12,12 +12,11 @@
   animation: shimmer 1.4s linear infinite;
   border-radius: 12px;
 }
-.kpi-grid   { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+.kpi-grid   { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
+.kpi-grid .kpi-card { padding:10px 12px; }
 .main-grid  { display:grid; grid-template-columns:3fr 2fr; gap:16px; margin-bottom:20px; }
-.bottom-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 @media(max-width:1200px){ .kpi-grid  { grid-template-columns:repeat(2,1fr)!important; } }
 @media(max-width:900px) { .main-grid { grid-template-columns:1fr!important; } }
-@media(max-width:640px) { .bottom-grid{ grid-template-columns:1fr!important; } }
 
 /* KPI card — variantes de couleur (bandeau supérieur via ::before) */
 .kpi-gold:before   { background: linear-gradient(90deg, #C9A84C, #E8D5A3); }

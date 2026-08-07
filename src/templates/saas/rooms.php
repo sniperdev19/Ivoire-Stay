@@ -319,6 +319,21 @@
 
       <div class="room-modal-v2-scroll">
 
+        <div class="create-steps">
+          <div class="create-step" :class="{ active: roomStep === 1, done: roomStep > 1 }">
+            <span class="create-step-num" x-text="roomStep > 1 ? '✓' : '1'"></span> Informations
+          </div>
+          <div class="create-step-line" :class="{ done: roomStep > 1 }"></div>
+          <div class="create-step" :class="{ active: roomStep === 2, done: roomStep > 2 }">
+            <span class="create-step-num" x-text="roomStep > 2 ? '✓' : '2'"></span> Tarifs & Équipements
+          </div>
+          <div class="create-step-line" :class="{ done: roomStep > 2 }"></div>
+          <div class="create-step" :class="{ active: roomStep === 3 }">
+            <span class="create-step-num">3</span> Notes & Photos
+          </div>
+        </div>
+
+        <div x-show="roomStep === 1">
         <!-- Informations générales -->
         <div>
           <div class="room-modal-v2-section-title">
@@ -404,7 +419,9 @@
             </div>
           </div>
         </div>
+        </div>
 
+        <div x-show="roomStep === 2">
         <!-- Tarifs -->
         <div>
           <div class="room-modal-v2-section-title">
@@ -456,6 +473,7 @@
                 <input type="checkbox" :checked="(roomTypeMode==='existing' ? (selectedRoomType?.amenities||[]) : newTypeForm.amenities).includes(a)"
                        :disabled="roomTypeMode==='existing'" @change="roomTypeMode==='new' && toggleNewTypeAmenity(a)" />
                 <svg x-show="a==='Climatisation'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M12 2v20M4.9 6.5l14.2 11M4.9 17.5l14.2-11"/></svg>
+                <svg x-show="a==='Ventilateur'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2m15.73-8.27A2.5 2.5 0 1119.5 12H2"/></svg>
                 <svg x-show="a==='Smart TV'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="10" rx="1.5"/><path stroke-linecap="round" d="M9 19h6M12 15v4"/></svg>
                 <svg x-show="a==='DSTV / Canal+'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 10a8 8 0 0116 0"/><circle cx="12" cy="17" r="1.6"/><path stroke-linecap="round" d="M12 15.4V10"/></svg>
                 <svg x-show="a==='Réfrigérateur'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2.5" width="12" height="19" rx="1.5"/><path stroke-linecap="round" d="M6 10h12"/></svg>
@@ -465,12 +483,21 @@
                 <svg x-show="a==='Coffre-fort'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" d="M12 9V6.5"/></svg>
                 <svg x-show="a==='Mini bar'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 4h12l-1.5 6a4.5 4.5 0 01-9 0L6 4z"/><path stroke-linecap="round" d="M12 14v6M9 20h6"/></svg>
                 <svg x-show="a==='Balcon'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10"/><path stroke-linecap="round" d="M4 10V6M20 10V6M12 10V6"/></svg>
+                <svg x-show="a==='Moustiquaire'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 9a8 8 0 0116 0M5 9v10M19 9v10M9 9v10M15 9v10"/></svg>
+                <svg x-show="a==='Groupe électrogène'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                <svg x-show="a==='Petit-déjeuner inclus'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><path stroke-linecap="round" d="M6 2v3M10 2v3M14 2v3"/></svg>
+                <svg x-show="a==='Parking privé'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="4"/><path stroke-linecap="round" stroke-linejoin="round" d="M10 16V8h3a2.5 2.5 0 010 5h-3"/></svg>
+                <svg x-show="a==='Sèche-cheveux'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a5 5 0 015-5c3 0 6 1.5 8 5-2 1.5-3 2-4 2H8a5 5 0 01-5-2z"/><path stroke-linecap="round" d="M7 11v8M11 11v6"/><path stroke-linecap="round" d="M18 6c1.2.9 1.2 2.1 0 3M20.5 5c1.8 1.5 1.8 3.5 0 5"/></svg>
+                <svg x-show="a==='Bureau de travail'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2 8h20M4 8v12M20 8v12"/><rect x="8" y="8" width="8" height="5" rx="1"/></svg>
+                <svg x-show="a==='Prises USB'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 2v6M15 2v6M6 8h12v4a6 6 0 01-12 0V8z"/><path stroke-linecap="round" d="M12 18v4"/></svg>
                 <span x-text="a"></span>
               </label>
             </template>
           </div>
         </div>
+        </div>
 
+        <div x-show="roomStep === 3">
         <!-- Notes -->
         <div>
           <div class="room-modal-v2-section-title">
@@ -520,6 +547,7 @@
           <p x-show="!editingRoom && pendingRoomPhotos.length" style="margin:8px 2px 0;font-size:12px;color:#6B7280;">Ces photos seront envoyées après la création de la chambre.</p>
           <p x-show="roomPhotoError" x-text="roomPhotoError" style="margin:8px 2px 0;font-size:12px;color:#DC2626;"></p>
         </div>
+        </div>
 
         <div x-show="roomError" x-cloak class="room-modal-v2-error">
           <strong>Erreur :</strong> <span x-text="roomError"></span>
@@ -527,8 +555,13 @@
       </div>
 
       <div class="type-modal-footer">
-        <button type="button" class="btn-saas-secondary" @click="showRoomModal=false">Annuler</button>
-        <button type="submit" class="btn-saas-primary" :disabled="roomSaving">
+        <button type="button" class="btn-saas-secondary" @click="roomStep > 1 ? roomStep-- : (showRoomModal=false)">
+          <span x-text="roomStep > 1 ? '← Précédent' : 'Annuler'"></span>
+        </button>
+        <button type="button" class="btn-saas-primary" x-show="roomStep < 3"
+          :disabled="(roomStep === 1 && !canProceedRoomStep1) || (roomStep === 2 && !canProceedRoomStep2)"
+          @click="roomStep++">Continuer →</button>
+        <button type="submit" class="btn-saas-primary" x-show="roomStep === 3" :disabled="roomSaving">
           <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
           <span x-show="!roomSaving" x-text="editingRoom ? 'Enregistrer' : 'Enregistrer la chambre'"></span>
           <span x-show="roomSaving">Sauvegarde...</span>
@@ -555,8 +588,8 @@
 
           <div class="type-tabs">
             <button type="button" class="type-tab" :class="{ active: typeTab === 1 }" @click="typeTab = 1">1. Détails & Capacités</button>
-            <button type="button" class="type-tab" :class="{ active: typeTab === 2 }" @click="typeTab = 2">2. Tarifs & Calendrier</button>
-            <button type="button" class="type-tab" :class="{ active: typeTab === 3 }" @click="typeTab = 3">3. Équipements</button>
+            <button type="button" class="type-tab" :class="{ active: typeTab === 2 }" :disabled="!canProceedTypeTab1" @click="canProceedTypeTab1 && (typeTab = 2)">2. Tarifs & Calendrier</button>
+            <button type="button" class="type-tab" :class="{ active: typeTab === 3 }" :disabled="!canProceedTypeTab1 || !canProceedTypeTab2" @click="(canProceedTypeTab1 && canProceedTypeTab2) && (typeTab = 3)">3. Équipements</button>
           </div>
 
           <div class="type-tab-panels">
@@ -663,7 +696,9 @@
 
           <div class="type-modal-footer">
             <button type="button" class="btn-saas-secondary" @click="typeTab === 1 ? (showTypeModal=false) : (typeTab = typeTab - 1)" x-text="typeTab === 1 ? 'Annuler' : '← Précédent'"></button>
-            <button type="button" class="btn-saas-primary" x-show="typeTab < 3" @click="typeTab = typeTab + 1">Continuer →</button>
+            <button type="button" class="btn-saas-primary" x-show="typeTab < 3"
+              :disabled="(typeTab === 1 && !canProceedTypeTab1) || (typeTab === 2 && !canProceedTypeTab2)"
+              @click="typeTab = typeTab + 1">Continuer →</button>
             <button type="submit" class="btn-saas-primary" x-show="typeTab === 3" :disabled="typeSaving">
               <span x-show="!typeSaving" x-text="editingType ? 'Enregistrer' : 'Créer le type'"></span>
               <span x-show="typeSaving">Sauvegarde...</span>

@@ -27,6 +27,17 @@ elseif (preg_match('#/newsletter/desabonnement#', $uri)) $pageName = 'newsletter
   <title><?= htmlspecialchars($title ?? 'Afristay') ?></title>
   <link rel="icon" href="<?= $base ?>/assets/icons/icon-192.png" type="image/png">
 
+  <!-- Google Analytics (GA4) — n'injecte rien tant que GA_MEASUREMENT_ID (.env) est vide -->
+  <?php if (GA_MEASUREMENT_ID !== ''): ?>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=<?= urlencode(GA_MEASUREMENT_ID) ?>"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', '<?= addslashes(GA_MEASUREMENT_ID) ?>');
+  </script>
+  <?php endif; ?>
+
   <link rel="stylesheet" href="<?= $base ?>/assets/css/fonts.css">
 
   <!-- Styles globaux vitrine (remplace Tailwind CDN) -->

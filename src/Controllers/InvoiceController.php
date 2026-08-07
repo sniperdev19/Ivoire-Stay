@@ -211,7 +211,10 @@ class InvoiceController
         $inv       = Invoice::find($invoiceId);
         $paid      = Invoice::paidAmount($invoiceId);
 
-        if ($inv) {
+        // Une facture annulée (réservation annulée, voir Invoice::cancelForBooking)
+        // ne doit pas être remise en 'paid'/'sent' par la simple réévaluation
+        // du solde suite à la modification d'un paiement existant.
+        if ($inv && $inv['status'] !== 'cancelled') {
             $now = date('Y-m-d H:i:s');
             $ttc = (float) $inv['amount_ttc'];
             if ($paid >= $ttc && $inv['status'] !== 'paid') {
