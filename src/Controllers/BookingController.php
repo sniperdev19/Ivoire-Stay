@@ -191,6 +191,8 @@ class BookingController
 
         if (!empty($update)) Booking::update($id, $update);
 
+        if ($becomingCancelled) Invoice::cancelForBooking($id);
+
         $details = Booking::findWithDetails($id);
 
         if ($becomingCancelled) {
@@ -212,6 +214,7 @@ class BookingController
         $booking = Guard::requireBooking($id);
         $this->requireNotHardFrozen((int) $booking['establishment_id']);
         Booking::update($id, ['status' => 'cancelled']);
+        Invoice::cancelForBooking($id);
 
         $details = Booking::findWithDetails($id);
         NotificationService::bookingCancelled(

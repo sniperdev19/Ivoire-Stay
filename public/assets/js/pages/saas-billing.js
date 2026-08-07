@@ -286,10 +286,15 @@ function billingPage(baseUrl, defaultTab) {
 
   // ── KPI calculés ──────────────────────────────────────────
   get kpi() {
-    const totalTtc   = this.invoices.reduce((s, i) => s + (Number(i.amount_ttc) || 0), 0);
+    // Une facture/un paiement lié à une réservation annulée ne compte plus
+    // comme CA actif (même règle que Dashboard/Rapports) — l'annulation
+    // bascule déjà la facture en 'cancelled' côté serveur (voir
+    // Invoice::cancelForBooking), donc totalTtc/paidInv l'excluent
+    // naturellement ; encaisse doit filtrer sur la réservation du paiement.
+    const totalTtc   = this.invoices.filter(i => i.status !== 'cancelled').reduce((s, i) => s + (Number(i.amount_ttc) || 0), 0);
     const paidInv    = this.invoices.filter(i => i.status === 'paid').length;
     const pendingInv = this.invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled').length;
-    const encaisse   = this.payments.filter(p => p.status === 'completed').reduce((s, p) => s + (Number(p.amount) || 0), 0);
+    const encaisse   = this.payments.filter(p => p.status === 'completed' && p.booking_status !== 'cancelled').reduce((s, p) => s + (Number(p.amount) || 0), 0);
     const enAttente  = this.payments.filter(p => p.status === 'pending').reduce((s, p) => s + (Number(p.amount) || 0), 0);
     return { totalTtc, paidInv, pendingInv, encaisse, enAttente };
   },

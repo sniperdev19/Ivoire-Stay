@@ -34,7 +34,7 @@ class BookingPaymentController
             Response::error('Un paiement est déjà en cours pour cette réservation. Vérifiez votre téléphone ou contactez l\'établissement.');
         }
 
-        // Le paiement en ligne est une fonctionnalité Premium (plans Pro/Business),
+        // Le paiement en ligne est une fonctionnalité payante (plans Pro/Business),
         // et peut en plus être désactivé par l'établissement lui-même
         $estabRow = Database::query(
             "SELECT e.plan, e.plan_expires_at, e.online_payment_enabled

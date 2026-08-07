@@ -246,7 +246,10 @@ $defaultTab = $defaultTab ?? 'invoices';
                         </div>
                       </td>
                       <td style="font-size:12px;color:#6B7280;" x-text="typeLabel(p.type)"></td>
-                      <td><span :class="payStatusCfg(p.status).badge" x-text="payStatusCfg(p.status).label"></span></td>
+                      <td>
+                        <span :class="payStatusCfg(p.status).badge" x-text="payStatusCfg(p.status).label"></span>
+                        <span x-show="p.booking_status === 'cancelled'" style="display:inline-block;margin-left:6px;font-size:11px;color:#9CA3AF;" title="La réservation liée a été annulée — exclu du CA">(résa. annulée)</span>
+                      </td>
                       <td x-text="formatDate(p.paid_at)"></td>
                       <td>
                         <button class="btn-saas-secondary" @click.stop="openEditPayment(p)">Modifier</button>
@@ -360,7 +363,7 @@ $defaultTab = $defaultTab ?? 'invoices';
               <label class="saas-label">Facture *</label>
               <select class="saas-input" x-model="payForm.invoice_id" @change="onInvoiceChange()">
                 <option value="">Sélectionner une facture</option>
-                <template x-for="inv in invoices.filter(i => i.status !== 'paid')" :key="inv.id">
+                <template x-for="inv in invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled')" :key="inv.id">
                   <option :value="inv.id" x-text="(inv.invoice_number ?? '#' + inv.id) + ' — ' + (inv.client_name ?? '') + ' — ' + formatPrice(inv.amount_ttc)"></option>
                 </template>
               </select>

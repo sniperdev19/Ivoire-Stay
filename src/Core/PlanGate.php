@@ -115,6 +115,6 @@ class PlanGate
                 return $config['name'];
             }
         }
-        return 'Premium';
+        return 'Pro';
     }
 }

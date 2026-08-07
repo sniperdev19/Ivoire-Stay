@@ -126,6 +126,22 @@ class Invoice extends BaseModel
         return 0;
     }
 
+    /**
+     * Bascule la/les facture(s) d'une réservation annulée en 'cancelled' —
+     * même si elle était déjà payée : une réservation annulée ne doit plus
+     * apparaître comme du CA actif dans la Comptabilité (même règle que
+     * l'exclusion des paiements côté Dashboard/Rapports, voir
+     * Payment::totalByEstablishment). Ne touche pas les factures déjà
+     * annulées (idempotent).
+     */
+    public static function cancelForBooking(int $bookingId): void
+    {
+        Database::query(
+            "UPDATE invoices SET status = 'cancelled' WHERE booking_id = ? AND status != 'cancelled'",
+            [$bookingId]
+        );
+    }
+
     public static function paidAmount(int $invoiceId): float
     {
         return (float) Database::query(
@@ -163,7 +179,10 @@ class Invoice extends BaseModel
         $inv  = self::find($invoiceId);
         $paid = self::paidAmount($invoiceId);
 
-        if ($inv) {
+        // Une facture annulée (réservation annulée) ne doit pas se
+        // retrouver "paid"/"sent" au simple fait qu'un paiement lui soit
+        // encore rattaché — voir Invoice::cancelForBooking.
+        if ($inv && $inv['status'] !== 'cancelled') {
             $ttc = (float) $inv['amount_ttc'];
             if ($paid >= $ttc) {
                 self::update($invoiceId, ['status' => 'paid', 'paid_at' => $now]);

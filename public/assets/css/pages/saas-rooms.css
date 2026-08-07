@@ -241,6 +241,25 @@
 .type-tabs { display:flex; gap:8px; margin-bottom:22px; padding:5px; background:#F3F4F6; border-radius:12px; }
 .type-tab { flex:1; padding:9px 10px; border:none; background:transparent; border-radius:9px; font-size:13px; font-weight:600; color:#6B7280; cursor:pointer; transition:all .2s; }
 .type-tab.active { background:white; color:#111827; box-shadow:0 1px 6px rgba(0,0,0,0.1); }
+.type-tab:disabled { opacity:0.4; cursor:not-allowed; }
+
+/* Étapes de la modale "Nouvelle chambre" (Informations → Tarifs & Équipements → Notes & Photos) */
+.create-steps { display:flex; align-items:center; margin:0 0 20px; }
+.create-step {
+  display:flex; align-items:center; gap:6px; flex-shrink:0;
+  font-size:12px; font-weight:600; color:#9CA3AF; white-space:nowrap;
+}
+.create-step.active { color:#111827; }
+.create-step.done { color:#16A34A; }
+.create-step-num {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:20px; height:20px; border-radius:50%; flex-shrink:0;
+  font-size:11px; font-weight:700; background:#F3F4F6; color:#9CA3AF;
+}
+.create-step.active .create-step-num { background:#C9A84C; color:white; }
+.create-step.done .create-step-num { background:#DCFCE7; color:#16A34A; }
+.create-step-line { flex:1 1 0%; height:1px; background:rgba(0,0,0,0.08); margin:0 10px; }
+.create-step-line.done { background:#16A34A; }
 
 /* Hauteur stable entre les 3 onglets du modal Type de chambre : évite que
    la modale change de taille en passant d'un onglet court à un long. */
@@ -307,46 +326,7 @@
 .amenity-option:hover { background:#F9FAFB; }
 .amenity-option.active { background:#0f2b20; border-color:#0f2b20; color:white; }
 
-/* Colonne aperçu */
-.type-preview-panel { flex:1 1 0%; background:#FAFAF8; padding:24px 26px; display:flex; flex-direction:column; gap:18px; min-height:0; overflow-y:auto; }
-@media(max-width:860px){ .type-preview-panel { flex:none; overflow-y:visible; } }
-.type-preview-live { flex-shrink:0; display:flex; align-items:center; gap:8px; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#6B7280; }
-.type-preview-dot { width:8px; height:8px; border-radius:50%; background:#16A34A; box-shadow:0 0 0 3px rgba(22,163,74,0.18); }
-
-.type-preview-card { flex-shrink:0; background:white; border-radius:16px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.08); border:1px solid rgba(0,0,0,0.05); }
-.type-preview-info { padding:18px; }
-.type-preview-top { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
-.type-preview-badge { display:flex; align-items:center; gap:6px; background:#F3F4F6; color:#374151; font-size:12px; font-weight:600; padding:5px 10px; border-radius:9999px; }
-.type-preview-price { background:#111827; color:white; font-size:13px; font-weight:700; padding:6px 10px; border-radius:10px; }
-.type-preview-name { font-size:16px; font-weight:700; color:#111827; margin-bottom:6px; }
-.type-preview-meta { display:flex; gap:8px; font-size:12px; color:#6B7280; margin-bottom:8px; }
-.type-preview-desc { font-size:13px; color:#6B7280; font-style:italic; line-height:1.5; }
-.type-preview-amenities { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; padding-top:12px; border-top:1px solid rgba(0,0,0,0.06); }
 .type-amenity-tag { font-size:11px; font-weight:600; color:var(--saas-gold); background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.2); padding:3px 9px; border-radius:9999px; }
-.type-preview-eyebrow { font-size:11px; font-weight:700; letter-spacing:.06em; color:var(--saas-gold); margin-bottom:4px; }
-
-/* Aperçu chambre */
-.room-preview-image {
-  position:relative; height:140px;
-  background:linear-gradient(160deg,#9CA3AF,#4B5563);
-  background-size:cover; background-position:center;
-  display:flex; align-items:flex-start; justify-content:space-between; padding:12px;
-}
-.room-preview-badge { display:flex; align-items:center; gap:6px; background:rgba(17,24,39,0.85); color:white; font-size:12px; font-weight:600; padding:5px 10px; border-radius:9999px; }
-.room-preview-status-pill { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; padding:5px 10px; border-radius:9999px; }
-.room-preview-price-tag { position:absolute; right:12px; bottom:12px; background:rgba(17,24,39,0.85); color:white; font-size:13px; font-weight:700; padding:6px 10px; border-radius:10px; }
-.room-preview-notes-label { font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#9CA3AF; margin-bottom:8px; }
-.room-preview-notes-box {
-  font-size:13px; color:#6B7280; font-style:italic; line-height:1.5;
-  background:#FAFAF8; border:1px solid rgba(0,0,0,0.06); border-radius:10px; padding:12px 14px;
-}
-
-.type-financial-panel { flex-shrink:0; background:#111827; border-radius:16px; padding:18px 20px; color:white; }
-.type-financial-title { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--saas-gold); margin-bottom:14px; }
-.type-financial-row { display:flex; justify-content:space-between; align-items:center; font-size:13px; color:rgba(255,255,255,0.75); padding:8px 0; border-top:1px solid rgba(255,255,255,0.08); }
-.type-financial-row:first-of-type { border-top:none; }
-.type-financial-row strong { color:white; font-size:14px; }
-.type-financial-row strong.accent { color:var(--saas-gold); }
 
 /* ============================================================
    Modal "Chambre" v2 — sections avec icônes, tarifs en aperçu
@@ -370,7 +350,7 @@
 .room-modal-v2-section-title svg { width:16px; height:16px; color:var(--saas-gold); flex-shrink:0; }
 
 .room-modal-v2-grid3 { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:16px; }
-@media(max-width:640px){ .room-modal-v2-grid3 { grid-template-columns:1fr; } }
+@media(max-width:640px){ .room-modal-v2-grid3 { grid-template-columns:repeat(2, minmax(0,1fr)); } }
 
 .room-modal-v2-link { display:block; border:none; background:none; padding:8px 0 0; color:#2563EB; font-size:12px; font-weight:600; cursor:pointer; }
 .room-modal-v2-link:hover { text-decoration:underline; }

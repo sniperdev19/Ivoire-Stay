@@ -82,7 +82,7 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
       <div class="pr-card-top pr-card-top-gold"></div>
       <span class="pr-popular-badge">Le plus populaire</span>
       <div class="pr-card-body">
-        <div class="pr-plan-name">Premium</div>
+        <div class="pr-plan-name">Pro</div>
         <p class="pr-plan-tagline">Pour les établissements qui veulent accélérer.</p>
         <div class="pr-price-block">
           <div class="pr-price"><span x-text="annual ? '<?= $fmt($proYearlyPerMo) ?>' : '<?= $fmt($proMonthly) ?>'"><?= $fmt($proMonthly) ?></span> <small>FCFA</small></div>
@@ -121,7 +121,7 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
               </svg></span><span>Multi-établissements</span></li>
         </ul>
         <a :href="'<?= $base ?>/register?plan=pro&billing=' + (annual ? 'yearly' : 'monthly')"
-          class="pr-card-btn pr-btn-gold">Choisir Premium →</a>
+          class="pr-card-btn pr-btn-gold">Choisir Pro →</a>
       </div>
     </div>
 
@@ -129,7 +129,7 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
     <div class="pr-card">
       <div class="pr-card-top" style="background:var(--forest);"></div>
       <div class="pr-card-body">
-        <div class="pr-plan-name">Premium+</div>
+        <div class="pr-plan-name">Business</div>
         <p class="pr-plan-tagline">Pour les groupes hôteliers et gestionnaires multi-sites.</p>
         <div class="pr-price-block">
           <div class="pr-price"><span x-text="annual ? '<?= $fmt($bizYearlyPerMo) ?>' : '<?= $fmt($bizMonthly) ?>'"><?= $fmt($bizMonthly) ?></span> <small>FCFA</small></div>
@@ -141,7 +141,7 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
           <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Tout le plan Premium inclus</span></li>
+              </svg></span><span>Tout le plan Pro inclus</span></li>
           <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
@@ -152,7 +152,7 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
               </svg></span><span>Boost vitrine</span></li>
         </ul>
         <a :href="'<?= $base ?>/register?plan=business&billing=' + (annual ? 'yearly' : 'monthly')"
-          class="pr-card-btn pr-btn-outline">Choisir Premium+ →</a>
+          class="pr-card-btn pr-btn-outline">Choisir Business →</a>
       </div>
     </div>
   </section>
@@ -169,8 +169,8 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
         <tr>
           <th>Fonctionnalité</th>
           <th>Gratuit</th>
-          <th>Premium</th>
-          <th>Premium+</th>
+          <th>Pro</th>
+          <th>Business</th>
         </tr>
       </thead>
       <tbody>
@@ -287,7 +287,7 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
         <button class="pr-faq-q" @click="open=open===2?null:2" type="button"><span>Y a-t-il une période d'essai
             ?</span><span class="pr-faq-icon">+</span></button>
         <div class="pr-faq-a" x-show="open===2" x-transition>Le plan Gratuit est gratuit et sans limite de temps. Vous
-          pouvez tester les fonctionnalités Premium pendant 14 jours sans carte bancaire.</div>
+          pouvez tester les fonctionnalités Pro pendant 14 jours sans carte bancaire.</div>
       </div>
       <div class="pr-faq-item" :class="open===3?'pr-faq-open':''">
         <button class="pr-faq-q" @click="open=open===3?null:3" type="button"><span>Comment fonctionnent les paiements
@@ -305,7 +305,7 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
         <button class="pr-faq-q" @click="open=open===5?null:5" type="button"><span>Puis-je gérer plusieurs hôtels
             ?</span><span class="pr-faq-icon">+</span></button>
         <div class="pr-faq-a" x-show="open===5" x-transition>La gestion multi-établissements est disponible
-          exclusivement sur le plan Premium+, sans limite de nombre d'établissements.</div>
+          exclusivement sur le plan Business, sans limite de nombre d'établissements.</div>
       </div>
     </div>
   </section>

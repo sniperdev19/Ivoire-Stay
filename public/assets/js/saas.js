@@ -230,9 +230,10 @@ const BOOKING_STATUS = {
 
 /* ─── Statuts de facture — source de vérité unique ──────────────────────── */
 const INVOICE_STATUS = {
-  draft: { label: 'Brouillon', badge: 'badge badge-info' },
-  sent:  { label: 'Envoyée',   badge: 'badge badge-warning' },
-  paid:  { label: 'Payée',     badge: 'badge badge-success' },
+  draft:     { label: 'Brouillon', badge: 'badge badge-info' },
+  sent:      { label: 'Envoyée',   badge: 'badge badge-warning' },
+  paid:      { label: 'Payée',     badge: 'badge badge-success' },
+  cancelled: { label: 'Annulée',   badge: 'badge badge-danger' },
 };
 
 /* ─── Catégories de dépenses — source de vérité unique ─────────────────────

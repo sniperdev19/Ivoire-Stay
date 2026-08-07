@@ -31,7 +31,10 @@ header('Permissions-Policy: geolocation=(self), camera=(self), microphone=()');
 // (gratuit, sans clé) utilisé par property.js::drawRoute() pour tracer
 // l'itinéraire client → établissement — pas de SLA officiel, à remplacer par
 // un fournisseur payant si le volume devient significatif.
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tile.openstreetmap.org; font-src 'self' data:; connect-src 'self' https://router.project-osrm.org; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'");
+// script-src/connect-src incluent googletagmanager.com/google-analytics.com :
+// tracking Google Analytics (GA4, vitrine/layout.php) — n'émet aucune requête
+// tant que GA_MEASUREMENT_ID (.env) est vide.
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tile.openstreetmap.org; font-src 'self' data:; connect-src 'self' https://router.project-osrm.org https://www.google-analytics.com https://www.googletagmanager.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'");
 if (($_SERVER['HTTPS'] ?? '') === 'on' || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') {
     header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
 }

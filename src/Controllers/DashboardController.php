@@ -61,13 +61,29 @@ class DashboardController
         // Expenses
         $expenses = Expense::totalByMonth($estabId, $month);
 
-        // Revenue received
+        // Revenue received — exclut les paiements liés à une réservation
+        // depuis annulée (voir Payment::totalByEstablishment).
         $paymentsReceived = (float) Database::query(
             "SELECT COALESCE(SUM(p.amount), 0)
              FROM payments p
              JOIN bookings b ON b.id = p.booking_id
              JOIN rooms r ON r.id = b.room_id
              WHERE r.establishment_id = ? AND p.status = 'completed'
+               AND b.status != 'cancelled'
+               AND DATE_FORMAT(p.paid_at, '%Y-%m') = ?",
+            [$estabId, $month]
+        )->fetchColumn();
+
+        // Montant encaissé mais depuis annulé — affiché à part pour que le
+        // gérant voie *pourquoi* le revenu a baissé plutôt que de le
+        // constater silencieusement.
+        $paymentsCancelled = (float) Database::query(
+            "SELECT COALESCE(SUM(p.amount), 0)
+             FROM payments p
+             JOIN bookings b ON b.id = p.booking_id
+             JOIN rooms r ON r.id = b.room_id
+             WHERE r.establishment_id = ? AND p.status = 'completed'
+               AND b.status = 'cancelled'
                AND DATE_FORMAT(p.paid_at, '%Y-%m') = ?",
             [$estabId, $month]
         )->fetchColumn();
@@ -146,6 +162,7 @@ class DashboardController
             'occupied_rooms'     => $occupiedRooms,
             'expenses'           => $canSeeFinance ? $expenses : null,
             'payments_received'  => $canSeeFinance ? $paymentsReceived : null,
+            'payments_cancelled' => $canSeeFinance ? $paymentsCancelled : null,
             'payments_pending'   => $canSeeFinance ? $paymentsPending : null,
             'net_profit'         => $canSeeFinance ? ($paymentsReceived - $expenses) : null,
             'distribution'       => $distribution,

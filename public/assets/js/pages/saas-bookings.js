@@ -25,6 +25,7 @@ function bookingsPage(baseUrl) {
   statusUpdating: false,
 
   showCreate: false,
+  createStep: 1,
   createLoading: false,
   createError: null,
   rooms: [],
@@ -32,9 +33,17 @@ function bookingsPage(baseUrl) {
   clientSearch: '',
   _autoCheckout: null,
 
+  // ── Calendrier de sélection des dates (même principe que la vitrine
+  //    publique : src/templates/vitrine/booking.php / booking.js) ────────
+  calMonth: null,
+  calAvailability: {},
+  calAvailabilityLoading: false,
+  calSelecting: false,
+
   form: {
     room_id: '', check_in: '', check_out: '',
     public_client_id: '', first_name: '', last_name: '', client_email: '', client_phone: '',
+    id_doc_type: '', id_doc_number: '',
     booking_type: 'nuit', hours: 3, guests_count: 2, source: 'manual', notes: '',
     record_payment: false, payment_type: 'full', payment_method: 'cash', payment_amount: '',
   },
@@ -47,13 +56,123 @@ function bookingsPage(baseUrl) {
   async init() {
     await Promise.all([this.loadBookings(), this.loadRooms(), this.loadClientsList()]);
     this.prefillFromQuery();
+    this.calMonth = this._calStartOfMonth(new Date());
     this.$watch('form.check_in',     () => this.autoSuggestCheckout());
     this.$watch('form.booking_type', () => this.autoSuggestCheckout());
+    this.$watch('form.room_id',      () => this.loadCalAvailability());
   },
 
   openCreate() {
     this.resetForm();
     this.showCreate = true;
+  },
+
+  // ── Calendrier de sélection des dates ────────────────────────────────
+  _calTodayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  },
+  _calStartOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); },
+
+  async loadCalAvailability() {
+    this.calAvailability = {};
+    if (!this.form.room_id) return;
+    this.calAvailabilityLoading = true;
+    try {
+      const from   = this._calTodayStr();
+      const toDate = new Date(); toDate.setDate(toDate.getDate() + 400);
+      const to     = toDate.getFullYear() + '-' + String(toDate.getMonth() + 1).padStart(2, '0') + '-' + String(toDate.getDate()).padStart(2, '0');
+      const res    = await fetch(baseUrl + `/api/public/availability/${this.form.room_id}?from=${from}&to=${to}`);
+      const data   = await res.json();
+      if (data.success && data.data) this.calAvailability = data.data;
+    } catch(e) { /* silencieux — le calendrier reste vide, la création vérifie côté serveur */ }
+    finally { this.calAvailabilityLoading = false; }
+  },
+
+  isCalBooked(dateStr) {
+    const status = this.calAvailability[dateStr];
+    return !!status && status !== 'available';
+  },
+
+  calRangeHasBooked(start, end) {
+    if (!start || !end || start === end) return this.isCalBooked(start);
+    const s = new Date(start + 'T00:00:00');
+    const e = new Date(end + 'T00:00:00');
+    for (let d = new Date(s); d < e; d.setDate(d.getDate() + 1)) {
+      if (this.isCalBooked(d.toISOString().slice(0, 10))) return true;
+    }
+    return false;
+  },
+
+  calMonthLabel() {
+    return this.calMonth ? this.calMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : '';
+  },
+
+  isCurrentCalMonth() {
+    const t = this._calStartOfMonth(new Date());
+    return this.calMonth && this.calMonth.getFullYear() === t.getFullYear() && this.calMonth.getMonth() === t.getMonth();
+  },
+
+  calPrevMonth() {
+    if (this.isCurrentCalMonth()) return;
+    this.calMonth = new Date(this.calMonth.getFullYear(), this.calMonth.getMonth() - 1, 1);
+  },
+  calNextMonth() {
+    this.calMonth = new Date(this.calMonth.getFullYear(), this.calMonth.getMonth() + 1, 1);
+  },
+
+  // Grille 7 colonnes (Lun→Dim), null = case vide de calage en début de mois
+  calDays() {
+    if (!this.calMonth) return [];
+    const year  = this.calMonth.getFullYear();
+    const month = this.calMonth.getMonth();
+    const startOffset = (new Date(year, month, 1).getDay() + 6) % 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today = this._calTodayStr();
+    const cells = [];
+    for (let i = 0; i < startOffset; i++) cells.push(null);
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      cells.push({
+        date:    dateStr,
+        day,
+        booked:  this.isCalBooked(dateStr),
+        past:    dateStr < today,
+        inRange: !!(this.form.check_in && this.form.check_out && dateStr > this.form.check_in && dateStr < this.form.check_out),
+      });
+    }
+    return cells;
+  },
+
+  // Sélection en 2 clics (arrivée puis départ) — "passage" = un seul jour.
+  // this.calSelecting distingue une sélection en cours d'une déjà bouclée,
+  // indépendamment du départ pré-rempli automatiquement par autoSuggestCheckout().
+  calSelectDate(dateStr) {
+    if (this.isCalBooked(dateStr) || dateStr < this._calTodayStr()) return;
+
+    if (this.form.booking_type === 'passage') {
+      this.form.check_in  = dateStr;
+      this.form.check_out = dateStr;
+      return;
+    }
+
+    if (!this.form.check_in || !this.calSelecting) {
+      this.form.check_in  = dateStr;
+      this.form.check_out = '';
+      this.calSelecting   = true;
+      return;
+    }
+    if (dateStr <= this.form.check_in) {
+      this.form.check_in  = dateStr;
+      this.form.check_out = '';
+      return;
+    }
+    if (this.calRangeHasBooked(this.form.check_in, dateStr)) {
+      this.createError = 'Une réservation existante se trouve dans cette période.';
+      return;
+    }
+    this.form.check_out = dateStr;
+    this.calSelecting   = false;
   },
 
   async loadClientsList() {
@@ -86,6 +205,8 @@ function bookingsPage(baseUrl) {
     this.form.last_name    = c.last_name  || parts.slice(1).join(' ') || '';
     this.form.client_phone = c.phone || '';
     this.form.client_email = c.email || '';
+    this.form.id_doc_type   = c.id_doc_type   || '';
+    this.form.id_doc_number = c.id_doc_number || '';
     this.clientSearch = '';
   },
 
@@ -312,9 +433,13 @@ function bookingsPage(baseUrl) {
 
   async createBooking() {
     this.createError = null;
+    const isPassage = this.form.booking_type === 'passage';
+    if (!this.form.check_in || (!isPassage && !this.form.check_out)) {
+      this.createError = 'Veuillez sélectionner les dates du séjour sur le calendrier.';
+      return;
+    }
     this.createLoading = true;
     try {
-      const isPassage = this.form.booking_type === 'passage';
       const payload = {
         room_id:          this.form.room_id,
         check_in:         this.form.check_in,
@@ -331,10 +456,12 @@ function bookingsPage(baseUrl) {
         payload.public_client_id = this.form.public_client_id;
       } else {
         payload.client = {
-          first_name: this.form.first_name.trim(),
-          last_name:  this.form.last_name.trim(),
-          email:      this.form.client_email  || null,
-          phone:      this.form.client_phone  || null,
+          first_name:    this.form.first_name.trim(),
+          last_name:     this.form.last_name.trim(),
+          email:         this.form.client_email  || null,
+          phone:         this.form.client_phone  || null,
+          id_doc_type:   this.form.id_doc_type   || null,
+          id_doc_number: this.form.id_doc_number || null,
         };
       }
 
@@ -367,88 +494,28 @@ function bookingsPage(baseUrl) {
     this.form = {
       room_id: '', check_in: '', check_out: '',
       public_client_id: '', first_name: '', last_name: '', client_email: '', client_phone: '',
+    id_doc_type: '', id_doc_number: '',
       booking_type: 'nuit', hours: 3, guests_count: 2, source: 'manual', notes: '',
       record_payment: false, payment_type: 'full', payment_method: 'cash', payment_amount: '',
     };
     this.clientSearch = '';
     this._autoCheckout = null;
     this.createError = null;
+    this.createStep = 1;
+    this.calMonth = this._calStartOfMonth(new Date());
+    this.calAvailability = {};
+    this.calSelecting = false;
   },
 
-  get selectedRoomForBooking() {
-    return this.rooms.find(r => r.id == this.form.room_id) || null;
+  // ── Étapes du formulaire de création ─────────────────────────────────
+  get canProceedStep1() {
+    if (!this.form.room_id || !this.form.check_in) return false;
+    if (this.form.booking_type !== 'passage' && !this.form.check_out) return false;
+    return true;
   },
-
-  photoUrl(path) {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    const clean = path.replace(/^\/+/, '');
-    return baseUrl + '/' + (clean.startsWith('assets/') ? clean : 'assets/' + clean);
-  },
-
-  get selectedRoomPhotoUrl() {
-    return this.photoUrl(this.selectedRoomForBooking?.cover_photo);
-  },
-
-  get bookingClientName() {
-    const name = [this.form.first_name, this.form.last_name].filter(Boolean).join(' ').trim();
-    return name || null;
-  },
-
-  get bookingDurationLabel() {
-    if (this.form.booking_type === 'passage') {
-      const h = Number(this.form.hours) || 0;
-      return h + ' heure' + (h > 1 ? 's' : '');
-    }
-    const nights = this.bookingNights;
-    return nights + ' nuit' + (nights > 1 ? 's' : '');
-  },
-
-  get bookingNights() {
-    if (!this.form.check_in || !this.form.check_out) return 1;
-    const n = Math.round((new Date(this.form.check_out) - new Date(this.form.check_in)) / 86_400_000);
-    return n > 0 ? n : 1;
-  },
-
-  get bookingRate() {
-    const room = this.selectedRoomForBooking;
-    if (!room) return 0;
-    if (this.form.booking_type === 'passage') return Number(room.passage_price) || 0;
-    if (this.form.booking_type === 'weekend')  return Number(room.weekend_price) || Number(room.base_price) || 0;
-    return Number(room.base_price) || 0;
-  },
-
-  get bookingEstimatedTotal() {
-    const room = this.selectedRoomForBooking;
-    if (!room) return 0;
-    if (this.form.booking_type === 'passage') return this.bookingRate * (Number(this.form.hours) || 0);
-    if (this.form.booking_type === 'weekend') return Number(room.weekend_price) || (this.bookingRate * this.bookingNights);
-
-    // Séjour "Nuit" : le tarif week-end est un FORFAIT pour un bloc complet
-    // vendredi+samedi+dimanche (pas un prix par nuit) — un week-end incomplet
-    // reste au tarif de base. Cohérent avec le calcul serveur (Booking::calculateAmount)
-    // et l'estimation affichée côté client sur la page de réservation publique (booking.js).
-    const basePrice    = Number(room.base_price) || 0;
-    const weekendPrice = Number(room.weekend_price) || 0;
-    if (!weekendPrice || weekendPrice === basePrice || !this.form.check_in) return basePrice * this.bookingNights;
-
-    const start = new Date(this.form.check_in + 'T00:00:00');
-    const dows  = [];
-    for (let i = 0; i < this.bookingNights; i++) {
-      const day = new Date(start);
-      day.setDate(start.getDate() + i);
-      dows.push(day.getDay());
-    }
-    let total = 0;
-    for (let i = 0; i < dows.length; i++) {
-      if (dows[i] === 5 && dows[i + 1] === 6 && dows[i + 2] === 0) {
-        total += weekendPrice;
-        i += 2; // bloc vendredi-samedi-dimanche déjà compté
-      } else {
-        total += basePrice;
-      }
-    }
-    return total;
+  get canProceedStep2() {
+    if (this.form.public_client_id) return true;
+    return !!(this.form.first_name.trim() && this.form.last_name.trim() && this.form.client_phone.trim());
   },
 
   get totalPages() { return Math.max(1, Math.ceil(this.total / this.perPage)); },
@@ -476,6 +543,20 @@ function bookingsPage(baseUrl) {
 
   statusConfig(s) { return BOOKING_STATUS[s] ?? { label: s, badge: 'badge' }; },
   sourceLabel(s)  { return { manual:'Manuel / Sur place', online:'En ligne', phone:'Téléphone' }[s] ?? s ?? '—'; },
+  initials(name) {
+    const parts = (name || '?').split(' ').filter(Boolean);
+    return (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '');
+  },
+  avatarBg(id) {
+    const colors = [
+      'linear-gradient(135deg,#C9A84C,#A67C2E)',
+      'linear-gradient(135deg,#2563EB,#1D4ED8)',
+      'linear-gradient(135deg,#16a34a,#15803D)',
+      'linear-gradient(135deg,#7C3AED,#6D28D9)',
+      'linear-gradient(135deg,#DC2626,#B91C1C)',
+    ];
+    return colors[(id ?? 0) % colors.length];
+  },
   typeLabel(t)    { return { nuit:'Nuit', weekend:'Week-end', passage:'Passage' }[t] ?? t ?? '—'; },
   typeBadgeStyle(t) {
     return {
