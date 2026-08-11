@@ -10,9 +10,9 @@
 .client-row:hover td { background: rgba(201,168,76,0.03) !important; }
 /* Avatar couleur */
 .client-avatar {
-  width: 36px; height: 36px; border-radius: 10px;
+  width: 32px; height: 32px; border-radius: 9px;
   display: grid; place-items: center;
-  font-size: 13px; font-weight: 700;
+  font-size: 12px; font-weight: 700;
   color: white; flex-shrink: 0;
 }
 /* Stat client dans modal.
@@ -43,3 +43,29 @@
 .client-contact-text { min-width:0; }
 .client-contact-label { font-size:11px; color:#9CA3AF; }
 .client-contact-value { font-size:14px; color:#111827; font-weight:500; overflow-wrap:anywhere; }
+
+/* Liste de clients mobile : évite le défilement horizontal du tableau
+   (5 colonnes ne tiennent pas sous ~600px). Le tableau reste la vue
+   desktop/tablette ; en dessous de 768px (palier de la tabbar mobile,
+   cf. saas.css) on bascule sur des cartes empilées — le tap ouvre déjà
+   le modal détail (openDetail) qui contient toutes les colonnes retirées
+   ici (dernière visite, etc.), donc rien n'est perdu, juste réorganisé. */
+.client-mobile-list { display:none; }
+@media (max-width:768px) {
+  .client-table-wrap { display:none; }
+  .client-mobile-list { display:flex; flex-direction:column; }
+}
+.client-mobile-card {
+  display:flex; flex-direction:column; gap:7px;
+  padding:10px 14px; border-bottom:1px solid rgba(0,0,0,0.04);
+  cursor:pointer; transition:background 0.15s;
+}
+.client-mobile-card:active { background:rgba(201,168,76,0.05); }
+.client-mobile-card:last-child { border-bottom:none; }
+.client-mobile-top { display:flex; align-items:center; gap:8px; min-width:0; }
+.client-mobile-info { flex:1; min-width:0; }
+.client-mobile-name { font-size:13px; font-weight:600; color:#111827; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.client-mobile-contact { font-size:11px; color:#9CA3AF; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.client-mobile-chevron { width:14px; height:14px; color:#D1D5DB; flex-shrink:0; }
+.client-mobile-stats { display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#374151; padding-left:40px; }
+.client-mobile-stats strong { color:#111827; font-weight:700; }

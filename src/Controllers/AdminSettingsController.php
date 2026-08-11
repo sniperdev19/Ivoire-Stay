@@ -27,6 +27,13 @@ class AdminSettingsController
 
     private const INT_KEYS = ['bonus_first_to_5_target', 'bonus_fast_conversion_days'];
 
+    /**
+     * Taux de commission plateforme (%) sur le paiement en ligne — seul Starter en a un
+     * par défaut (Pro/Business : 0%). `_client_pct` est la part répercutée sur le client
+     * (ajoutée au prix affiché), toujours ⩽ au taux total `plan_commission_starter_pct`.
+     */
+    private const PERCENT_KEYS = ['plan_commission_starter_pct', 'plan_commission_starter_client_pct'];
+
     public function index(Request $req, array $params = []): void
     {
         $plans   = require BASE_PATH . '/config/plans.php';
@@ -41,6 +48,9 @@ class AdminSettingsController
             'plan_price_pro_yearly'       => PlanPricingService::price('pro', 'yearly'),
             'plan_price_business_monthly' => PlanPricingService::price('business', 'monthly'),
             'plan_price_business_yearly'  => PlanPricingService::price('business', 'yearly'),
+
+            'plan_commission_starter_pct'        => PlanPricingService::commissionPct('starter'),
+            'plan_commission_starter_client_pct' => PlanPricingService::clientSharePct('starter'),
 
             'agent_reward_pro'      => Settings::getFloat('agent_reward_pro', (float) ($plans['pro']['agent_reward_per_5'] ?? 0)),
             'agent_reward_business' => Settings::getFloat('agent_reward_business', (float) ($plans['business']['agent_reward_per_5'] ?? 0)),
@@ -96,6 +106,29 @@ class AdminSettingsController
                 Response::error("Valeur invalide : {$key}");
             }
             Settings::set($key, (string) (int) $data[$key]);
+        }
+
+        foreach (self::PERCENT_KEYS as $key) {
+            if (!isset($data[$key])) continue;
+            if (!is_numeric($data[$key]) || (float) $data[$key] < 0 || (float) $data[$key] > 100) {
+                Response::error("Taux invalide (0 à 100) : {$key}");
+            }
+        }
+
+        // La part client ne peut pas dépasser le taux total — comparée à la valeur
+        // soumise si elle aussi fait partie de cette requête, sinon à l'effective actuelle.
+        if (isset($data['plan_commission_starter_client_pct'])) {
+            $totalPct = isset($data['plan_commission_starter_pct'])
+                ? (float) $data['plan_commission_starter_pct']
+                : PlanPricingService::commissionPct('starter');
+            if ((float) $data['plan_commission_starter_client_pct'] > $totalPct) {
+                Response::error('La part client ne peut pas dépasser le taux de commission total.');
+            }
+        }
+
+        foreach (self::PERCENT_KEYS as $key) {
+            if (!isset($data[$key])) continue;
+            Settings::set($key, (string) (float) $data[$key]);
         }
 
         Response::success(null, 'Réglages mis à jour');

@@ -60,7 +60,6 @@
   <div class="hm-hero-strip">
     <div class="hm-hero-stat"><strong><?= number_format($stats['establishments'], 0, ',', ' ') ?></strong><span>Établissements</span></div>
     <div class="hm-hero-stat"><strong><?= number_format($stats['rooms'], 0, ',', ' ') ?></strong><span>Chambres</span></div>
-    <div class="hm-hero-stat"><strong><?= number_format($stats['bookings'], 0, ',', ' ') ?></strong><span>Réservations</span></div>
     <div class="hm-hero-stat"><strong><?= number_format($stats['cities'], 0, ',', ' ') ?><span> villes</span></strong><span>Couverture nationale</span></div>
   </div>
 </section>
@@ -126,7 +125,7 @@
           >
             <div class="dest-img-wrap" style="height:100%;">
               <img :src="dest.img" :alt="dest.name" />
-              <div class="dest-hover-desc">
+              <div class="dest-hover-desc" :class="{ 'is-active': i===current }">
                 <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,0.25);border:1px solid rgba(201,168,76,0.45);color:#C9A84C;border-radius:50px;padding:5px 14px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.05em;margin-bottom:12px;width:fit-content;" x-text="dest.tag"></div>
                 <div style="font-family:'Cormorant Garamond',serif;font-size:42px;color:white;font-weight:700;line-height:1;margin-bottom:6px;" x-text="dest.name"></div>
                 <div style="font-family:Inter,sans-serif;font-size:13px;color:#C9A84C;font-weight:600;margin-bottom:12px;" x-text="dest.count+' établissements disponibles'"></div>
@@ -137,10 +136,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                   </svg>
                 </a>
-              </div>
-              <div style="position:absolute;bottom:24px;left:24px;pointer-events:none;">
-                <div style="font-family:'Cormorant Garamond',serif;font-size:34px;color:white;font-weight:700;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,0.5);" x-text="dest.name"></div>
-                <div style="font-family:Inter,sans-serif;font-size:11px;color:#C9A84C;font-weight:500;text-shadow:0 1px 4px rgba(0,0,0,0.5);" x-text="dest.count+' établissements'"></div>
               </div>
             </div>
           </div>
@@ -238,9 +233,9 @@
     <div class="hm-cta-deco">AS</div>
     <div class="hm-cta-eyebrow"><div class="hm-cta-dot"></div><span>Rejoignez Afristay</span></div>
     <h2 class="hm-cta-title">Transformez votre<br>établissement <em>dès aujourd'hui.</em></h2>
-    <p class="hm-cta-sub">Gérez réservations, clients et paiements depuis une interface conçue pour le marché ivoirien. Gratuit pour commencer.</p>
+    <p class="hm-cta-sub">Gérez réservations, clients et paiements depuis une interface conçue pour le marché ivoirien. Sans abonnement pour commencer.</p>
     <div class="hm-cta-btns">
-      <a href="<?= $base ?>/register" class="hm-cta-btn-p">Démarrer gratuitement →</a>
+      <a href="<?= $base ?>/register" class="hm-cta-btn-p">Démarrer sans abonnement →</a>
       <a href="<?= $base ?>/tarifs" class="hm-cta-btn-o">Voir les tarifs</a>
     </div>
   </div>

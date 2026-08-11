@@ -3,7 +3,7 @@
 if (!isset($base_url)) $base_url = rtrim(APP_URL, '/');
 $defaultTab = $defaultTab ?? 'invoices';
 ?>
-<?php $pageJs = 'saas-billing'; ?>
+<?php $pageJs = 'saas-billing'; $pageCss = 'saas-billing'; ?>
 
 <div x-data="billingPage('<?= $base_url ?>', '<?= $defaultTab ?>')"
      x-init="init()"
@@ -28,24 +28,24 @@ $defaultTab = $defaultTab ?? 'invoices';
       <!-- KPI BAR -->
       <div class="saas-kpi-grid">
         <div class="kpi-card saas-card">
-          <div style="font-size:11px;color:#9CA3AF;margin-bottom:4px;">Total factures</div>
-          <div style="font-size:20px;font-weight:800;color:#111827;" x-text="invoices.length"></div>
+          <div style="font-size:10px;color:#9CA3AF;margin-bottom:3px;">Total factures</div>
+          <div style="font-size:16px;font-weight:800;color:#111827;" x-text="invoices.length"></div>
         </div>
         <div class="kpi-card saas-card">
-          <div style="font-size:11px;color:#9CA3AF;margin-bottom:4px;">Montant total TTC</div>
-          <div style="font-size:16px;font-weight:800;color:#1B4332;" x-text="formatPrice(kpi.totalTtc)"></div>
+          <div style="font-size:10px;color:#9CA3AF;margin-bottom:3px;">Montant total TTC</div>
+          <div style="font-size:13px;font-weight:800;color:#1B4332;" x-text="formatPrice(kpi.totalTtc)"></div>
         </div>
         <div class="kpi-card saas-card">
-          <div style="font-size:11px;color:#9CA3AF;margin-bottom:4px;">Factures payées</div>
-          <div style="font-size:20px;font-weight:800;color:#16a34a;" x-text="kpi.paidInv"></div>
+          <div style="font-size:10px;color:#9CA3AF;margin-bottom:3px;">Factures payées</div>
+          <div style="font-size:16px;font-weight:800;color:#16a34a;" x-text="kpi.paidInv"></div>
         </div>
         <div class="kpi-card saas-card">
-          <div style="font-size:11px;color:#9CA3AF;margin-bottom:4px;">Encaissé</div>
-          <div style="font-size:16px;font-weight:800;color:#1B4332;" x-text="formatPrice(kpi.encaisse)"></div>
+          <div style="font-size:10px;color:#9CA3AF;margin-bottom:3px;">Encaissé</div>
+          <div style="font-size:13px;font-weight:800;color:#1B4332;" x-text="formatPrice(kpi.encaisse)"></div>
         </div>
         <div class="kpi-card saas-card">
-          <div style="font-size:11px;color:#9CA3AF;margin-bottom:4px;">En attente</div>
-          <div style="font-size:16px;font-weight:800;color:#D97706;" x-text="formatPrice(kpi.enAttente)"></div>
+          <div style="font-size:10px;color:#9CA3AF;margin-bottom:3px;">En attente</div>
+          <div style="font-size:13px;font-weight:800;color:#D97706;" x-text="formatPrice(kpi.enAttente)"></div>
         </div>
       </div>
 
@@ -107,7 +107,7 @@ $defaultTab = $defaultTab ?? 'invoices';
           </template>
 
           <template x-if="!loading">
-            <div style="overflow-x:auto;">
+            <div class="bill-table-wrap" style="overflow-x:auto;">
               <table class="saas-table" style="width:100%;">
                 <thead>
                   <tr>
@@ -167,6 +167,61 @@ $defaultTab = $defaultTab ?? 'invoices';
               </table>
             </div>
           </template>
+
+          <!-- Vue mobile : cartes empilées, aucun défilement horizontal -->
+          <template x-if="!loading">
+            <div class="bill-mobile-list">
+              <template x-if="invoices.length === 0">
+                <div style="text-align:center;padding:40px 20px;color:#9CA3AF;">
+                  <svg xmlns="http://www.w3.org/2000/svg" style="width:32px;height:32px;color:#C9A84C;margin-bottom:8px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  <div style="font-weight:600;color:#374151;">Aucune facture</div>
+                  <div style="font-size:12px;margin-top:4px;">Les factures sont créées automatiquement à chaque réservation.</div>
+                </div>
+              </template>
+              <template x-for="inv in invoices" :key="inv.id">
+                <div class="bill-mobile-card">
+                  <div class="bill-mobile-top">
+                    <span class="bill-mobile-number" x-text="inv.invoice_number"></span>
+                    <span :class="invStatusCfg(inv.status).badge" x-text="invStatusCfg(inv.status).label"></span>
+                  </div>
+                  <div class="bill-mobile-client">
+                    <div class="bill-mobile-client-name" x-text="inv.client_name ?? '—'"></div>
+                    <div class="bill-mobile-client-email" x-text="inv.client_email ?? ''"></div>
+                  </div>
+                  <div class="bill-price-group">
+                    <div class="bill-price-col main">
+                      <span class="bill-price-label">TTC</span>
+                      <span class="bill-price-value" x-text="formatPrice(inv.amount_ttc)"></span>
+                    </div>
+                    <div class="bill-price-col">
+                      <span class="bill-price-label">Encaissé</span>
+                      <span class="bill-price-value secondary" style="color:#16a34a;" x-text="formatPrice(inv.paid_amount ?? 0)"></span>
+                    </div>
+                    <div class="bill-price-col">
+                      <span class="bill-price-label">Restant</span>
+                      <span class="bill-price-value secondary"
+                        :style="(inv.amount_ttc - (inv.paid_amount||0)) <= 0 ? 'color:#16a34a;' : 'color:#D97706;'"
+                        x-text="(inv.amount_ttc - (inv.paid_amount||0)) <= 0 ? '—' : formatPrice(inv.amount_ttc - (inv.paid_amount||0))"></span>
+                    </div>
+                  </div>
+                  <div class="bill-mobile-bottom">
+                    <span class="bill-mobile-date" x-text="formatDate(inv.issued_at)"></span>
+                    <div class="bill-mobile-actions">
+                      <button type="button" class="card-icon-btn" title="Télécharger PDF" @click.stop="downloadPdf(inv)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                      </button>
+                      <button type="button" class="card-icon-btn" title="Envoyer par email" @click.stop="openSendEmail(inv)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                      </button>
+                      <button type="button" class="card-icon-btn" title="Modifier" @click.stop="openEditInvoice(inv)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
         </div>
 
       </div><!-- /tab factures -->
@@ -208,7 +263,7 @@ $defaultTab = $defaultTab ?? 'invoices';
           </template>
 
           <template x-if="!loading">
-            <div style="overflow-x:auto;">
+            <div class="bill-table-wrap" style="overflow-x:auto;">
               <table class="saas-table" style="width:100%;">
                 <thead>
                   <tr>
@@ -258,6 +313,47 @@ $defaultTab = $defaultTab ?? 'invoices';
                   </template>
                 </tbody>
               </table>
+            </div>
+          </template>
+
+          <!-- Vue mobile : cartes empilées, aucun défilement horizontal -->
+          <template x-if="!loading">
+            <div class="bill-mobile-list">
+              <template x-if="payments.length === 0">
+                <div style="text-align:center;padding:40px 20px;color:#9CA3AF;">
+                  <svg xmlns="http://www.w3.org/2000/svg" style="width:32px;height:32px;color:#C9A84C;margin-bottom:8px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                  <div style="font-weight:600;color:#374151;">Aucun paiement</div>
+                  <div style="font-size:12px;margin-top:4px;">Cliquez sur « Enregistrer un paiement » pour commencer.</div>
+                </div>
+              </template>
+              <template x-for="p in payments" :key="p.id">
+                <div class="bill-mobile-card">
+                  <div class="bill-mobile-top">
+                    <span class="bill-mobile-number" x-text="p.reference ?? '#' + p.id"></span>
+                    <span :class="payStatusCfg(p.status).badge" x-text="payStatusCfg(p.status).label"></span>
+                  </div>
+                  <div class="bill-mobile-client">
+                    <div class="bill-mobile-client-name" x-text="p.client_name ?? '—'"></div>
+                    <div class="bill-mobile-client-email" x-text="p.invoice_number ?? '—'"></div>
+                  </div>
+                  <div class="bill-mobile-bottom">
+                    <div class="bill-mobile-method">
+                      <span class="bill-mobile-method-dot" :style="'background:' + methodColor(p.method)"></span>
+                      <span x-text="methodLabel(p.method) + ' · ' + typeLabel(p.type)"></span>
+                    </div>
+                    <span class="bill-mobile-amount" x-text="formatPrice(p.amount)"></span>
+                  </div>
+                  <div class="bill-mobile-footer">
+                    <span>
+                      <span class="bill-mobile-date" x-text="formatDate(p.paid_at)"></span>
+                      <span x-show="p.booking_status === 'cancelled'" style="margin-left:6px;font-size:11px;color:#9CA3AF;" title="La réservation liée a été annulée — exclu du CA">(résa. annulée)</span>
+                    </span>
+                    <button type="button" class="card-icon-btn" title="Modifier" @click.stop="openEditPayment(p)">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </template>
             </div>
           </template>
         </div>

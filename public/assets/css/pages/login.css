@@ -330,6 +330,16 @@ body {
 .lg-btn-gold { background: linear-gradient(135deg, var(--gold), #A67C2E); }
 .lg-btn-gold:hover:not(:disabled) { background: linear-gradient(135deg, #D4B55A, #C9A84C); box-shadow: 0 8px 28px rgba(201,168,76,0.4); }
 
+/* Bouton secondaire (contour, pas de fond plein) — ex: "Se connecter avec l'empreinte".
+   Couleurs adaptées séparément en dessous pour le fond vert plein du panneau mobile
+   (@media max-width:1024px) : sans ça, texte/bordure sombres deviennent illisibles
+   sur fond sombre — piège déjà rencontré une fois avec ce bouton. */
+.lg-btn-secondary { background: transparent; border: 1px solid rgba(27,67,50,0.15); color: #1B4332; }
+.lg-btn-secondary:hover:not(:disabled) { background: rgba(27,67,50,0.05); }
+/* .lg-spinner est blanc par défaut (pensé pour un fond plein coloré, ex. .lg-btn-gold) —
+   invisible sur fond transparent/clair, donc recoloré ici spécifiquement. */
+.lg-btn-secondary .lg-spinner { border-color: rgba(27,67,50,0.2); border-top-color: #1B4332; }
+
 .lg-spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
 
 .lg-alert {
@@ -387,7 +397,9 @@ body {
 @media (max-width: 1024px) {
   body { grid-template-columns: 1fr; }
   .lg-left { display: none; }
-  .lg-mobile-back { display: inline-flex; }
+  /* Bouton retour et lien d'inscription retirés sur mobile (demande explicite) —
+     .lg-mobile-back garde son display:none de base au lieu d'être réaffiché ici. */
+  .lg-form-footer { display: none; }
   .lg-separator { display: none; }
   .lg-right { background: var(--forest); min-height: 100vh; height: auto; }
   .lg-form-title, .lg-form-eyebrow span { color: white; }
@@ -401,12 +413,15 @@ body {
   .lg-toggle-btn { color: rgba(255,255,255,0.45); }
   .lg-forgot { color: rgba(255,255,255,0.4); }
   .lg-forgot:hover { color: white; }
+  .lg-bio-fallback { color: rgba(255,255,255,0.45); }
+  .lg-bio-fallback:hover { color: white; }
+  .lg-btn-secondary { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.18); color: white; }
+  .lg-btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+  .lg-btn-secondary .lg-spinner { border-color: rgba(255,255,255,0.3); border-top-color: white; }
   .lg-vitrine-link { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
   .lg-vitrine-link:hover { border-color: rgba(255,255,255,0.3); color: white; }
   .lg-divider-line { background: rgba(255,255,255,0.1); }
   .lg-divider span { color: rgba(255,255,255,0.3); }
-  .lg-form-footer { color: rgba(255,255,255,0.4); }
-  .lg-form-footer a { color: var(--gold); border-color: rgba(201,168,76,0.3); }
   .lg-alert { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); color: #fca5a5; }
 }
 
@@ -502,6 +517,265 @@ body {
 .lg-gate-step div { font-family: 'Inter', sans-serif; font-size: 12.5px; color: rgba(27,67,50,0.6); line-height: 1.55; }
 .lg-gate-step strong { color: var(--forest); display: block; font-size: 13px; margin-bottom: 2px; }
 .lg-gate-step em { font-style: normal; color: var(--gold); font-weight: 500; }
+
+/* ── Connexion rapide par empreinte (façon WhatsApp) — écran prioritaire quand
+   déjà activée sur cet appareil, cf. loginPage()/biometricFirstMode. ── */
+.lg-bio-btn {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--forest), var(--mid));
+  border: none;
+  display: grid;
+  place-items: center;
+  margin-bottom: 28px;
+  box-shadow: 0 10px 36px rgba(27,67,50,0.28);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.lg-bio-btn:hover:not(:disabled) { transform: scale(1.04); box-shadow: 0 14px 44px rgba(27,67,50,0.34); }
+.lg-bio-btn:active:not(:disabled) { transform: scale(0.97); }
+.lg-bio-btn:disabled { cursor: default; }
+.lg-bio-btn svg { width: 40px; height: 40px; color: white; }
+.lg-bio-btn .lg-spinner { width: 28px; height: 28px; border-width: 3px; }
+.lg-bio-fallback {
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(27,67,50,0.5);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  margin-top: 4px;
+}
+.lg-bio-fallback:hover { color: var(--forest); }
+
+/* ── Écran "verrouillé" façon écran de verrouillage mobile — remplace toute la mise
+   en page (grille desktop incluse) par un plein cadre sombre, cf. loginPage()/
+   biometricFirstMode + lockRevealed. Fond toujours sombre (vert forêt) quel que soit
+   le mode clair/sombre du reste de la page : pas de variante mobile séparée à prévoir. ── */
+.lg-lock {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--forest);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+}
+/* Toujours montée (jamais retirée du flux par x-show) pour rester un vrai
+   élément flex:1 qui centre son contenu — évite de recréer à la main le
+   centrage vertical d'un "vide" quand le bas-de-page est relevé, cf. le bug
+   de rendu constaté le 2026-08-11 quand ce rôle reposait sur un x-show. */
+.lg-lock-top {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  position: relative;
+}
+.lg-lock-face,
+.lg-lock-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: fadeUp 0.4s ease;
+}
+/* Insigne du cadenas : deux anneaux dorés concentriques (simple halo décoratif,
+   pas d'animation — cf. .lg-radial/.lg-ghost pour le même esprit "lueur dorée
+   discrète" déjà utilisé ailleurs sur cette page) + quelques points dispersés
+   façon éclat, autour du cadenas plein en dégradé or (remplace l'ancienne icône
+   ligne blanche, "nouveau visuel" demandé le 2026-08-11). */
+.lg-lock-badge {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+}
+.lg-lock-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(201,168,76,0.22);
+}
+.lg-lock-ring-1 { width: 168px; height: 168px; }
+.lg-lock-ring-2 { width: 118px; height: 118px; border-color: rgba(201,168,76,0.34); }
+.lg-lock-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--gold);
+  pointer-events: none;
+}
+.lg-lock-dot-1 { width: 4px; height: 4px; top: 6px;    left: 46px;  opacity: 0.65; }
+.lg-lock-dot-2 { width: 3px; height: 3px; top: 44px;   left: 4px;   opacity: 0.4; }
+.lg-lock-dot-3 { width: 3px; height: 3px; bottom: 18px; left: 22px; opacity: 0.5; }
+.lg-lock-dot-4 { width: 4px; height: 4px; bottom: 26px; right: 10px; opacity: 0.6; }
+.lg-lock-dot-5 { width: 3px; height: 3px; top: 26px;   right: 18px; opacity: 0.45; }
+.lg-lock-dot-6 { width: 2px; height: 2px; top: 50%;    right: 0;    opacity: 0.35; }
+.lg-lock-icon {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,0.35));
+}
+.lg-lock-icon svg { width: 100%; height: 100%; }
+.lg-lock-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: white;
+  text-align: center;
+}
+.lg-lock-title em { color: var(--gold); font-style: normal; }
+.lg-lock-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  text-align: center;
+  max-width: 260px;
+  margin-top: -8px;
+}
+.lg-lock-unlock {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px 20px;
+  letter-spacing: 0.01em;
+}
+.lg-lock-unlock:hover { color: white; }
+
+/* Lueur d'ambiance derrière la zone haute (cadenas ou monogramme) — même
+   esprit que .lg-radial du panneau gauche desktop. Toujours dans le DOM
+   (pas de x-show) : rendu sous .lg-lock-top/.lg-lock-sheet. */
+.lg-lock-radial {
+  position: absolute;
+  top: -110px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,168,76,0.16) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Monogramme de marque affiché à la place du cadenas une fois le bas-de-page
+   relevé (.lg-lock-top reste flex:1 et centre ce contenu à la place) — évite
+   que la zone haute paraisse vide une fois le cadenas remplacé par la
+   feuille d'action, constaté en conditions réelles le 2026-08-11. Réutilise
+   le même motif à double anneau que .lg-lock-badge/.lg-lock-sheet-badge pour
+   rester cohérent visuellement entre les trois temps de cet écran. */
+.lg-lock-mark-badge {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  display: grid;
+  place-items: center;
+}
+.lg-lock-mark-badge .lg-lock-ring-1 { width: 132px; height: 132px; }
+.lg-lock-mark-badge .lg-lock-ring-2 { width: 96px; height: 96px; border-color: rgba(201,168,76,0.3); }
+.lg-lock-mark-sq {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--gold);
+}
+.lg-lock-mark-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lg-lock-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  /* margin-top:auto (pas juste "0 auto") : ancre TOUJOURS le bas-de-page au bas de
+     .lg-lock, même quand .lg-lock-top (le seul autre élément flex du parent) est
+     retiré du flux par x-show — sinon plus rien ne pousse ce bloc vers le bas et il
+     remonte collé en haut de l'écran, constaté en conditions réelles le 2026-08-11. */
+  margin: auto auto 0;
+  background: var(--mid);
+  border-radius: 32px 32px 0 0;
+  padding: 44px 28px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 -24px 60px rgba(0,0,0,0.3);
+  z-index: 1;
+}
+/* Fin liseré doré en tête du bas-de-page, façon "poignée" — reprend l'accent
+   or du reste de la charte plutôt qu'un simple angle arrondi nu. */
+.lg-lock-sheet::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(201,168,76,0.45);
+}
+.lg-lock-sheet-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 4px;
+  margin-top: 6px;
+}
+.lg-lock-sheet-brand em { color: var(--gold); font-style: normal; }
+.lg-lock-sheet-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 24px;
+  max-width: 280px;
+}
+.lg-lock-fallback { color: rgba(255,255,255,0.85) !important; margin-bottom: 32px; }
+.lg-lock-fallback:hover { color: white !important; }
+
+/* Halo doré autour du capteur d'empreinte, écho du badge à anneaux de
+   .lg-lock-top — donne au bouton du poids visuel au lieu de flotter seul
+   dans le bas-de-page. */
+.lg-lock-sheet-badge {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: grid;
+  place-items: center;
+}
+.lg-lock-sheet-badge .lg-lock-ring-1 { width: 140px; height: 140px; }
+.lg-lock-sheet-badge .lg-lock-ring-2 { width: 112px; height: 112px; border-color: rgba(201,168,76,0.3); }
+.lg-lock-sheet .lg-bio-btn {
+  margin-bottom: 0;
+  background: linear-gradient(135deg, #EAD08A, #B4872F);
+  box-shadow: 0 10px 32px rgba(0,0,0,0.3);
+}
+.lg-lock-sheet .lg-bio-btn:hover:not(:disabled) { box-shadow: 0 14px 40px rgba(0,0,0,0.36); }
+.lg-lock-sheet .lg-bio-btn svg { color: var(--forest); }
+.lg-lock-sheet .lg-bio-btn .lg-spinner { border-color: rgba(27,67,50,0.25); border-top-color: var(--forest); }
 
 @media (max-width: 1024px) {
   .lg-gate-title { color: white; }

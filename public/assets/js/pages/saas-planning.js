@@ -12,6 +12,7 @@ function planningPage(baseUrl) {
   error: null,
   currentMonth: null,
   selectedBooking: null,
+  selectedDay: null,
   _dayMap: {},
 
   async init() {
@@ -132,6 +133,20 @@ function planningPage(baseUrl) {
     return this._dayMap[ymd] ?? [];
   },
 
+  /* Agenda du jour (vue mobile) : la grille mensuelle complète est illisible
+     sous ~640px (chips tronqués) — au tap sur une case, cette liste affiche
+     le détail des réservations du jour au lieu d'entasser le texte dans la
+     case. Non affichée en desktop (CSS), où les chips restent cliquables
+     directement. */
+  selectDay(ymd) { this.selectedDay = this.selectedDay === ymd ? null : ymd; },
+  get selectedDayBookings() { return this.selectedDay ? this.getBookingsForDay(this.selectedDay) : []; },
+  get selectedDayLabel() {
+    if (!this.selectedDay) return '';
+    const d = new Date(this.selectedDay + 'T00:00:00');
+    const label = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  },
+
   roomName(roomId) {
     const r = this.rooms.find(r => r.id == roomId);
     return r ? (r.number ? 'Ch. ' + r.number : r.name ?? '') : '';
@@ -145,11 +160,12 @@ function planningPage(baseUrl) {
     const d = new Date(this.currentMonth);
     d.setMonth(d.getMonth() + delta);
     this.currentMonth = d;
+    this.selectedDay = null;
     await this.loadData();
   },
   async prevMonth() { await this.shiftMonth(-1); },
   async nextMonth() { await this.shiftMonth(+1); },
-  async goToday()   { this.currentMonth = this._firstOfMonth(); await this.loadData(); },
+  async goToday()   { this.currentMonth = this._firstOfMonth(); this.selectedDay = null; await this.loadData(); },
 
   openDetail(booking)  { this.selectedBooking = booking; },
   closeDetail()        { this.selectedBooking = null; },

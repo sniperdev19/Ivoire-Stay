@@ -60,6 +60,16 @@ $router->get('/newsletter/desabonnement', 'PageController@newsletterUnsubscribe'
 // ─── API Auth ─────────────────────────────────────────────────────────────────
 $router->post('/api/auth/webauthn/register-options', 'AuthController@webauthnRegisterOptions');
 $router->post('/api/auth/webauthn/register-verify',  'AuthController@webauthnRegisterVerify');
+
+// Connexion optionnelle par empreinte digitale (WebAuthn/passkey) — facultative,
+// en plus du mot de passe. Ne pas confondre avec le gate ci-dessus (anonyme).
+$router->post('/api/auth/webauthn/login-credential/register-options', 'AuthController@webauthnLoginCredentialRegisterOptions', ['auth']);
+$router->post('/api/auth/webauthn/login-credential/register-verify',  'AuthController@webauthnLoginCredentialRegisterVerify',  ['auth']);
+$router->get('/api/auth/webauthn/login-credential',                   'AuthController@webauthnLoginCredentials',               ['auth']);
+$router->delete('/api/auth/webauthn/login-credential/{id}',           'AuthController@webauthnLoginCredentialRevoke',          ['auth']);
+$router->post('/api/auth/webauthn/login-options', 'AuthController@webauthnLoginOptions');
+$router->post('/api/auth/webauthn/login-verify',  'AuthController@webauthnLoginVerify');
+
 $router->post('/api/auth/login',    'AuthController@login');
 $router->post('/api/auth/logout',   'AuthController@logout',  ['auth']);
 $router->post('/api/auth/register', 'AuthController@register');

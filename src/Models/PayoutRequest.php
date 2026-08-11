@@ -41,11 +41,25 @@ class PayoutRequest extends BaseModel
         return Database::query($sql, $params)->fetchAll();
     }
 
-    /** Montant brut des paiements réellement collectés en ligne (GeniusPay) pour l'établissement. */
+    /** Montant brut des paiements réellement collectés en ligne (GeniusPay) pour l'établissement, avant commission. */
     public static function grossOnlineCollected(int $estabId): float
     {
         return (float) Database::query(
             "SELECT COALESCE(SUM(p.amount), 0) FROM payments p
+             JOIN bookings b ON b.id = p.booking_id
+             JOIN rooms r ON r.id = b.room_id
+             WHERE r.establishment_id = ?
+               AND b.pay_status = 'paid'
+               AND p.status = 'completed'",
+            [$estabId]
+        )->fetchColumn();
+    }
+
+    /** Somme des commissions plateforme prélevées sur les paiements en ligne collectés (plan Starter). */
+    public static function totalCommission(int $estabId): float
+    {
+        return (float) Database::query(
+            "SELECT COALESCE(SUM(p.commission_amount), 0) FROM payments p
              JOIN bookings b ON b.id = p.booking_id
              JOIN rooms r ON r.id = b.room_id
              WHERE r.establishment_id = ?
@@ -65,9 +79,14 @@ class PayoutRequest extends BaseModel
         )->fetchColumn();
     }
 
-    /** L'établissement peut retirer 100% du brut collecté en ligne (aucune commission plateforme). */
+    /**
+     * Solde retirable = brut collecté en ligne, moins la commission plateforme éventuelle
+     * (0% Pro/Business, 5% par défaut Starter — figée par paiement, voir
+     * payments.commission_amount / PlanGate::commissionPct()), moins ce qui est déjà
+     * versé ou réservé par une demande en cours.
+     */
     public static function availableBalance(int $estabId): float
     {
-        return round(self::grossOnlineCollected($estabId) - self::reservedOrPaid($estabId), 2);
+        return round(self::grossOnlineCollected($estabId) - self::totalCommission($estabId) - self::reservedOrPaid($estabId), 2);
     }
 }

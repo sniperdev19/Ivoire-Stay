@@ -117,12 +117,12 @@
 
     <div class="main-grid">
       <div style="padding:0;overflow:hidden;background:#ffffff;border:1px solid rgba(0,0,0,0.06);border-radius:24px;box-shadow:0 14px 40px rgba(15,23,42,0.05);">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;">
           <div>
-            <h3 style="font-size:15px;font-weight:700;color:#111827;margin:0 0 2px 0;">Réservations récentes</h3>
-            <p style="font-size:12px;color:#9CA3AF;margin:0;">Dernières activités enregistrées</p>
+            <h3 style="font-size:14px;font-weight:700;color:#111827;margin:0 0 2px 0;">Réservations récentes</h3>
+            <p style="font-size:11px;color:#9CA3AF;margin:0;">Dernières activités enregistrées</p>
           </div>
-          <a href="<?= $base_url ?>/saas/bookings" class="btn-saas-secondary" style="font-size:13px;padding:7px 14px;">Voir tout →</a>
+          <a href="<?= $base_url ?>/saas/bookings" class="btn-saas-secondary" style="font-size:12px;padding:6px 12px;">Voir tout →</a>
         </div>
 
         <div x-show="recentBookings.length === 0" style="padding:32px;text-align:center;color:#9CA3AF;">
@@ -130,7 +130,7 @@
             Aucune réservation récente
         </div>
 
-        <div x-show="recentBookings.length > 0" style="overflow-x:auto;">
+        <div x-show="recentBookings.length > 0" class="db-recent-table-wrap" style="overflow-x:auto;">
           <table style="width:100%;border-collapse:collapse;">
             <thead style="text-align:left;color:rgba(0,0,0,0.65);font-size:13px;">
               <tr>
@@ -155,39 +155,56 @@
           </table>
         </div>
 
+        <!-- Vue mobile : cartes empilées, aucun défilement horizontal -->
+        <div x-show="recentBookings.length > 0" class="db-recent-mobile-list">
+          <template x-for="b in recentBookings" :key="b.id">
+            <div class="db-recent-mobile-card" :style="'border-left-color:' + statusAccent(b.status)">
+              <div class="db-recent-mobile-top">
+                <div class="db-recent-mobile-avatar" x-text="(b.client_name||'?').charAt(0).toUpperCase()"></div>
+                <div class="db-recent-mobile-info" x-text="b.client_name ?? '-'"></div>
+                <span :style="statusStyle(b.status)" x-text="statusLabel(b.status)"></span>
+              </div>
+              <div class="db-recent-mobile-bottom">
+                <span class="db-recent-mobile-meta" x-text="'Ch. ' + (b.room_number ?? '-') + ' · ' + formatDate(b.check_in)"></span>
+                <span class="db-recent-mobile-amount" x-text="formatPrice(b.total_amount)"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+
       </div>
 
-      <div class="saas-card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="saas-card db-section-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
           <div>
-            <h3 style="font-size:15px;font-weight:700;color:#111827;margin:0 0 2px 0;">Occupation par type</h3>
-            <p style="font-size:12px;color:#9CA3AF;margin:0;">Distribution actuelle</p>
+            <h3 style="font-size:14px;font-weight:700;color:#111827;margin:0 0 2px 0;">Occupation par type</h3>
+            <p style="font-size:11px;color:#9CA3AF;margin:0;">Distribution actuelle</p>
           </div>
           <a href="<?= $base_url ?>/saas/rooms" style="font-size:12px;color:#C9A84C;font-weight:500;text-decoration:none;">Gérer →</a>
         </div>
 
-        <div style="position:relative;text-align:center;margin-bottom:24px;">
-          <svg viewBox="0 0 120 120" style="width:110px;height:110px;transform:rotate(-90deg);display:block;margin:0 auto;"><circle cx="60" cy="60" r="46" fill="none" stroke="#F3F4F6" stroke-width="12"/><circle cx="60" cy="60" r="46" fill="none" stroke="#C9A84C" stroke-width="12" stroke-linecap="round" stroke-dasharray="289.03" :stroke-dashoffset="289.03 - (289.03 * occupancyPct / 100)" style="transition:stroke-dashoffset 1.2s ease;"/></svg>
-          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;"><div style="font-size:22px;font-weight:800;color:#111827;" x-text="occupancyPct + '%' "></div><div style="font-size:11px;color:#9CA3AF;">Occupation</div></div>
+        <div style="position:relative;text-align:center;margin-bottom:14px;">
+          <svg viewBox="0 0 120 120" style="width:84px;height:84px;transform:rotate(-90deg);display:block;margin:0 auto;"><circle cx="60" cy="60" r="46" fill="none" stroke="#F3F4F6" stroke-width="12"/><circle cx="60" cy="60" r="46" fill="none" stroke="#C9A84C" stroke-width="12" stroke-linecap="round" stroke-dasharray="289.03" :stroke-dashoffset="289.03 - (289.03 * occupancyPct / 100)" style="transition:stroke-dashoffset 1.2s ease;"/></svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;"><div style="font-size:17px;font-weight:800;color:#111827;" x-text="occupancyPct + '%' "></div><div style="font-size:9.5px;color:#9CA3AF;">Occupation</div></div>
         </div>
 
         <!-- Aucun type de chambre configuré -->
         <div x-show="typeDistribution.length === 0" style="font-size:13px;color:#9CA3AF;text-align:center;padding:12px 0;">
           Aucun type de chambre configuré.
         </div>
-        <div x-show="typeDistribution.length > 0" style="display:flex;flex-direction:column;gap:12px;">
+        <div x-show="typeDistribution.length > 0" style="display:flex;flex-direction:column;gap:8px;">
           <template x-for="t in typeDistribution" :key="t.label">
-            <div style="display:flex;align-items:center;gap:10px;">
+            <div style="display:flex;align-items:center;gap:8px;">
               <div :style="'width:8px;height:8px;border-radius:2px;background:' + t.color + ';flex-shrink:0;'"></div>
-              <div style="font-size:13px;color:#374151;flex:1;" x-text="t.label"></div>
-              <div style="font-size:13px;font-weight:600;color:#111827;min-width:40px;text-align:right;" x-text="t.count + ' ch.'"></div>
-              <div style="font-size:12px;color:#6B7280;min-width:32px;text-align:right;" x-text="t.pct + '%'"></div>
-              <div style="width:72px;height:5px;background:rgba(0,0,0,0.06);border-radius:3px;overflow:hidden;flex-shrink:0;">
+              <div style="font-size:12px;color:#374151;flex:1;" x-text="t.label"></div>
+              <div style="font-size:12px;font-weight:600;color:#111827;min-width:36px;text-align:right;" x-text="t.count + ' ch.'"></div>
+              <div style="font-size:11px;color:#6B7280;min-width:30px;text-align:right;" x-text="t.pct + '%'"></div>
+              <div style="width:60px;height:5px;background:rgba(0,0,0,0.06);border-radius:3px;overflow:hidden;flex-shrink:0;">
                 <div :style="'height:100%;width:' + t.pct + '%;border-radius:3px;background:' + t.color + ';transition:width 0.8s ease;'"></div>
               </div>
             </div>
           </template>
-          <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.06);font-size:12px;color:#6B7280;">
+          <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.06);font-size:11px;color:#6B7280;">
             Total chambres : <strong style="color:#111827;" x-text="stats?.total_rooms ?? 0"></strong>
             &nbsp;·&nbsp; Occupées : <strong style="color:#1B4332;" x-text="occupiedRooms"></strong>
           </div>
@@ -195,22 +212,22 @@
       </div>
     </div>
 
-    <div class="saas-card" x-show="canSeeFinance" style="max-width:520px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <h3 style="font-size:15px;font-weight:700;color:#111827;margin:0;">Résumé financier</h3>
+    <div class="saas-card db-section-card" x-show="canSeeFinance" style="max-width:520px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <h3 style="font-size:14px;font-weight:700;color:#111827;margin:0;">Résumé financier</h3>
         <a href="<?= $base_url ?>/saas/invoices" style="font-size:12px;color:#C9A84C;font-weight:500;text-decoration:none;">Facturation →</a>
       </div>
-      <div style="display:flex;flex-direction:column;gap:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:#6B7280;">Revenus</span><span style="font-size:14px;font-weight:600;color:#111827;" x-text="formatPrice(stats?.revenue ?? 0)"></span></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:#6B7280;">Paiements reçus</span><span style="font-size:14px;font-weight:600;color:#16A34A;" x-text="formatPrice(stats?.payments_received ?? 0)"></span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#6B7280;">Revenus</span><span style="font-size:13px;font-weight:600;color:#111827;" x-text="formatPrice(stats?.revenue ?? 0)"></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#6B7280;">Paiements reçus</span><span style="font-size:13px;font-weight:600;color:#16A34A;" x-text="formatPrice(stats?.payments_received ?? 0)"></span></div>
         <template x-if="(stats?.payments_cancelled ?? 0) > 0">
-          <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:#6B7280;">Annulé</span><span style="font-size:14px;font-weight:600;color:#9CA3AF;text-decoration:line-through;" x-text="formatPrice(stats?.payments_cancelled ?? 0)"></span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#6B7280;">Annulé</span><span style="font-size:13px;font-weight:600;color:#9CA3AF;text-decoration:line-through;" x-text="formatPrice(stats?.payments_cancelled ?? 0)"></span></div>
         </template>
-        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:#6B7280;">En attente</span><span style="font-size:14px;font-weight:600;color:#D97706;" x-text="formatPrice(stats?.payments_pending ?? 0)"></span></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:#6B7280;">Dépenses</span><span style="font-size:14px;font-weight:600;color:#DC2626;" x-text="formatPrice(stats?.expenses ?? 0)"></span></div>
-        <div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:12px;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:14px;font-weight:700;color:#111827;">Bénéfice net</span>
-          <span :style="(stats?.net_profit ?? 0) >=0 ? 'color:#16A34A;font-size:16px;font-weight:800;' : 'color:#DC2626;font-size:16px;font-weight:800;'" x-text="formatPrice(stats?.net_profit ?? 0)"></span>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#6B7280;">En attente</span><span style="font-size:13px;font-weight:600;color:#D97706;" x-text="formatPrice(stats?.payments_pending ?? 0)"></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#6B7280;">Dépenses</span><span style="font-size:13px;font-weight:600;color:#DC2626;" x-text="formatPrice(stats?.expenses ?? 0)"></span></div>
+        <div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:8px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;font-weight:700;color:#111827;">Bénéfice net</span>
+          <span :style="(stats?.net_profit ?? 0) >=0 ? 'color:#16A34A;font-size:14px;font-weight:800;' : 'color:#DC2626;font-size:14px;font-weight:800;'" x-text="formatPrice(stats?.net_profit ?? 0)"></span>
         </div>
       </div>
     </div>

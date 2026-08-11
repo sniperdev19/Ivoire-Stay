@@ -2,13 +2,23 @@
    Afristay — Page SaaS : Paramètres (src/templates/saas/settings.php)
    ============================================================ */
 
-function settingsPage(baseUrl, onlinePaymentsEnabled) {
+/* Désactivé le 2026-08-11 à la demande explicite de l'utilisateur — même
+   flag que public/assets/js/pages/login.js, à modifier en même temps que
+   lui pour réactiver la fonctionnalité (code backend intact). */
+const BIOMETRIC_LOGIN_ENABLED = false;
+
+function settingsPage(baseUrl, onlinePaymentsEnabled, commissionPct, estabSharePct) {
   return {
   ...saasHelpers,
 
   // Verrou v1 global (ONLINE_PAYMENTS_ENABLED, config.php) : paiement en ligne
   // en cours de développement, indépendant du plan de l'établissement.
   onlinePaymentsEnabled: !!onlinePaymentsEnabled,
+  // Taux de commission plateforme (%) du plan Starter (PlanPricingService::commissionPct), pour l'affichage.
+  commissionPct: commissionPct ?? 0,
+  // Part de la commission (%) qui réduit réellement le montant touché par l'établissement
+  // (le reste est déjà inclus dans le prix vu par le client — PlanPricingService::establishmentSharePct).
+  estabSharePct: estabSharePct ?? 0,
 
   establishment: null,
   loading: true,
@@ -22,7 +32,8 @@ function settingsPage(baseUrl, onlinePaymentsEnabled) {
     pdf:         'Export PDF',
     boost:       'Boost vitrine',
     multi_estab: 'Multi-établissements',
-    online_payment_control: 'Contrôle du paiement en ligne',
+    online_payment: 'Paiement en ligne',
+    online_payment_control: 'Paiement en ligne désactivable (sans commission)',
   },
   activeTab: 'general',
   saving: false,
@@ -126,13 +137,14 @@ function settingsPage(baseUrl, onlinePaymentsEnabled) {
 
   savingPayment: false,
 
-  /* Le contrôle du paiement en ligne est réservé aux plans Pro/Business (config/plans.php: online_payment_control) */
-  get onlinePaymentLocked() { return planUpgradeRequired('online_payment_control'); },
+  /* Sur le plan Starter, le paiement en ligne est forcé actif (non désactivable) en échange
+     de la commission plateforme — seuls Pro/Business ont le contrôle du toggle (config/plans.php: online_payment_control). */
+  get onlinePaymentForced() { return planUpgradeRequired('online_payment_control'); },
   /* Fonctionnalité en développement pour tout le monde, indépendamment du plan (v1) */
   get onlinePaymentComingSoon() { return !this.onlinePaymentsEnabled; },
 
   async toggleOnlinePayment() {
-    if (this.onlinePaymentComingSoon || this.onlinePaymentLocked || this.creatingEstab || this.savingPayment) return;
+    if (this.onlinePaymentComingSoon || this.onlinePaymentForced || this.creatingEstab || this.savingPayment) return;
     const previous = this.form.online_payment_enabled;
     this.form.online_payment_enabled = !previous;
     this.savingPayment = true;
@@ -282,6 +294,7 @@ function settingsPage(baseUrl, onlinePaymentsEnabled) {
     this.initPush();       // indépendant de l'établissement, ne bloque pas le reste
     this.loadNotifPrefs(); // idem
     this.loadSessions();   // idem
+    this.loadBiometricCredentials(); // idem
     this.profileForm = { name: this.currentUser.name || '', phone: this.currentUser.phone || '' };
     const id = this.estId();
 
@@ -620,6 +633,115 @@ function settingsPage(baseUrl, onlinePaymentsEnabled) {
       this.showToast('Erreur réseau.', 'error');
     } finally {
       this.sessionsActionLoading = false;
+    }
+  },
+
+  // ── Connexion par empreinte digitale (WebAuthn/passkey) — facultative ──
+  // Ne PAS confondre avec le device_token du gate "app installée" (pwa.js
+  // ensureWebauthnCredential) : ici chaque empreinte est liée au compte
+  // (webauthn_login_credentials.user_id), c'est un raccourci de connexion,
+  // jamais un remplacement du mot de passe.
+  biometricSupported: BIOMETRIC_LOGIN_ENABLED && !!(window.AfristayPWA && window.AfristayPWA.webauthnSupported()),
+  biometricCredentials: [],
+  biometricLoading: false,
+  biometricEnrolling: false,
+  biometricActionLoading: false,
+  biometricError: null,
+
+  async loadBiometricCredentials() {
+    if (!this.biometricSupported) return;
+    this.biometricLoading = true;
+    try {
+      const res  = await fetch(baseUrl + '/api/auth/webauthn/login-credential', { headers: this.apiHeaders() });
+      const data = await res.json();
+      if (data.success) {
+        this.biometricCredentials = data.data ?? [];
+        // Auto-réparation du témoin localStorage (login.js::biometricFirstMode) sur
+        // l'état réel du serveur — au cas où il aurait divergé (ex : effacé par un
+        // localStorage.clear() de déconnexion ailleurs dans l'app). Simplement ouvrir
+        // Paramètres suffit à corriger un témoin désynchronisé, sans manipulation manuelle.
+        if (this.biometricCredentials.length > 0) {
+          localStorage.setItem('biometric_login_hint', '1');
+        } else {
+          localStorage.removeItem('biometric_login_hint');
+        }
+      }
+    } catch (e) { /* liste vide si hors-ligne */ }
+    finally { this.biometricLoading = false; }
+  },
+
+  async enrollBiometric() {
+    if (this.biometricEnrolling) return;
+    this.biometricError = null;
+    this.biometricEnrolling = true;
+    try {
+      const optRes  = await fetch(baseUrl + '/api/auth/webauthn/login-credential/register-options', {
+        method: 'POST', headers: this.apiHeaders(),
+      });
+      const optData = await optRes.json();
+      const { state, publicKey } = optData?.data ?? {};
+      if (!optData.success || !state || !publicKey) {
+        this.biometricError = optData.message || "Impossible de démarrer l'activation.";
+        return;
+      }
+
+      const publicKeyOptions = {
+        ...publicKey,
+        challenge: window.AfristayPWA.b64urlToBuffer(publicKey.challenge),
+        user: { ...publicKey.user, id: window.AfristayPWA.b64urlToBuffer(publicKey.user.id) },
+        excludeCredentials: (publicKey.excludeCredentials || []).map(c => ({ ...c, id: window.AfristayPWA.b64urlToBuffer(c.id) })),
+      };
+
+      const credential = await navigator.credentials.create({ publicKey: publicKeyOptions });
+      if (!credential) { this.biometricError = 'Cérémonie annulée.'; return; }
+
+      const credentialJson = {
+        id: credential.id,
+        rawId: window.AfristayPWA.bufferToB64url(credential.rawId),
+        type: credential.type,
+        response: {
+          clientDataJSON: window.AfristayPWA.bufferToB64url(credential.response.clientDataJSON),
+          attestationObject: window.AfristayPWA.bufferToB64url(credential.response.attestationObject),
+          transports: credential.response.getTransports ? credential.response.getTransports() : [],
+        },
+      };
+
+      const verifyRes  = await fetch(baseUrl + '/api/auth/webauthn/login-credential/register-verify', {
+        method: 'POST', headers: this.apiHeaders(),
+        body: JSON.stringify({ state, credential: credentialJson }),
+      });
+      const verifyData = await verifyRes.json();
+      if (verifyData.success) {
+        this.showToast('Empreinte activée sur cet appareil.', 'success');
+        // loadBiometricCredentials() pose le témoin localStorage pour /login
+        // (loginPage()::biometricFirstMode) — voir son commentaire.
+        await this.loadBiometricCredentials();
+      } else {
+        this.biometricError = verifyData.message || "Échec de l'activation.";
+      }
+    } catch (e) {
+      // Annulation utilisateur (navigator.credentials.create rejeté) ou appareil sans authentificateur.
+      this.biometricError = e?.name === 'NotAllowedError' ? null : "Impossible d'activer l'empreinte sur cet appareil.";
+    } finally {
+      this.biometricEnrolling = false;
+    }
+  },
+
+  async revokeBiometric(id) {
+    this.biometricActionLoading = true;
+    try {
+      const res  = await fetch(baseUrl + '/api/auth/webauthn/login-credential/' + id, { method: 'DELETE', headers: this.apiHeaders() });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast('Empreinte désactivée.', 'success');
+        // loadBiometricCredentials() retire le témoin localStorage si c'était la
+        // dernière empreinte du compte — voir son commentaire.
+        await this.loadBiometricCredentials();
+      }
+    } catch (e) {
+      this.showToast('Erreur réseau.', 'error');
+    } finally {
+      this.biometricActionLoading = false;
     }
   },
 

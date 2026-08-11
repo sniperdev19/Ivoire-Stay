@@ -25,6 +25,18 @@
       <div style="font-size:26px;font-weight:800;color:#111827;" x-text="overview?.total_bookings ?? 0"></div>
     </div>
 
+    <div class="saas-card" style="padding:16px;border-top:3px solid #0D9488;"
+      :title="'Commission encaissée : ' + formatPrice(overview?.platform_margin?.commission_collected ?? 0) + ' — frais GeniusPay (encaissement) : ' + formatPrice(overview?.platform_margin?.geniuspay_payment_fees ?? 0) + ' — frais GeniusPay (retrait) : ' + formatPrice(overview?.platform_margin?.geniuspay_withdrawal_fees ?? 0)">
+      <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Marge nette plateforme</div>
+      <div style="font-size:20px;font-weight:800;color:#0D9488;" x-text="formatPrice(overview?.platform_margin?.net_margin ?? 0)"></div>
+      <div style="font-size:10px;color:#9CA3AF;margin-top:4px;">Commission − frais GeniusPay réels</div>
+    </div>
+
+    <div class="saas-card" style="padding:16px;border-top:3px solid #9333EA;">
+      <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Agents commerciaux</div>
+      <div style="font-size:26px;font-weight:800;color:#111827;" x-text="overview?.total_agents ?? 0"></div>
+    </div>
+
     <div class="saas-card" style="padding:16px;border-top:3px solid #2563EB;">
       <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Répartition par plan</div>
       <div style="display:grid;gap:10px;">

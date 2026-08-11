@@ -198,8 +198,10 @@ $contactPhone = \Core\Settings::get('contact_phone', '+225 01 61 95 90 80');
           <span>Afristay est-il gratuit ?</span>
           <span class="ct-faq-icon">+</span>
         </button>
-        <div class="ct-faq-a" x-show="open === 1" x-transition>Oui ! Notre plan Starter est 100% gratuit et vous permet
-          de gérer jusqu'à 10 chambres sans limitation de durée.</div>
+        <div class="ct-faq-a" x-show="open === 1" x-transition>Notre plan Starter est sans abonnement, sans limitation
+          de durée ni de nombre de chambres. En contrepartie, le paiement en ligne des réservations y est toujours
+          activé et la plateforme prélève une commission dessus (voir la page Tarifs). Les plans Pro et Business
+          restent des abonnements classiques, sans commission.</div>
       </div>
       <div class="ct-faq-item" :class="{ 'ct-faq-open': open === 2 }">
         <button class="ct-faq-q" type="button" @click="open = open === 2 ? null : 2">

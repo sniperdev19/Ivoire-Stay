@@ -121,7 +121,7 @@
         </div>
 
         <div class="saas-card">
-          <div class="report-kpi" style="margin-bottom:12px;">
+          <div class="report-kpi" style="margin-bottom:10px;">
             <div class="report-kpi-icon" style="background:rgba(37,99,235,0.1);color:#2563EB;">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><line x1="19" y1="5" x2="5" y2="19" stroke-width="2" stroke-linecap="round"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
             </div>
@@ -130,59 +130,59 @@
               <p class="report-kpi-value" x-text="occupancy + '%'"></p>
             </div>
           </div>
-          <div style="height:8px;background:#F3F4F6;border-radius:6px;overflow:hidden;"><div :style="'height:100%;width:'+occupancy+'%;background:#2563EB;'"></div></div>
+          <div style="height:6px;background:#F3F4F6;border-radius:6px;overflow:hidden;"><div :style="'height:100%;width:'+occupancy+'%;background:#2563EB;'"></div></div>
         </div>
       </div>
 
       <!-- ROW 2: left distribution, right summary -->
       <div style="display:grid;grid-template-columns:60% 40%;gap:12px;margin-bottom:12px;">
-        <div class="saas-card">
+        <div class="saas-card report-section-card">
           <h3 class="report-section-title"><span class="report-section-dot"></span>Dépenses par catégorie</h3>
-          <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;flex-direction:column;gap:7px;">
             <template x-for="item in expByCategory" :key="item.cat">
               <div style="display:flex;align-items:center;gap:10px;">
-                <div style="min-width:110px;display:flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:4px;" :style="{ background: catColor(item.cat) }"></div><div style="font-size:13px;color:#111827;" x-text="catLabel(item.cat)"></div></div>
-                <div style="flex:1;background:#F3F4F6;border-radius:6px;height:8px;overflow:hidden;margin-right:8px;"><div :style="'height:100%;width:'+item.pct+'%;background:'+catColor(item.cat)+';'"></div></div>
-                <div style="font-weight:700;color:#111827;min-width:110px;text-align:right;" x-text="formatPrice(item.amt)"></div>
-                <div style="width:48px;text-align:right;color:#9CA3AF;font-size:11px;" x-text="item.pct+'%' "></div>
+                <div style="min-width:110px;display:flex;align-items:center;gap:8px;"><div style="width:9px;height:9px;border-radius:3px;" :style="{ background: catColor(item.cat) }"></div><div style="font-size:12px;color:#111827;" x-text="catLabel(item.cat)"></div></div>
+                <div style="flex:1;background:#F3F4F6;border-radius:6px;height:6px;overflow:hidden;margin-right:8px;"><div :style="'height:100%;width:'+item.pct+'%;background:'+catColor(item.cat)+';'"></div></div>
+                <div style="font-weight:700;color:#111827;font-size:13px;min-width:100px;text-align:right;" x-text="formatPrice(item.amt)"></div>
+                <div style="width:40px;text-align:right;color:#9CA3AF;font-size:10.5px;" x-text="item.pct+'%' "></div>
               </div>
             </template>
           </div>
-          <div style="border-top:1px solid rgba(0,0,0,0.06);margin-top:12px;padding-top:12px;display:flex;justify-content:space-between;align-items:center;"><div style="color:#9CA3AF;">Total dépenses</div><div style="font-weight:800;color:#1B4332;" x-text="formatPrice(expTotal)"></div></div>
+          <div style="border-top:1px solid rgba(0,0,0,0.06);margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;align-items:center;"><div style="color:#9CA3AF;font-size:13px;">Total dépenses</div><div style="font-weight:800;color:#1B4332;font-size:14px;" x-text="formatPrice(expTotal)"></div></div>
         </div>
 
-        <div class="saas-card">
+        <div class="saas-card report-section-card">
           <h3 class="report-section-title"><span class="report-section-dot"></span>Bilan <span x-text="periodLabel"></span></h3>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <div><div style="font-size:12px;color:#9CA3AF;">Revenus bruts</div><div style="font-weight:800;color:#16a34a;" x-text="formatPrice(revenue)"></div></div>
-            <div><div style="font-size:12px;color:#9CA3AF;">Factures payées</div><div style="font-weight:700;color:#16a34a;" x-text="formatPrice(paidInv)"></div></div>
-            <div><div style="font-size:12px;color:#9CA3AF;">En attente encaissement</div><div style="font-weight:700;color:#D97706;" x-text="formatPrice(pendingPay)"></div></div>
-            <div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:10px;"><div style="font-size:12px;color:#9CA3AF;">Total dépenses</div><div style="font-weight:800;color:#DC2626;" x-text="formatPrice(expTotal)"></div>
-              <div style="margin-top:8px;">
-                <template x-for="(c,idx) in expByCategory.slice(0,3)" :key="c.cat"><div style="display:flex;justify-content:space-between;font-size:13px;margin-top:6px;"><div><span style="font-weight:700;color:#111827;" x-text="catLabel(c.cat)"></span></div><div style="font-weight:700;color:#111827;" x-text="formatPrice(c.amt)"></div></div></template>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div><div style="font-size:11px;color:#9CA3AF;">Revenus bruts</div><div style="font-weight:800;color:#16a34a;font-size:14px;" x-text="formatPrice(revenue)"></div></div>
+            <div><div style="font-size:11px;color:#9CA3AF;">Factures payées</div><div style="font-weight:700;color:#16a34a;font-size:13px;" x-text="formatPrice(paidInv)"></div></div>
+            <div><div style="font-size:11px;color:#9CA3AF;">En attente encaissement</div><div style="font-weight:700;color:#D97706;font-size:13px;" x-text="formatPrice(pendingPay)"></div></div>
+            <div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:8px;"><div style="font-size:11px;color:#9CA3AF;">Total dépenses</div><div style="font-weight:800;color:#DC2626;font-size:13px;" x-text="formatPrice(expTotal)"></div>
+              <div style="margin-top:6px;">
+                <template x-for="(c,idx) in expByCategory.slice(0,3)" :key="c.cat"><div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px;"><div><span style="font-weight:700;color:#111827;" x-text="catLabel(c.cat)"></span></div><div style="font-weight:700;color:#111827;" x-text="formatPrice(c.amt)"></div></div></template>
               </div>
             </div>
 
-            <div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:12px;">
+            <div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:8px;">
               <div class="report-net-card" :style="{ background: netProfit>=0?'rgba(22,163,74,0.08)':'rgba(220,38,38,0.06)' }">
                 <div>
                   <p class="report-net-label">Résultat net</p>
                   <p class="report-net-value" :style="{ color: netProfit>=0?'#16a34a':'#DC2626' }" x-text="formatPrice(netProfit)"></p>
                 </div>
-                <svg xmlns="http://www.w3.org/2000/svg" style="width:26px;height:26px;flex-shrink:0;" :style="{ color: netProfit>=0?'#16a34a':'#DC2626' }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;flex-shrink:0;" :style="{ color: netProfit>=0?'#16a34a':'#DC2626' }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path x-show="netProfit>=0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
                   <path x-show="netProfit<0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
                 </svg>
               </div>
             </div>
 
-            <a href="<?= $base_url ?>/saas/invoices" class="btn-saas-secondary" style="justify-self:end;">Voir les factures →</a>
+            <a href="<?= $base_url ?>/saas/invoices" class="btn-saas-secondary" style="justify-self:end;padding:7px 14px;font-size:13px;">Voir les factures →</a>
           </div>
         </div>
       </div>
 
       <!-- ROW 3: Paiements récents -->
-      <div class="saas-card">
+      <div class="saas-card report-section-card">
         <h3 class="report-section-title"><span class="report-section-dot"></span>Paiements reçus</h3>
         <div style="overflow-x:auto;">
           <table class="saas-table" style="width:100%;">

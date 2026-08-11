@@ -11,11 +11,11 @@
     Politique de confidentialité</h1>
   <p style="font-size:13px;color:rgba(27,67,50,0.5);margin:0 0 32px;">Dernière mise à jour : <?= date('d/m/Y') ?></p>
 
-  <div
+  <!-- <div
     style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:16px 20px;margin-bottom:40px;font-size:13px;line-height:1.7;color:rgba(27,67,50,0.75);">
     Ce document est un modèle générique décrivant le traitement des données tel qu'implémenté actuellement.
     Il doit être relu et validé par un professionnel du droit avant toute mise en production réelle.
-  </div>
+  </div> -->
 
   <div style="font-size:15px;line-height:1.85;color:rgba(27,67,50,0.85);">
 

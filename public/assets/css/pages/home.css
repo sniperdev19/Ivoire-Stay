@@ -29,7 +29,7 @@
 .hm-input:focus { border-color: #C9A84C; }
 .hm-select { cursor: pointer; }
 .hm-search-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 15px 24px; background: #1B4332; color: white; border: none; border-radius: 999px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
-.hm-hero-strip { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(4,1fr); background: rgba(6,14,9,0.82); backdrop-filter: blur(20px); border-top: 1px solid rgba(201,168,76,0.12); }
+.hm-hero-strip { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(3,1fr); background: rgba(6,14,9,0.82); backdrop-filter: blur(20px); border-top: 1px solid rgba(201,168,76,0.12); }
 .hm-hero-stat { padding: 18px 28px; border-right: 0.5px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 4px; }
 .hm-hero-stat strong { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 700; color: white; }
 .hm-hero-stat strong span { color: #C9A84C; font-size: 18px; }
@@ -99,11 +99,24 @@
   position: absolute; bottom: 0; left: 0; right: 0;
   padding: 28px 24px 24px;
   background: linear-gradient(to top, rgba(10,30,20,0.97) 0%, rgba(10,30,20,0.75) 55%, transparent 100%);
-  opacity: 0; transform: translateY(8px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
   display: flex; flex-direction: column; justify-content: flex-end;
 }
-.dest-slide-item:hover .dest-hover-desc { opacity: 1; transform: translateY(0); }
+/* Révélation animée de la légende — au survol sur souris ; sur tactile (pas de ":hover"
+   fiable), on l'anime plutôt quand la carte devient la carte active du carrousel via .is-active. */
+@media (hover: hover) and (pointer: fine) {
+  .dest-hover-desc {
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .dest-slide-item:hover .dest-hover-desc { opacity: 1; transform: translateY(0); }
+}
+@media (hover: none), (pointer: coarse) {
+  .dest-hover-desc {
+    opacity: 0; transform: translateY(10px);
+    transition: opacity 0.5s ease 0.15s, transform 0.5s ease 0.15s;
+  }
+  .dest-hover-desc.is-active { opacity: 1; transform: translateY(0); }
+}
 .dest-nav-btn {
   width: 48px; height: 48px; border-radius: 50%;
   background: rgba(255,255,255,0.12); backdrop-filter: blur(12px);
@@ -188,7 +201,7 @@
   .hm-hero-left { padding-right: 0; }
   .hm-hero-right { justify-content: flex-start; }
   .hm-search-card { max-width: 560px; }
-  .hm-hero-strip { grid-template-columns: repeat(2, 1fr); }
+  .hm-hero-strip { grid-template-columns: repeat(3, 1fr); }
   /* Avantages 2 colonnes */
   .hm-av-grid { grid-template-columns: repeat(2, 1fr); }
   .hm-av-item:nth-child(2n) { border-right: none; }
@@ -213,7 +226,7 @@
   .hm-hero-btns { flex-direction: column; }
   .hm-btn-p, .hm-btn-g { width: 100%; justify-content: center; text-align: center; }
   /* Stats */
-  .hm-hero-strip { grid-template-columns: repeat(2, 1fr); }
+  .hm-hero-strip { grid-template-columns: repeat(3, 1fr); }
   .hm-hero-stat { padding: 14px 18px; }
   /* Avantages → colonne unique */
   .hm-avantages { padding: 48px 20px; }

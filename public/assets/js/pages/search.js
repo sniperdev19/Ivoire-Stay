@@ -20,12 +20,69 @@ function searchPage(base) {
     totalCount: 0,
     viewMode: 'grid',
     typeOptions: [
-      { value: '',           label: 'Tous' },
-      { value: 'hotel',      label: 'Hôtel' },
-      { value: 'residence',  label: 'Résidence' },
-      { value: 'villa',      label: 'Villa' },
-      { value: 'appartement', label: 'Appartement' },
+      { value: '',            label: 'Tous',        icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>' },
+      { value: 'hotel',       label: 'Hôtel',       icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 21v-4a1 1 0 011-1h4a1 1 0 011 1v4"/><path d="M9 7h1M14 7h1M9 11h1M14 11h1"/></svg>' },
+      { value: 'residence',   label: 'Résidence',   icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 21v-4a1 1 0 011-1h4a1 1 0 011 1v4"/><path d="M9 7h1M14 7h1M9 11h1M14 11h1"/></svg>' },
+      { value: 'villa',       label: 'Villa',       icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>' },
+      { value: 'appartement', label: 'Appartement', icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 21v-4a1 1 0 011-1h4a1 1 0 011 1v4"/><path d="M9 7h1M14 7h1M9 11h1M14 11h1"/></svg>' },
     ],
+
+    // Filtre "établissements proches" — géolocalisation navigateur, distance
+    // calculée côté client (les résultats de l'API incluent déjà latitude/longitude).
+    geoActive: false,
+    geoLoading: false,
+    geoError: null,
+    userLat: null,
+    userLng: null,
+    maxDistanceKm: 1,
+
+    get displayedResults() {
+      if (!this.geoActive) return this.results;
+      return this.results
+        .map(p => ({ ...p, _distanceKm: this.distanceKm(p) }))
+        .filter(p => p._distanceKm !== null && p._distanceKm <= this.maxDistanceKm)
+        .sort((a, b) => a._distanceKm - b._distanceKm);
+    },
+
+    toggleNearby() {
+      if (this.geoActive) {
+        this.geoActive = false;
+        this.userLat = null;
+        this.userLng = null;
+        this.geoError = null;
+        return;
+      }
+      if (!navigator.geolocation) {
+        this.geoError = 'Géolocalisation non disponible sur cet appareil.';
+        return;
+      }
+      this.geoLoading = true;
+      this.geoError = null;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          this.userLat = pos.coords.latitude;
+          this.userLng = pos.coords.longitude;
+          this.geoActive = true;
+          this.geoLoading = false;
+        },
+        () => {
+          this.geoError = 'Localisation refusée ou indisponible.';
+          this.geoLoading = false;
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+      );
+    },
+
+    distanceKm(p) {
+      if (p.latitude == null || p.longitude == null) return null;
+      const toRad = (d) => d * Math.PI / 180;
+      const R = 6371;
+      const dLat = toRad(p.latitude - this.userLat);
+      const dLon = toRad(p.longitude - this.userLng);
+      const a = Math.sin(dLat / 2) ** 2
+        + Math.cos(toRad(this.userLat)) * Math.cos(toRad(p.latitude)) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    },
 
     async publicFetch(path) {
       const url = path.startsWith('http') ? path : this.base + path;
@@ -104,6 +161,10 @@ function searchPage(base) {
 
     clearFilters() {
       this.filters = { city: '', type: '' };
+      this.geoActive = false;
+      this.userLat = null;
+      this.userLng = null;
+      this.geoError = null;
       window.history.replaceState({}, '', window.location.pathname);
       this.search();
     },

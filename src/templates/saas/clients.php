@@ -21,13 +21,13 @@
 
   <!-- KPI compactes -->
   <div class="client-kpi-grid">
-    <div class="saas-card" style="padding:14px 16px;border-top:3px solid #C9A84C;">
-      <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Total clients</div>
-      <div style="font-size:24px;font-weight:800;color:#111827;" x-text="clients.length"></div>
+    <div class="saas-card" style="padding:10px 12px;border-top:3px solid #C9A84C;">
+      <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Total clients</div>
+      <div style="font-size:18px;font-weight:800;color:#111827;" x-text="clients.length"></div>
     </div>
-    <div class="saas-card" style="padding:14px 16px;border-top:3px solid #16a34a;">
-      <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Avec réservations</div>
-      <div style="font-size:24px;font-weight:800;color:#16a34a;" x-text="clients.filter(c => (c.total_bookings ?? 0) > 0).length"></div>
+    <div class="saas-card" style="padding:10px 12px;border-top:3px solid #16a34a;">
+      <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Avec réservations</div>
+      <div style="font-size:18px;font-weight:800;color:#16a34a;" x-text="clients.filter(c => (c.total_bookings ?? 0) > 0).length"></div>
     </div>
   </div>
 
@@ -75,7 +75,7 @@
 
     <!-- Table -->
     <div x-show="filteredClients.length > 0" class="saas-card" style="padding:0;overflow:hidden;">
-      <div style="overflow-x:auto;">
+      <div class="client-table-wrap" style="overflow-x:auto;">
         <table style="width:100%;border-collapse:collapse;">
           <thead>
             <tr style="background:#FAFAFA;">
@@ -117,6 +117,26 @@
             </template>
           </tbody>
         </table>
+      </div>
+
+      <!-- Vue mobile : cartes empilées, aucun défilement horizontal -->
+      <div class="client-mobile-list">
+        <template x-for="client in filteredClients" :key="client.id">
+          <div class="client-mobile-card" @click="openDetail(client)">
+            <div class="client-mobile-top">
+              <div class="client-avatar" :style="'background:' + avatarBg(client.id)" x-text="initials(client.name)"></div>
+              <div class="client-mobile-info">
+                <div class="client-mobile-name" x-text="client.name"></div>
+                <div class="client-mobile-contact" x-text="client.phone ?? client.email ?? '-'"></div>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" class="client-mobile-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </div>
+            <div class="client-mobile-stats">
+              <span><strong x-text="client.total_bookings ?? 0"></strong> réservation(s)</span>
+              <span x-text="formatPrice(client.total_spent ?? 0)"></span>
+            </div>
+          </div>
+        </template>
       </div>
 
       <!-- Footer table -->

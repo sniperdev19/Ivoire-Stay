@@ -4,7 +4,7 @@ namespace Controllers;
 
 use Core\{Request, Response, PlanGate, Guard};
 use Models\{PayoutRequest, Establishment, User};
-use Services\NotificationService;
+use Services\{NotificationService, GeniusPayService};
 
 class PayoutController
 {
@@ -23,14 +23,18 @@ class PayoutController
      * établissement du owner à l'inscription — pour un owner
      * multi-établissements (plan Business), gater sur ce seul établissement
      * permettait de contourner (ou déclenchait à tort) la limite plan
-     * 'online_payment_control' d'un AUTRE de ses établissements que celui
+     * 'online_payment' d'un AUTRE de ses établissements que celui
      * réellement ciblé par la requête.
      */
     private function gate(int $estabId): void
     {
         if (Guard::isSuperadmin()) return;
         $estab = Establishment::find($estabId) ?? [];
-        PlanGate::require($estab, 'online_payment_control');
+        // 'online_payment' = accès de base (tous les plans, y compris Starter forcé),
+        // à distinguer de 'online_payment_control' (capacité à activer/désactiver soi-même,
+        // Pro/Business seulement) — un établissement Starter doit pouvoir retirer les fonds
+        // qu'il a collectés même s'il ne contrôle pas le toggle.
+        PlanGate::require($estab, 'online_payment');
     }
 
     public function balance(Request $req, array $params = []): void
@@ -41,6 +45,7 @@ class PayoutController
 
         Response::success([
             'gross_online_collected' => PayoutRequest::grossOnlineCollected($estabId),
+            'total_commission'       => PayoutRequest::totalCommission($estabId),
             'reserved_or_paid'       => PayoutRequest::reservedOrPaid($estabId),
             'available_balance'      => PayoutRequest::availableBalance($estabId),
         ]);
@@ -103,6 +108,10 @@ class PayoutController
         $id = PayoutRequest::create([
             'establishment_id'      => $estabId,
             'amount'                => $amount,
+            // Frais réels GeniusPay au retrait (1%, informatif — voir GeniusPayService::
+            // withdrawalFee) : ne réduit PAS le montant réellement versé à l'établissement,
+            // sert uniquement à calculer la marge nette plateforme (AdminController::overview()).
+            'geniuspay_fee_amount'  => GeniusPayService::withdrawalFee($amount),
             'mobile_money_operator' => $data['mobile_money_operator'],
             'mobile_money_number'   => trim($data['mobile_money_number']),
             'status'                => 'pending',

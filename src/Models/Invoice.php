@@ -161,19 +161,38 @@ class Invoice extends BaseModel
         float $amount,
         string $method,
         string $type = 'full',
-        ?string $notes = null
+        ?string $notes = null,
+        float $commissionPct = 0.0,
+        bool $viaGeniusPay = false,
+        float $clientSharePct = 0.0
     ): int {
         $now = date('Y-m-d H:i:s');
 
+        // $amount est le montant réellement encaissé (TTC), qui inclut déjà la
+        // majoration client le cas échéant (PlanGate::applyClientMarkup(), plan
+        // Starter) — cette part est donc DÉJÀ couverte par le client et ne doit pas
+        // être reprélevée en plus sur la commission plateforme. On retrouve le prix
+        // de base (avant majoration) pour calculer la commission (commissionPct)
+        // dessus, pas sur l'amount majoré, sans quoi l'établissement finit par
+        // absorber le commissionPct entier au lieu de establishmentSharePct% —
+        // constaté en conditions réelles le 2026-08-11 (5% prélevés au lieu de 4%).
+        $baseAmount = $clientSharePct > 0 ? $amount / (1 + $clientSharePct / 100) : $amount;
+
         $paymentId = Payment::create([
-            'booking_id' => $bookingId,
-            'invoice_id' => $invoiceId,
-            'amount'     => $amount,
-            'method'     => $method,
-            'type'       => $type,
-            'status'     => 'completed',
-            'notes'      => $notes,
-            'paid_at'    => $now,
+            'booking_id'           => $bookingId,
+            'invoice_id'           => $invoiceId,
+            'amount'               => $amount,
+            'commission_pct'       => $commissionPct,
+            'commission_amount'    => round($baseAmount * $commissionPct / 100, 2),
+            // Frais réels GeniusPay (informatif, cf. GeniusPayService::paymentFee) : uniquement
+            // pour les paiements réellement passés par la passerelle, jamais pour un encaissement
+            // manuel (espèces/mobile money saisi à la main par le personnel).
+            'geniuspay_fee_amount' => $viaGeniusPay ? \Services\GeniusPayService::paymentFee($amount) : 0,
+            'method'               => $method,
+            'type'                 => $type,
+            'status'               => 'completed',
+            'notes'                => $notes,
+            'paid_at'              => $now,
         ]);
 
         $inv  = self::find($invoiceId);

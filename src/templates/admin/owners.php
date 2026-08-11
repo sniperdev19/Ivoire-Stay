@@ -8,7 +8,7 @@
       <p style="margin:6px 0 0;color:#9CA3AF;"><span x-text="owners.length"></span> compte(s) propriétaire sur la plateforme</p>
     </div>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <input type="text" class="saas-input" style="max-width:280px;" placeholder="Rechercher (nom, email)…" x-model="search">
+      <input type="text" class="saas-input" style="max-width:280px;" placeholder="Rechercher (nom, email)…" x-model="search" @input="ownersPage = 1">
       <button type="button" class="btn-saas-secondary" @click="exportCsv()">Exporter (CSV)</button>
     </div>
   </div>
@@ -29,7 +29,7 @@
           </tr>
         </thead>
         <tbody>
-          <template x-for="o in sortedOwners" :key="o.id">
+          <template x-for="o in pagedOwners" :key="o.id">
             <tr style="cursor:pointer;" @click="openOwner(o)">
               <td>
                 <div style="display:flex;align-items:center;gap:10px;">
@@ -53,6 +53,11 @@
           </template>
         </tbody>
       </table>
+    </div>
+    <div x-show="ownersPageCount > 1" class="admin-pagination">
+      <button type="button" class="btn-saas-secondary" :disabled="ownersPage <= 1" @click="ownersPage--">&larr;</button>
+      <span>Page <strong x-text="ownersPage"></strong> / <span x-text="ownersPageCount"></span></span>
+      <button type="button" class="btn-saas-secondary" :disabled="ownersPage >= ownersPageCount" @click="ownersPage++">&rarr;</button>
     </div>
   </div>
 

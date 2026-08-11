@@ -60,8 +60,13 @@ function saasLayout(baseUrl) {
         });
 
         if (res.status === 401 || res.status === 403) {
-          /* Token expiré ou invalide → déconnexion forcée */
+          /* Token expiré ou invalide → déconnexion forcée. Le témoin "empreinte
+             activée sur cet appareil" (login.js::biometricFirstMode) doit survivre —
+             c'est un réglage de l'APPAREIL, pas de la session, sinon l'écran
+             "connexion rapide" ne réapparaît plus jamais après une déconnexion. */
+          const biometricHint = localStorage.getItem('biometric_login_hint');
           localStorage.clear();
+          if (biometricHint) localStorage.setItem('biometric_login_hint', biometricHint);
           window.location.href = this.baseUrl + '/login';
           return;
         }
@@ -123,7 +128,11 @@ function saasLayout(baseUrl) {
     },
 
     logout() {
+      // Même précaution que la déconnexion forcée ci-dessus : le témoin "empreinte
+      // activée sur cet appareil" doit survivre à une déconnexion volontaire.
+      const biometricHint = localStorage.getItem('biometric_login_hint');
       localStorage.clear();
+      if (biometricHint) localStorage.setItem('biometric_login_hint', biometricHint);
       window.location.href = this.baseUrl + '/login';
     },
 
@@ -180,9 +189,9 @@ function saasLayout(baseUrl) {
 
     /* Matrice des fonctionnalités par plan (miroir de config/plans.php) */
     planMatrix: {
-      starter:  { invoices: false, payments: false, expenses: false, reports: false, pdf: false, boost: false, multi_estab: false, online_payment_control: false },
-      pro:      { invoices: true,  payments: true,  expenses: true,  reports: true,  pdf: true,  boost: false, multi_estab: false, online_payment_control: true  },
-      business: { invoices: true,  payments: true,  expenses: true,  reports: true,  pdf: true,  boost: true,  multi_estab: true,  online_payment_control: true  },
+      starter:  { invoices: true, payments: true, expenses: true, reports: true, pdf: true, boost: false, multi_estab: false, online_payment: true, online_payment_control: false },
+      pro:      { invoices: true, payments: true, expenses: true, reports: true, pdf: true, boost: false, multi_estab: false, online_payment: true, online_payment_control: true  },
+      business: { invoices: true, payments: true, expenses: true, reports: true, pdf: true, boost: true,  multi_estab: true,  online_payment: true, online_payment_control: true  },
     },
     get currentPlan() {
       const plan = this.establishment?.plan ?? 'starter';
@@ -210,9 +219,9 @@ function planUpgradeRequired(feature) {
     const estab = list.find(e => String(e.id) === String(id)) ?? list[0] ?? {};
     const plan  = estab.plan ?? 'starter';
     const matrix = {
-      starter:  { invoices: false, payments: false, expenses: false, reports: false, pdf: false, boost: false, multi_estab: false, online_payment_control: false },
-      pro:      { invoices: true,  payments: true,  expenses: true,  reports: true,  pdf: true,  boost: false, multi_estab: false, online_payment_control: true  },
-      business: { invoices: true,  payments: true,  expenses: true,  reports: true,  pdf: true,  boost: true,  multi_estab: true,  online_payment_control: true  },
+      starter:  { invoices: true, payments: true, expenses: true, reports: true, pdf: true, boost: false, multi_estab: false, online_payment: true, online_payment_control: false },
+      pro:      { invoices: true, payments: true, expenses: true, reports: true, pdf: true, boost: false, multi_estab: false, online_payment: true, online_payment_control: true  },
+      business: { invoices: true, payments: true, expenses: true, reports: true, pdf: true, boost: true,  multi_estab: true,  online_payment: true, online_payment_control: true  },
     };
     return !(matrix[plan]?.[feature] ?? false);
   } catch { return true; }
@@ -276,6 +285,17 @@ const saasHelpers = {
     this.toast = { msg, type };
     clearTimeout(this.toastTimer);
     this.toastTimer = setTimeout(() => { this.toast = null; }, 3500);
+  },
+
+  /* Pagination client (5 par page par défaut). Le compteur de page reste dans
+     l'état propre de l'appelant (ex: this.ownersPage) : une page peut afficher
+     plusieurs tableaux paginés indépendamment, donc pas de curseur partagé ici. */
+  pageItems(items, page, perPage = 5) {
+    const start = (Math.max(1, page) - 1) * perPage;
+    return (items ?? []).slice(start, start + perPage);
+  },
+  pageCount(items, perPage = 5) {
+    return Math.max(1, Math.ceil((items?.length ?? 0) / perPage));
   },
 };
 

@@ -10,7 +10,8 @@ $featureLabels = [
     'pdf'                     => 'Export PDF (factures)',
     'boost'                   => 'Mise en avant (boost) dans la recherche',
     'multi_estab'             => 'Plusieurs établissements',
-    'online_payment_control'  => 'Paiement en ligne (GeniusPay) + Retraits',
+    'online_payment'          => 'Paiement en ligne (GeniusPay) + Retraits',
+    'online_payment_control'  => 'Paiement en ligne désactivable (sans commission — sinon commission sur Starter)',
 ];
 
 // Icônes reprises telles quelles de la sidebar (src/templates/saas/layout.php)
@@ -141,7 +142,7 @@ $modules = [
         ],
     ],
     [
-        'name' => 'Comptabilité', 'anchor' => 'billing', 'plan' => 'pro', 'role' => 'owner',
+        'name' => 'Comptabilité', 'anchor' => 'billing', 'plan' => null, 'role' => 'owner',
         'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
         'desc' => "Factures et paiements de l'établissement.",
         'points' => [
@@ -170,7 +171,7 @@ $modules = [
         ],
     ],
     [
-        'name' => 'Dépenses', 'anchor' => 'expenses', 'plan' => 'pro', 'role' => 'owner',
+        'name' => 'Dépenses', 'anchor' => 'expenses', 'plan' => null, 'role' => 'owner',
         'icon' => 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
         'desc' => 'Suivi des charges opérationnelles.',
         'points' => [
@@ -189,7 +190,7 @@ $modules = [
         ],
     ],
     [
-        'name' => 'Retraits', 'anchor' => 'payouts', 'plan' => 'pro', 'role' => 'owner',
+        'name' => 'Retraits', 'anchor' => 'payouts', 'plan' => null, 'role' => 'owner',
         'icon' => 'M17 9V7a4 4 0 00-8 0v2M5 9h14l1 11H4L5 9z',
         'desc' => "Solde et demandes de retrait des paiements en ligne encaissés par la plateforme pour le compte de l'établissement.",
         'points' => [
@@ -208,7 +209,7 @@ $modules = [
         ],
     ],
     [
-        'name' => 'Rapports', 'anchor' => 'reports', 'plan' => 'pro', 'role' => 'owner',
+        'name' => 'Rapports', 'anchor' => 'reports', 'plan' => null, 'role' => 'owner',
         'icon' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
         'desc' => "Analyses de performance construites à partir des factures, dépenses et paiements.",
         'points' => [
@@ -384,6 +385,20 @@ $modules = [
                 <td style="font-weight:600;">Tarif mensuel</td>
                 <?php foreach ($plans as $key => $p): ?>
                   <td style="text-align:center;font-weight:700;color:#111827;" class="<?= $key === 'pro' ? 'docs-plan-highlight' : '' ?>"><?= $p['prices']['monthly'] > 0 ? number_format($p['prices']['monthly'], 0, ',', ' ') . ' FCFA' : 'Gratuit' ?></td>
+                <?php endforeach; ?>
+              </tr>
+              <tr>
+                <td style="font-weight:600;">Commission paiement en ligne</td>
+                <?php foreach ($plans as $key => $p): ?>
+                  <?php $pct = (float) ($p['online_payment_commission_pct'] ?? 0); ?>
+                  <td style="text-align:center;" class="<?= $key === 'pro' ? 'docs-plan-highlight' : '' ?>"><?= $pct > 0 ? number_format($pct, 0, ',', ' ') . '% (imposé)' : '0% (optionnel)' ?></td>
+                <?php endforeach; ?>
+              </tr>
+              <tr>
+                <td style="font-weight:600;">— dont incluse dans le prix client</td>
+                <?php foreach ($plans as $key => $p): ?>
+                  <?php $clientPct = (float) ($p['online_payment_client_share_pct'] ?? 0); ?>
+                  <td style="text-align:center;" class="<?= $key === 'pro' ? 'docs-plan-highlight' : '' ?>"><?= $clientPct > 0 ? number_format($clientPct, 1, ',', ' ') . '%' : '—' ?></td>
                 <?php endforeach; ?>
               </tr>
               <tr>

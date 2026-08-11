@@ -88,7 +88,7 @@
 
     <!-- Table -->
     <div x-show="filteredBookings.length > 0" class="saas-card" style="padding:0;overflow:hidden;">
-      <div style="overflow-x:auto;">
+      <div class="booking-table-wrap" style="overflow-x:auto;">
         <table class="saas-table booking-table" style="min-width:980px;">
           <thead>
             <tr>
@@ -145,8 +145,43 @@
         </table>
       </div>
 
+      <!-- Vue mobile : cartes empilées, aucun défilement horizontal -->
+      <div class="booking-mobile-list">
+        <template x-for="b in filteredBookings" :key="b.id">
+          <div class="booking-mobile-card" @click="openDetail(b)" :style="'border-left-color:' + statusConfig(b.status).color">
+            <div class="booking-mobile-top">
+              <div class="booking-mobile-avatar" :style="'background:' + avatarBg(b.id)" x-text="initials(b.client_name)"></div>
+              <div class="booking-mobile-info">
+                <div class="booking-mobile-name" x-text="b.client_name"></div>
+                <div class="booking-mobile-contact" x-text="[b.client_phone, b.client_email].filter(Boolean).join(' · ')"></div>
+              </div>
+              <span :class="statusConfig(b.status).badge" x-text="statusConfig(b.status).label"></span>
+            </div>
+            <div class="booking-mobile-mid">
+              <span class="booking-room-chip" x-text="'Ch. ' + b.room_number"></span>
+              <span style="font-size:12px;color:#9CA3AF;" x-text="b.room_type"></span>
+              <span class="booking-type-label" :style="{ color: typeColor(b.booking_type) }" x-text="typeLabel(b.booking_type).toUpperCase()"></span>
+            </div>
+            <div class="booking-mobile-dates">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span x-text="formatDate(b.check_in)"></span>
+              <template x-if="b.booking_type === 'passage'">
+                <span x-text="' · ' + b.hours + ' heure' + (b.hours > 1 ? 's' : '')"></span>
+              </template>
+              <template x-if="b.booking_type !== 'passage'">
+                <span x-text="' → ' + formatDate(b.check_out) + ' · ' + b.nights + ' nuit' + (b.nights > 1 ? 's' : '')"></span>
+              </template>
+            </div>
+            <div class="booking-mobile-bottom">
+              <span class="booking-mobile-amount" x-text="formatPrice(b.total_price)"></span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="booking-mobile-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </div>
+          </div>
+        </template>
+      </div>
+
       <!-- Pagination -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-top:1px solid rgba(0,0,0,0.06);">
+      <div class="booking-pagination" style="display:flex;align-items:center;justify-content:space-between;">
         <span style="color:#6B7280;font-size:13px;">Page <span x-text="page"></span> sur <span x-text="totalPages"></span></span>
         <div style="display:flex;gap:10px;">
           <button type="button" class="btn-saas-secondary" style="padding:8px 14px;font-size:13px;" @click="goToPage(page-1)" :disabled="page<=1" :style="{ opacity: page<=1?'0.4':'1', cursor: page<=1?'not-allowed':'pointer' }">← Préc.</button>

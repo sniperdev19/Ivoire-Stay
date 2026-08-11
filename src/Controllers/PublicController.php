@@ -42,6 +42,14 @@ class PublicController
             $params
         )->fetchAll();
 
+        // Majoration client (plan Starter uniquement) sur le prix d'appel affiché.
+        foreach ($results as &$estab) {
+            if ($estab['min_price'] !== null) {
+                $estab['min_price'] = PlanGate::applyClientMarkup((float) $estab['min_price'], $estab);
+            }
+        }
+        unset($estab);
+
         Response::success($results);
     }
 
@@ -88,6 +96,14 @@ class PublicController
             $results = array_values($results);
         }
 
+        // Majoration client (plan Starter uniquement) sur le prix d'appel affiché.
+        foreach ($results as &$estab) {
+            if ($estab['min_price'] !== null) {
+                $estab['min_price'] = PlanGate::applyClientMarkup((float) $estab['min_price'], $estab);
+            }
+        }
+        unset($estab);
+
         Response::success($results);
     }
 
@@ -101,6 +117,17 @@ class PublicController
         $rooms = Room::allWithDetails($id);
         $checkIn  = $req->get('check_in');
         $checkOut = $req->get('check_out');
+
+        // Majoration client (plan Starter uniquement) sur les tarifs affichés — même
+        // prix du début à la fin, voir PlanPricingService::applyClientMarkup().
+        foreach ($rooms as &$room) {
+            foreach (['base_price', 'weekend_price', 'passage_price'] as $priceField) {
+                if ($room[$priceField] !== null) {
+                    $room[$priceField] = PlanGate::applyClientMarkup((float) $room[$priceField], $estab);
+                }
+            }
+        }
+        unset($room);
 
         // is_available reflète toujours le statut de la chambre (mis à jour depuis le
         // SaaS) ; si des dates sont fournies, on affine avec la disponibilité réelle
@@ -160,7 +187,9 @@ class PublicController
 
         // La chambre doit exister et appartenir à un établissement actif
         $room = Database::query(
-            "SELECT r.*, rt.capacity, e.name as establishment_name FROM rooms r
+            "SELECT r.*, rt.capacity, e.name as establishment_name,
+                    e.plan as establishment_plan, e.plan_expires_at as establishment_plan_expires_at
+             FROM rooms r
              JOIN room_types rt ON rt.id = r.room_type_id
              JOIN establishments e ON e.id = r.establishment_id
              WHERE r.id = ? AND e.is_active = 1 AND e.frozen_at IS NULL",
@@ -203,6 +232,13 @@ class PublicController
         ]);
 
         $amount = Booking::calculateAmount($room['room_type_id'], $checkIn, $checkOut, $bookingType, $hours);
+        // Majoration client (plan Starter uniquement) — même prix affiché/facturé du début
+        // à la fin (recherche, fiche chambre, réservation, facture), quel que soit le mode
+        // de paiement finalement choisi. Voir PlanPricingService::applyClientMarkup().
+        $amount = PlanGate::applyClientMarkup($amount, [
+            'plan'            => $room['establishment_plan'],
+            'plan_expires_at' => $room['establishment_plan_expires_at'],
+        ]);
 
         $id = Booking::create([
             'room_id'          => $roomId,
@@ -288,14 +324,21 @@ class PublicController
 
         $room['type_amenities'] = !empty($room['type_amenities']) ? json_decode($room['type_amenities'], true) : [];
 
-        // Le paiement en ligne est une fonctionnalité payante (plans Pro/Business) :
-        // même si le flag est activé en base, il reste sans effet sur un plan Starter
-        // (protège aussi contre un flag resté à 1 après un downgrade de plan).
-        // ONLINE_PAYMENTS_ENABLED (verrou v1, config.php) passe outre tout le reste :
-        // fonctionnalité en développement, désactivée pour tout le monde pour l'instant.
         $estabForGate = ['plan' => $room['establishment_plan'], 'plan_expires_at' => $room['plan_expires_at']];
+
+        // Majoration client (plan Starter uniquement) sur les tarifs affichés — même
+        // prix du début à la fin, voir PlanPricingService::applyClientMarkup().
+        foreach (['base_price', 'weekend_price', 'passage_price'] as $priceField) {
+            if ($room[$priceField] !== null) {
+                $room[$priceField] = PlanGate::applyClientMarkup((float) $room[$priceField], $estabForGate);
+            }
+        }
+
+        // Le paiement en ligne ('online_payment') est disponible sur tous les plans —
+        // forcé sur Starter, optionnel sur Pro/Business via online_payment_enabled.
+        // ONLINE_PAYMENTS_ENABLED (verrou v1, config.php) passe outre tout le reste.
         $room['online_payment_enabled'] = ONLINE_PAYMENTS_ENABLED
-            && PlanGate::can($estabForGate, 'online_payment_control')
+            && PlanGate::can($estabForGate, 'online_payment')
             && (bool) $room['online_payment_enabled'];
 
         Response::success($room);

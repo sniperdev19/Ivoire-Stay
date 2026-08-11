@@ -11,6 +11,7 @@ function adminOwnersPage(baseUrl) {
     search: '',
     sortKey: 'created_at',
     sortDir: 'desc',
+    ownersPage: 1,
 
     selected: null,
     ownerEstablishments: [],
@@ -51,6 +52,9 @@ function adminOwnersPage(baseUrl) {
       return list;
     },
 
+    get pagedOwners()    { return this.pageItems(this.sortedOwners, this.ownersPage); },
+    get ownersPageCount() { return this.pageCount(this.sortedOwners); },
+
     toggleSort(key) {
       if (this.sortKey === key) {
         this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
@@ -58,6 +62,7 @@ function adminOwnersPage(baseUrl) {
         this.sortKey = key;
         this.sortDir = 'desc';
       }
+      this.ownersPage = 1;
     },
     sortIndicator(key) {
       if (this.sortKey !== key) return '';

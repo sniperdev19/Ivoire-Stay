@@ -9,14 +9,17 @@ function adminAgentsPage(baseUrl) {
 
     loadingAgents: true,
     agents: [],
+    agentsPage: 1,
 
     loadingPayouts: true,
     payouts: [],
+    payoutsPage: 1,
     filter: 'pending',
     toast: null,
 
     loadingBonuses: true,
     bonuses: [],
+    bonusesPage: 1,
 
     rejectTarget: null,
     rejectNotes: '',
@@ -37,6 +40,7 @@ function adminAgentsPage(baseUrl) {
         this.agents = [];
       } finally {
         this.loadingAgents = false;
+        this.agentsPage = 1;
       }
     },
 
@@ -52,6 +56,7 @@ function adminAgentsPage(baseUrl) {
         this.payouts = [];
       } finally {
         this.loadingPayouts = false;
+        this.payoutsPage = 1;
       }
     },
 
@@ -65,8 +70,16 @@ function adminAgentsPage(baseUrl) {
         this.bonuses = [];
       } finally {
         this.loadingBonuses = false;
+        this.bonusesPage = 1;
       }
     },
+
+    get pagedAgents()      { return this.pageItems(this.agents, this.agentsPage); },
+    get agentsPageCount()  { return this.pageCount(this.agents); },
+    get pagedPayouts()     { return this.pageItems(this.payouts, this.payoutsPage); },
+    get payoutsPageCount() { return this.pageCount(this.payouts); },
+    get pagedBonuses()     { return this.pageItems(this.bonuses, this.bonusesPage); },
+    get bonusesPageCount() { return this.pageCount(this.bonuses); },
 
     bonusTypeLabel(type) {
       return {

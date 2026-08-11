@@ -80,6 +80,10 @@
     webauthnSupported() {
       return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
     },
+    // Exposées pour la connexion optionnelle par empreinte (saas-settings.js, login.js)
+    // — évite de dupliquer ces conversions base64url<->ArrayBuffer dans deux fichiers de plus.
+    b64urlToBuffer,
+    bufferToB64url,
 
     /**
      * Enregistre une passkey liée à cet appareil (preuve cryptographique
