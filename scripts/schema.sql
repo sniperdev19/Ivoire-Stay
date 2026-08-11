@@ -161,6 +161,9 @@ CREATE TABLE `payments` (
   `booking_id` int NOT NULL,
   `invoice_id` int DEFAULT NULL,
   `amount` decimal(10,2) NOT NULL,
+  `commission_pct` decimal(5,2) NOT NULL DEFAULT '0' COMMENT 'Taux de commission plateforme appliqué (plan Starter), 0 sinon',
+  `commission_amount` decimal(10,2) NOT NULL DEFAULT '0' COMMENT 'Montant de commission déduit du solde retirable (voir PayoutRequest)',
+  `geniuspay_fee_amount` decimal(10,2) NOT NULL DEFAULT '0' COMMENT 'Frais réels GeniusPay (100 XOF + 2.5%), informatif — ne change aucun montant facturé/versé',
   `method` enum('cash','mobile_money','bank_transfer','card') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'cash',
   `type` enum('deposit','full','partial') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'full',
   `status` enum('pending','completed','refunded') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
@@ -352,13 +355,39 @@ CREATE TABLE `device_attestations` (
 DROP TABLE IF EXISTS `webauthn_challenges`;
 CREATE TABLE `webauthn_challenges` (
   `id`          char(36) NOT NULL,
-  `type`        enum('register','login') NOT NULL,
+  `type`        enum('register','login','login_register') NOT NULL,
   `challenge`   varchar(255) NOT NULL COMMENT 'base64 du challenge brut',
   `user_handle` varchar(255) DEFAULT NULL COMMENT 'base64, uniquement pour type=register',
   `expires_at`  datetime NOT NULL,
   `created_at`  datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `expires_at` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `webauthn_login_credentials`;
+-- Connexion optionnelle par empreinte/Face ID/Windows Hello, en complément du mot
+-- de passe (jamais obligatoire) — distinct du gate "app installée" ci-dessous
+-- (anonyme par conception) : ici chaque credential est lié à un vrai user_id.
+CREATE TABLE `webauthn_login_credentials` (
+  `id`               int NOT NULL AUTO_INCREMENT,
+  `user_id`          int NOT NULL,
+  `credential_id`    varchar(255) NOT NULL COMMENT 'base64 de l’ID de credential, retrouve l’utilisateur à la connexion',
+  `credential_type`  varchar(20) NOT NULL DEFAULT 'public-key',
+  `transports`       varchar(255) DEFAULT NULL COMMENT 'JSON array',
+  `aaguid`           char(36) NOT NULL,
+  `public_key`       mediumtext NOT NULL COMMENT 'base64 de la clé publique COSE/CBOR',
+  `user_handle`      varchar(255) NOT NULL COMMENT 'base64, généré à l’enrôlement — requis par la cérémonie WebAuthn (assertion), distinct de user_id',
+  `counter`          bigint unsigned NOT NULL DEFAULT '0',
+  `device_label`     varchar(150) DEFAULT NULL COMMENT 'même heuristique que user_sessions.device_label',
+  `backup_eligible`  tinyint(1) DEFAULT NULL,
+  `backup_status`    tinyint(1) DEFAULT NULL,
+  `created_at`       datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_used_at`     datetime DEFAULT NULL,
+  `revoked_at`       datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `credential_id` (`credential_id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `webauthn_login_credentials_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `webauthn_credentials`;
@@ -463,6 +492,7 @@ CREATE TABLE `payout_requests` (
   `id` int NOT NULL AUTO_INCREMENT,
   `establishment_id` int NOT NULL,
   `amount` decimal(10,2) NOT NULL,
+  `geniuspay_fee_amount` decimal(10,2) NOT NULL DEFAULT '0' COMMENT 'Frais réels GeniusPay au retrait (1%), informatif — ne change pas le montant versé',
   `mobile_money_operator` enum('orange','wave','mtn') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `mobile_money_number` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `status` enum('pending','paid','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',

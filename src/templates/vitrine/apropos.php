@@ -37,41 +37,7 @@
       </div>
       <p class="ab-mission-body">Notre SaaS permet à n'importe quel établissement de gérer chambres, réservations,
         clients et finances en un seul endroit. Paiement Mobile Money, interface 100 % en français.</p>
-      <a href="<?= $base_url ?>/register" class="ab-btn-dark">Démarrer gratuitement →</a>
-    </div>
-  </section>
-
-  <section class="ab-stats">
-    <div class="ab-stats-header">
-      <div class="ab-stats-rule"></div>
-      <span>Chiffres clés</span>
-      <div class="ab-stats-rule"></div>
-    </div>
-    <div class="ab-stats-grid">
-      <div class="ab-stat-item">
-        <div class="ab-stat-ghost">500</div>
-        <div class="ab-stat-num">500<span>+</span></div>
-        <div class="ab-stat-label">Établissements partenaires</div>
-        <div class="ab-stat-bar"></div>
-      </div>
-      <div class="ab-stat-item">
-        <div class="ab-stat-ghost">12K</div>
-        <div class="ab-stat-num">12 000<span>+</span></div>
-        <div class="ab-stat-label">Réservations traitées</div>
-        <div class="ab-stat-bar"></div>
-      </div>
-      <div class="ab-stat-item">
-        <div class="ab-stat-ghost">4.9</div>
-        <div class="ab-stat-num">4.9<span>/5</span></div>
-        <div class="ab-stat-label">Satisfaction client</div>
-        <div class="ab-stat-bar"></div>
-      </div>
-      <div class="ab-stat-item">
-        <div class="ab-stat-ghost">3</div>
-        <div class="ab-stat-num">3<span> villes</span></div>
-        <div class="ab-stat-label">Couverture nationale</div>
-        <div class="ab-stat-bar"></div>
-      </div>
+      <a href="<?= $base_url ?>/register" class="ab-btn-dark">Démarrer sans abonnement →</a>
     </div>
   </section>
 
@@ -81,36 +47,24 @@
       <span>Notre équipe</span>
       <div class="ab-team-rule"></div>
     </div>
-    <div class="ab-team-list">
-      <div class="ab-team-member">
-        <div class="ab-member-left">
-          <div class="ab-member-initials">BE</div>
-          <h3 class="ab-member-name">Botchi<em>Emmanuel</em></h3>
-        </div>
-        <div class="ab-member-right">
-          <div class="ab-member-role">CEO &amp; dev Backend &amp; Fondateur</div>
-          <p class="ab-member-desc">Entrepreneur tech depuis 03 ans, membre de Prime Tech Group</p>
-        </div>
+    <div class="ab-team-grid">
+      <div class="ab-team-card">
+        <div class="ab-team-card-ghost">01</div>
+        <h3 class="ab-team-card-role">Fondateur &amp;<br><em>Dev Backend</em></h3>
+        <div class="ab-team-card-rule"></div>
+        <p class="ab-team-card-desc">Entrepreneur tech depuis 03 ans, membre de Prime Tech Group</p>
       </div>
-      <div class="ab-team-member">
-        <div class="ab-member-left">
-          <div class="ab-member-initials">KF</div>
-          <h3 class="ab-member-name">Kouadio <em>Fréjus</em></h3>
-        </div>
-        <div class="ab-member-right">
-          <div class="ab-member-role">Dev Frontend</div>
-          <p class="ab-member-desc">Développeuse fullstack, passionnée par les solutions africaines</p>
-        </div>
+      <div class="ab-team-card">
+        <div class="ab-team-card-ghost">02</div>
+        <h3 class="ab-team-card-role"><em>Dev</em><br>Frontend</h3>
+        <div class="ab-team-card-rule"></div>
+        <p class="ab-team-card-desc">Développeuse fullstack, passionnée par les solutions africaines</p>
       </div>
-      <!-- <div class="ab-team-member">
-        <div class="ab-member-left">
-          <div class="ab-member-initials">MB</div>
-          <h3 class="ab-member-name">Marcel <em>Bamba</em></h3>
-        </div>
-        <div class="ab-member-right">
-          <div class="ab-member-role">Head of Growth</div>
-          <p class="ab-member-desc">Spécialiste marketing digital et hôtellerie en Côte d'Ivoire</p>
-        </div>
+      <!-- <div class="ab-team-card">
+        <div class="ab-team-card-ghost">03</div>
+        <h3 class="ab-team-card-role">Head of<br><em>Growth</em></h3>
+        <div class="ab-team-card-rule"></div>
+        <p class="ab-team-card-desc">Spécialiste marketing digital et hôtellerie en Côte d'Ivoire</p>
       </div> -->
     </div>
     <div class="ab-team-deco">03</div>

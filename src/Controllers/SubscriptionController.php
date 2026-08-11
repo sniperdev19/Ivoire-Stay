@@ -327,6 +327,69 @@ class SubscriptionController
         }
     }
 
+    /**
+     * Active un abonnement pending → active de façon IDEMPOTENTE : `callback()` (webhook)
+     * et `verify()` (poll client) peuvent tous deux être appelés pour le même paiement
+     * (webhook rejoué par GeniusPay en cas de retry, ou course webhook/poll quasi
+     * simultanée) — sans protection, chaque appel dupliquerait l'email d'activation, la
+     * notification, et pourrait re-déclencher EstablishmentFreezeService inutilement.
+     * L'UPDATE conditionnel `WHERE status != 'active'` est atomique par nature (verrouillage
+     * de ligne implicite, MySQL garantit l'atomicité d'une seule requête UPDATE) : un seul
+     * appelant peut faire passer `rowCount()` à 1, tous les autres (retries/course) no-op.
+     * Retourne l'échéance si CET appel a effectivement activé l'abonnement, sinon null.
+     */
+    private function activateSubscription(array $sub): ?string
+    {
+        $months    = $sub['billing'] === 'yearly' ? 12 : 1;
+        $startedAt = date('Y-m-d H:i:s');
+
+        $estabRow  = Database::query(
+            "SELECT plan, plan_expires_at FROM establishments WHERE id = ?", [$sub['establishment_id']]
+        )->fetch();
+        $prevPlan  = $estabRow['plan'] ?? null;
+        $expiresAt = $this->renewedExpiry($estabRow ?: [], $sub['plan'], $months);
+
+        $stmt = Database::query(
+            "UPDATE subscriptions SET status = 'active', started_at = ?, expires_at = ? WHERE id = ? AND status != 'active'",
+            [$startedAt, $expiresAt, $sub['id']]
+        );
+        if ($stmt->rowCount() === 0) {
+            return null;
+        }
+
+        Database::query(
+            "UPDATE establishments SET plan = ?, plan_expires_at = ? WHERE id = ?",
+            [$sub['plan'], $expiresAt, $sub['establishment_id']]
+        );
+
+        if (($prevPlan ?: 'starter') === 'starter') {
+            CommissionService::recordFirstSubscription((int) $sub['establishment_id'], $sub['plan']);
+        }
+
+        $owner = Database::query(
+            "SELECT u.name, u.email, e.name as estab_name FROM users u
+             JOIN establishments e ON e.owner_id = u.id
+             WHERE e.id = ?",
+            [$sub['establishment_id']]
+        )->fetch();
+        if ($owner) {
+            MailService::subscriptionActivated($owner['email'], $owner['name'], $sub['plan'], $expiresAt);
+            $plans = require BASE_PATH . '/config/plans.php';
+            NotificationService::subscriptionActivated(
+                $owner['estab_name'] ?? ('#' . $sub['establishment_id']),
+                $plans[$sub['plan']]['name'] ?? $sub['plan'],
+                (int) $sub['establishment_id']
+            );
+        }
+
+        $ownerId = (int) Database::query(
+            "SELECT owner_id FROM establishments WHERE id = ?", [$sub['establishment_id']]
+        )->fetchColumn();
+        if ($ownerId) EstablishmentFreezeService::recompute($ownerId);
+
+        return $expiresAt;
+    }
+
     // ─── POST /api/subscriptions/callback (webhook Genius Pay, no auth) ──────
     public function callback(Request $_req, array $_params = []): void
     {
@@ -365,50 +428,7 @@ class SubscriptionController
         $internalStatus = GeniusPayService::mapStatus($txStatus ?: $gpEvent);
 
         if ($internalStatus === 'active') {
-            $months    = $sub['billing'] === 'yearly' ? 12 : 1;
-            $startedAt = date('Y-m-d H:i:s');
-
-            $estabRow  = Database::query(
-                "SELECT plan, plan_expires_at FROM establishments WHERE id = ?", [$sub['establishment_id']]
-            )->fetch();
-            $prevPlan  = $estabRow['plan'] ?? null;
-            $expiresAt = $this->renewedExpiry($estabRow ?: [], $sub['plan'], $months);
-
-            Database::query(
-                "UPDATE subscriptions SET status = 'active', started_at = ?, expires_at = ? WHERE id = ?",
-                [$startedAt, $expiresAt, $sub['id']]
-            );
-
-            Database::query(
-                "UPDATE establishments SET plan = ?, plan_expires_at = ? WHERE id = ?",
-                [$sub['plan'], $expiresAt, $sub['establishment_id']]
-            );
-
-            if (($prevPlan ?: 'starter') === 'starter') {
-                CommissionService::recordFirstSubscription((int) $sub['establishment_id'], $sub['plan']);
-            }
-
-            // Email de confirmation d'abonnement
-            $owner = Database::query(
-                "SELECT u.name, u.email, e.name as estab_name FROM users u
-                 JOIN establishments e ON e.owner_id = u.id
-                 WHERE e.id = ?",
-                [$sub['establishment_id']]
-            )->fetch();
-            if ($owner) {
-                MailService::subscriptionActivated($owner['email'], $owner['name'], $sub['plan'], $expiresAt);
-                $plans = require BASE_PATH . '/config/plans.php';
-                NotificationService::subscriptionActivated(
-                    $owner['estab_name'] ?? ('#' . $sub['establishment_id']),
-                    $plans[$sub['plan']]['name'] ?? $sub['plan'],
-                    (int) $sub['establishment_id']
-                );
-            }
-
-            $ownerId = (int) Database::query(
-                "SELECT owner_id FROM establishments WHERE id = ?", [$sub['establishment_id']]
-            )->fetchColumn();
-            if ($ownerId) EstablishmentFreezeService::recompute($ownerId);
+            $this->activateSubscription($sub);
         } elseif ($internalStatus === 'failed') {
             Database::query(
                 "UPDATE subscriptions SET status = 'failed' WHERE id = ?",
@@ -461,51 +481,10 @@ class SubscriptionController
             }
 
             if ($internalStatus === 'active') {
-                $months    = $sub['billing'] === 'yearly' ? 12 : 1;
-                $startedAt = date('Y-m-d H:i:s');
-
-                $estabRow  = Database::query(
-                    "SELECT plan, plan_expires_at FROM establishments WHERE id = ?", [$sub['establishment_id']]
-                )->fetch();
-                $prevPlan  = $estabRow['plan'] ?? null;
-                $expiresAt = $this->renewedExpiry($estabRow ?: [], $sub['plan'], $months);
-
-                Database::query(
-                    "UPDATE subscriptions SET status = 'active', started_at = ?, expires_at = ? WHERE id = ?",
-                    [$startedAt, $expiresAt, $sub['id']]
-                );
-
-                Database::query(
-                    "UPDATE establishments SET plan = ?, plan_expires_at = ? WHERE id = ?",
-                    [$sub['plan'], $expiresAt, $sub['establishment_id']]
-                );
-
-                if (($prevPlan ?: 'starter') === 'starter') {
-                    CommissionService::recordFirstSubscription((int) $sub['establishment_id'], $sub['plan']);
-                }
-
-                // Email activation (si pas encore envoyé via webhook)
-                $owner = Database::query(
-                    "SELECT u.name, u.email, e.name as estab_name FROM users u
-                     JOIN establishments e ON e.owner_id = u.id
-                     WHERE e.id = ?",
-                    [$sub['establishment_id']]
-                )->fetch();
-                if ($owner) {
-                    MailService::subscriptionActivated($owner['email'], $owner['name'], $sub['plan'], $expiresAt);
-                    $plans = require BASE_PATH . '/config/plans.php';
-                    NotificationService::subscriptionActivated(
-                        $owner['estab_name'] ?? ('#' . $sub['establishment_id']),
-                        $plans[$sub['plan']]['name'] ?? $sub['plan'],
-                        (int) $sub['establishment_id']
-                    );
-                }
-
-                $ownerId = (int) Database::query(
-                    "SELECT owner_id FROM establishments WHERE id = ?", [$sub['establishment_id']]
-                )->fetchColumn();
-                if ($ownerId) EstablishmentFreezeService::recompute($ownerId);
-
+                // Si un autre appel (webhook concurrent, ou ce même verify() rejoué) a déjà
+                // gagné la course, activateSubscription() renvoie null sans rien refaire —
+                // on retombe alors sur l'échéance déjà en base plutôt que d'en recalculer une.
+                $expiresAt = $this->activateSubscription($sub) ?? $sub['expires_at'];
                 Response::success(['status' => 'active', 'plan' => $sub['plan'], 'expires_at' => $expiresAt]);
             } elseif ($internalStatus === 'failed' && $sub['status'] !== 'failed') {
                 // Persiste l'échec constaté auprès de Genius Pay — sans ça, un abonnement

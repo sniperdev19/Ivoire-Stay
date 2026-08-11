@@ -2,7 +2,7 @@
 <?php ?>
 <!-- Template Dépenses SaaS -->
 
-<?php $pageJs = 'saas-expenses'; ?>
+<?php $pageJs = 'saas-expenses'; $pageCss = 'saas-expenses'; ?>
 <div x-data="expensesPage('<?= $base_url ?>')"
  x-init="init()" @keydown.escape.window="showModal=false">
 
@@ -20,9 +20,9 @@
 
       <!-- KPIs -->
       <div class="saas-kpi-grid">
-        <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Total dépenses</div><div style="font-size:18px;font-weight:800;" x-text="formatPrice(totalExpenses)"></div></div>
-        <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Ce mois</div><div style="font-size:18px;font-weight:800;" x-text="formatPrice(expenses.filter(e=> new Date(e.expense_date ?? e.date).getMonth() === new Date().getMonth() && new Date(e.expense_date ?? e.date).getFullYear()=== new Date().getFullYear()).reduce((s,e)=>s+(e.amount||0),0))"></div></div>
-        <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Catégorie principale</div><div style="font-size:18px;font-weight:800;" x-text="byCategory[0]?.cat ?? '-' "></div></div>
+        <div class="kpi-card saas-card"><div style="font-size:10px;color:#9CA3AF;">Total dépenses</div><div style="font-size:15px;font-weight:800;" x-text="formatPrice(totalExpenses)"></div></div>
+        <div class="kpi-card saas-card"><div style="font-size:10px;color:#9CA3AF;">Ce mois</div><div style="font-size:15px;font-weight:800;" x-text="formatPrice(expenses.filter(e=> new Date(e.expense_date ?? e.date).getMonth() === new Date().getMonth() && new Date(e.expense_date ?? e.date).getFullYear()=== new Date().getFullYear()).reduce((s,e)=>s+(e.amount||0),0))"></div></div>
+        <div class="kpi-card saas-card"><div style="font-size:10px;color:#9CA3AF;">Catégorie principale</div><div style="font-size:15px;font-weight:800;" x-text="byCategory[0]?.cat ?? '-' "></div></div>
       </div>
 
       <!-- Filters -->

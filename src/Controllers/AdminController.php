@@ -30,9 +30,42 @@ class AdminController
             'plan_breakdown'           => $byPlan,
             'estimated_mrr'            => $mrr,
             'total_bookings'           => (int) Database::query("SELECT COUNT(*) FROM bookings")->fetchColumn(),
+            'total_agents'             => (int) Database::query("SELECT COUNT(*) FROM agents")->fetchColumn(),
             'bookings_by_month'        => $this->monthlySeries('bookings', 'created_at'),
             'establishments_by_month'  => $this->monthlySeries('establishments', 'created_at'),
+            'platform_margin'          => $this->platformMargin(),
         ]);
+    }
+
+    /**
+     * Marge nette réelle de la plateforme sur le paiement en ligne : commission
+     * plateforme encaissée (payments.commission_amount) moins les frais RÉELS
+     * prélevés par GeniusPay (encaissement + retrait — voir GeniusPayService::
+     * paymentFee()/withdrawalFee()). Purement informatif pour le superadmin,
+     * ne recalcule ni ne modifie aucun montant déjà facturé/versé.
+     */
+    private function platformMargin(): array
+    {
+        $commission = (float) Database::query(
+            "SELECT COALESCE(SUM(commission_amount), 0) FROM payments WHERE status = 'completed'"
+        )->fetchColumn();
+
+        $paymentFees = (float) Database::query(
+            "SELECT COALESCE(SUM(geniuspay_fee_amount), 0) FROM payments WHERE status = 'completed'"
+        )->fetchColumn();
+
+        // Frais de retrait comptés seulement sur les demandes déjà versées ('paid') —
+        // une demande encore 'pending'/'rejected' n'a occasionné aucun frais réel.
+        $withdrawalFees = (float) Database::query(
+            "SELECT COALESCE(SUM(geniuspay_fee_amount), 0) FROM payout_requests WHERE status = 'paid'"
+        )->fetchColumn();
+
+        return [
+            'commission_collected'    => round($commission, 2),
+            'geniuspay_payment_fees'  => round($paymentFees, 2),
+            'geniuspay_withdrawal_fees' => round($withdrawalFees, 2),
+            'net_margin'              => round($commission - $paymentFees - $withdrawalFees, 2),
+        ];
     }
 
     /**

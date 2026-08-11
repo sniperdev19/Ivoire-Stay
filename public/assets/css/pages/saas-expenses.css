@@ -1,0 +1,6 @@
+/* ============================================================
+   Afristay — Page SaaS : dépenses (saas/expenses.php)
+   ============================================================ */
+
+/* Cartes KPI plus compactes que le .kpi-card générique (padding:20px 24px). */
+.saas-kpi-grid .kpi-card { padding: 10px 12px; }

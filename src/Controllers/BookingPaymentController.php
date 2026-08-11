@@ -34,8 +34,10 @@ class BookingPaymentController
             Response::error('Un paiement est déjà en cours pour cette réservation. Vérifiez votre téléphone ou contactez l\'établissement.');
         }
 
-        // Le paiement en ligne est une fonctionnalité payante (plans Pro/Business),
-        // et peut en plus être désactivé par l'établissement lui-même
+        // Le paiement en ligne est disponible sur tous les plans ('online_payment') ;
+        // sur Starter il est forcé (non désactivable), sur Pro/Business l'établissement
+        // peut l'activer/désactiver lui-même — dans les deux cas c'est la colonne
+        // online_payment_enabled qui fait foi ici.
         $estabRow = Database::query(
             "SELECT e.plan, e.plan_expires_at, e.online_payment_enabled
              FROM rooms r JOIN establishments e ON e.id = r.establishment_id
@@ -43,7 +45,7 @@ class BookingPaymentController
             [$booking['room_id']]
         )->fetch();
         $onlinePaymentAllowed = $estabRow
-            && PlanGate::can(['plan' => $estabRow['plan'], 'plan_expires_at' => $estabRow['plan_expires_at']], 'online_payment_control')
+            && PlanGate::can(['plan' => $estabRow['plan'], 'plan_expires_at' => $estabRow['plan_expires_at']], 'online_payment')
             && (bool) $estabRow['online_payment_enabled'];
         if (!$onlinePaymentAllowed) {
             Response::error("Le paiement en ligne n'est pas disponible pour cet établissement. Merci de choisir le paiement sur place.");
@@ -127,14 +129,7 @@ class BookingPaymentController
         $internalStatus = GeniusPayService::mapStatus($tx['status'] ?? $gpEvent);
 
         if ($internalStatus === 'active') {
-            Database::query(
-                "UPDATE bookings SET status = 'confirmed', pay_status = 'paid', paid_at = NOW() WHERE id = ?",
-                [$booking['id']]
-            );
-            $this->recordOnlinePayment((int) $booking['id']);
-            // Email confirmation paiement
-            $full = Booking::findWithDetails($booking['id']);
-            if ($full) MailService::bookingPaid($full);
+            $this->confirmAndNotify($booking);
         } elseif ($internalStatus === 'failed') {
             Database::query(
                 "UPDATE bookings SET pay_status = 'failed' WHERE id = ?",
@@ -208,14 +203,33 @@ class BookingPaymentController
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
-    private function confirmAndNotify(array $booking): void
+    /**
+     * Confirme une réservation payée en ligne, de façon IDEMPOTENTE : `callback()` (webhook)
+     * et `verify()` (poll client) peuvent tous deux être appelés pour le même paiement
+     * (webhook rejoué par GeniusPay en cas de retry, ou course quasi simultanée) — sans
+     * protection, chaque appel dupliquerait la ligne `payments` et l'email de confirmation.
+     * L'UPDATE conditionnel `WHERE pay_status != 'paid'` est atomique par nature
+     * (verrouillage de ligne implicite, MySQL garantit l'atomicité d'une seule requête
+     * UPDATE) : un seul appelant fait passer `rowCount()` à 1, les autres (retries/course)
+     * no-op. Retourne true si CET appel a effectivement confirmé la réservation.
+     */
+    private function confirmAndNotify(array $booking): bool
     {
-        Database::query(
-            "UPDATE bookings SET status = 'confirmed', pay_status = 'paid', paid_at = NOW() WHERE id = ?",
+        $stmt = Database::query(
+            "UPDATE bookings SET status = 'confirmed', pay_status = 'paid', paid_at = NOW() WHERE id = ? AND pay_status != 'paid'",
             [$booking['id']]
         );
+        if ($stmt->rowCount() === 0) {
+            return false;
+        }
         $this->recordOnlinePayment((int) $booking['id']);
-        MailService::bookingPaid($booking);
+        // Détails complets (notamment client_email) : le $booking reçu par callback()/verify()
+        // n'a pas toujours ces champs (webhook : colonnes brutes de bookings ; verify() :
+        // jointure minimale room_number/establishment_name), sans quoi MailService::bookingPaid()
+        // ne trouve pas de destinataire et abandonne silencieusement l'envoi.
+        $full = Booking::findWithDetails((int) $booking['id']);
+        if ($full) MailService::bookingPaid($full);
+        return true;
     }
 
     /**
@@ -225,6 +239,10 @@ class BookingPaymentController
      * l'onglet Paiements de la Comptabilité (qui ne lisent que la table `payments`).
      * Idempotent : webhook et vérification manuelle peuvent toutes deux appeler ceci
      * pour la même réservation.
+     *
+     * La commission plateforme (0% Pro/Business, 5% par défaut Starter — voir
+     * PlanGate::commissionPct()) est figée sur CE paiement au moment de l'encaissement,
+     * pour rester stable même si le plan de l'établissement change ensuite.
      */
     private function recordOnlinePayment(int $bookingId): void
     {
@@ -232,9 +250,21 @@ class BookingPaymentController
         if (!$invoice) return;
         if (Invoice::paidAmount((int) $invoice['id']) > 0) return;
 
-        $payMethod = (string) Database::query(
-            "SELECT pay_method FROM bookings WHERE id = ?", [$bookingId]
-        )->fetchColumn();
+        $row = Database::query(
+            "SELECT b.pay_method, e.plan, e.plan_expires_at
+             FROM bookings b
+             JOIN rooms r ON r.id = b.room_id
+             JOIN establishments e ON e.id = r.establishment_id
+             WHERE b.id = ?",
+            [$bookingId]
+        )->fetch();
+        $payMethod       = (string) ($row['pay_method'] ?? '');
+        $estabForGate    = $row ? ['plan' => $row['plan'], 'plan_expires_at' => $row['plan_expires_at']] : [];
+        $commissionPct   = $row ? PlanGate::commissionPct($estabForGate) : 0.0;
+        // amount_ttc inclut déjà la majoration client (PlanGate::applyClientMarkup)
+        // — nécessaire pour qu'Invoice::registerPayment() calcule la commission sur
+        // le prix de base et non sur le montant majoré, voir son docblock.
+        $clientSharePct  = $row ? PlanGate::clientSharePct($estabForGate) : 0.0;
 
         Invoice::registerPayment(
             $bookingId,
@@ -242,7 +272,10 @@ class BookingPaymentController
             (float) $invoice['amount_ttc'],
             'mobile_money',
             'full',
-            'Paiement en ligne GeniusPay' . ($payMethod ? " ($payMethod)" : '')
+            'Paiement en ligne GeniusPay' . ($payMethod ? " ($payMethod)" : ''),
+            $commissionPct,
+            true, // viaGeniusPay — frais réels de la passerelle applicables ici, jamais pour un encaissement manuel
+            $clientSharePct
         );
     }
 }

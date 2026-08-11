@@ -20,17 +20,21 @@
 
       <!-- KPIs -->
       <div class="payout-kpi-grid">
-        <div class="saas-card" style="padding:14px 16px;border-top:3px solid #6B7280;">
-          <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Encaissé en ligne</div>
-          <div style="font-size:18px;font-weight:800;color:#111827;" x-text="formatPrice(balance?.gross_online_collected ?? 0)"></div>
+        <div class="saas-card" style="padding:10px 12px;border-top:3px solid #6B7280;">
+          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Encaissé en ligne</div>
+          <div style="font-size:15px;font-weight:800;color:#111827;" x-text="formatPrice(balance?.gross_online_collected ?? 0)"></div>
         </div>
-        <div class="saas-card" style="padding:14px 16px;border-top:3px solid #D97706;">
-          <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">En attente / déjà retiré</div>
-          <div style="font-size:18px;font-weight:800;color:#D97706;" x-text="formatPrice(balance?.reserved_or_paid ?? 0)"></div>
+        <div class="saas-card" style="padding:10px 12px;border-top:3px solid #DC2626;">
+          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Commission plateforme</div>
+          <div style="font-size:15px;font-weight:800;color:#DC2626;" x-text="formatPrice(balance?.total_commission ?? 0)"></div>
         </div>
-        <div class="saas-card" style="padding:14px 16px;border-top:3px solid #16a34a;">
-          <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Solde disponible</div>
-          <div style="font-size:18px;font-weight:800;color:#16a34a;" x-text="formatPrice(balance?.available_balance ?? 0)"></div>
+        <div class="saas-card" style="padding:10px 12px;border-top:3px solid #D97706;">
+          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">En attente / déjà retiré</div>
+          <div style="font-size:15px;font-weight:800;color:#D97706;" x-text="formatPrice(balance?.reserved_or_paid ?? 0)"></div>
+        </div>
+        <div class="saas-card" style="padding:10px 12px;border-top:3px solid #16a34a;">
+          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Solde disponible</div>
+          <div style="font-size:15px;font-weight:800;color:#16a34a;" x-text="formatPrice(balance?.available_balance ?? 0)"></div>
         </div>
       </div>
 

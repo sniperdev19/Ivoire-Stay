@@ -432,7 +432,8 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
         <!-- Note plan sélectionné -->
         <div class="rg-free-note" x-show="!isPaid">
           <div class="rg-free-dot"></div>
-          Plan Starter gratuit, jusqu'à 10 chambres, sans carte bancaire requise.
+          Plan Starter sans abonnement, chambres illimitées, sans carte bancaire requise — paiement en ligne des
+          réservations toujours activé, commission plateforme incluse.
         </div>
         <div class="rg-paid-note" x-show="isPaid">
           <div class="rg-paid-note-dot"></div>
@@ -530,7 +531,7 @@ $rgJsPath = BASE_PATH . '/public/assets/js/pages/register.js';
         </button>
 
         <div class="rg-skip-link">
-          <button type="button" @click="skipPayment()">Continuer avec le plan Starter (gratuit) →</button>
+          <button type="button" @click="skipPayment()">Continuer avec le plan Starter (sans abonnement) →</button>
         </div>
 
       </div>

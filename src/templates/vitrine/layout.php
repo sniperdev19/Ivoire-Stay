@@ -480,19 +480,6 @@ elseif (preg_match('#/newsletter/desabonnement#', $uri)) $pageName = 'newsletter
 
     <!-- Drawer mobile — hors de <nav> pour éviter le stacking context du transform -->
     <div class="v-nav-mobile" :class="{ open: mobileOpen }">
-      <div
-        style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:16px;border-bottom:1px solid rgba(201,168,76,0.15);">
-        <span class="font-display" style="font-size:22px;font-weight:600;line-height:1;white-space:nowrap;">
-          <span style="color:#1B4332;">Afri</span> <span style="color:#C9A84C;">Stay</span>
-        </span>
-        <button @click="mobileOpen = false"
-          style="background:none;border:none;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#1B4332;">
-          <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;" fill="none" viewBox="0 0 24 24"
-            stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
       <?php foreach($navLinks as $link):
       $isActive = $link['href'] === $base . $activePath;
     ?>
@@ -501,7 +488,7 @@ elseif (preg_match('#/newsletter/desabonnement#', $uri)) $pageName = 'newsletter
       <?php endforeach; ?>
       <div class="v-nav-mobile-sep"></div>
       <div class="v-nav-mobile-actions">
-        <a href="<?= $base ?>/register" class="v-nav-mobile-btn-cta">Commencer gratuitement →</a>
+        <a href="<?= $base ?>/register" class="v-nav-mobile-btn-cta">Commencer sans abonnement →</a>
       </div>
     </div>
   </header>

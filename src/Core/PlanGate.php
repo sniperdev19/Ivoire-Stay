@@ -47,6 +47,27 @@ class PlanGate
         }
     }
 
+    /** Taux de commission TOTAL plateforme (%) sur les paiements en ligne de cet établissement, selon son plan effectif. */
+    public static function commissionPct(array $estab): float
+    {
+        $plan = self::getPlan($estab);
+        return \Services\PlanPricingService::commissionPct($plan);
+    }
+
+    /** Part de la commission (%) répercutée sur le client — voir PlanPricingService::applyClientMarkup(). */
+    public static function clientSharePct(array $estab): float
+    {
+        $plan = self::getPlan($estab);
+        return \Services\PlanPricingService::clientSharePct($plan);
+    }
+
+    /** Applique la majoration client au montant, selon le plan effectif de cet établissement. */
+    public static function applyClientMarkup(float $amount, array $estab): float
+    {
+        $plan = self::getPlan($estab);
+        return \Services\PlanPricingService::applyClientMarkup($amount, $plan);
+    }
+
     public static function canAddRoom(array $estab, int $current): bool
     {
         $plan = self::getPlan($estab);

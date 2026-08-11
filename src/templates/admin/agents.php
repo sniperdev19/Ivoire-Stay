@@ -13,7 +13,7 @@
       <table class="saas-table" style="width:100%;">
         <thead><tr><th>Nom</th><th>Numéro</th><th>Opérateur</th><th>Établissements rattachés</th><th>Inscrit le</th></tr></thead>
         <tbody>
-          <template x-for="a in agents" :key="a.id">
+          <template x-for="a in pagedAgents" :key="a.id">
             <tr>
               <td style="font-weight:600;color:#111827;" x-text="a.nom"></td>
               <td x-text="a.numero"></td>
@@ -27,6 +27,11 @@
           </template>
         </tbody>
       </table>
+    </div>
+    <div x-show="agentsPageCount > 1" class="admin-pagination">
+      <button type="button" class="btn-saas-secondary" :disabled="agentsPage <= 1" @click="agentsPage--">&larr;</button>
+      <span>Page <strong x-text="agentsPage"></strong> / <span x-text="agentsPageCount"></span></span>
+      <button type="button" class="btn-saas-secondary" :disabled="agentsPage >= agentsPageCount" @click="agentsPage++">&rarr;</button>
     </div>
   </div>
 
@@ -45,7 +50,7 @@
       <table class="saas-table" style="width:100%;">
         <thead><tr><th>Agent</th><th>Motif</th><th>Date</th><th>Montant</th><th>Mobile Money</th><th>Statut</th><th>Actions</th></tr></thead>
         <tbody>
-          <template x-for="p in payouts" :key="p.id">
+          <template x-for="p in pagedPayouts" :key="p.id">
             <tr>
               <td style="font-weight:600;color:#111827;" x-text="p.agent_nom"></td>
               <td x-text="p.label || (p.plan === 'pro' ? 'Pro' : 'Business')"></td>
@@ -70,6 +75,11 @@
         </tbody>
       </table>
     </div>
+    <div x-show="payoutsPageCount > 1" class="admin-pagination">
+      <button type="button" class="btn-saas-secondary" :disabled="payoutsPage <= 1" @click="payoutsPage--">&larr;</button>
+      <span>Page <strong x-text="payoutsPage"></strong> / <span x-text="payoutsPageCount"></span></span>
+      <button type="button" class="btn-saas-secondary" :disabled="payoutsPage >= payoutsPageCount" @click="payoutsPage++">&rarr;</button>
+    </div>
   </div>
 
   <div style="margin-bottom:12px;">
@@ -82,7 +92,7 @@
       <table class="saas-table" style="width:100%;">
         <thead><tr><th>Agent</th><th>Prime</th><th>Montant</th><th>Décernée le</th></tr></thead>
         <tbody>
-          <template x-for="b in bonuses" :key="b.id">
+          <template x-for="b in pagedBonuses" :key="b.id">
             <tr>
               <td style="font-weight:600;color:#111827;" x-text="b.agent_nom"></td>
               <td x-text="bonusTypeLabel(b.type)"></td>
@@ -95,6 +105,11 @@
           </template>
         </tbody>
       </table>
+    </div>
+    <div x-show="bonusesPageCount > 1" class="admin-pagination">
+      <button type="button" class="btn-saas-secondary" :disabled="bonusesPage <= 1" @click="bonusesPage--">&larr;</button>
+      <span>Page <strong x-text="bonusesPage"></strong> / <span x-text="bonusesPageCount"></span></span>
+      <button type="button" class="btn-saas-secondary" :disabled="bonusesPage >= bonusesPageCount" @click="bonusesPage++">&rarr;</button>
     </div>
   </div>
 

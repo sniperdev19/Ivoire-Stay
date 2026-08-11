@@ -46,12 +46,18 @@ define('GENIUS_PAY_SECRET',         env('GENIUS_PAY_SECRET', ''));
 define('GENIUS_PAY_URL',            env('GENIUS_PAY_URL',    'http://pay.genius.ci/api/v1/merchant'));
 define('GENIUS_PAY_WEBHOOK_SECRET', env('GENIUS_PAY_WEBHOOK_SECRET', ''));
 
-// Verrou global v1 : le paiement en ligne des réservations (GeniusPay) est en
-// cours de développement, désactivé partout (front ET back) tant que ce n'est
-// pas false→true explicitement. Ne pas confondre avec `online_payment_enabled`
-// (colonne establishments, réglage par hôte) ou le plan-gate
-// `online_payment_control` (config/plans.php) : les deux restent inopérants
-// tant que ce verrou global est fermé.
+// Verrou global v1 : le paiement en ligne des réservations (GeniusPay) reste
+// désactivé partout (front ET back) tant que ce n'est pas false→true
+// explicitement en environnement de production, le temps de valider le flux
+// complet (initiation, webhook, commission, retrait) en conditions réelles.
+// Ne pas confondre avec `online_payment_enabled` (colonne establishments,
+// réglage par établissement — forcé à 1 et non désactivable sur le plan
+// Starter, togglable sur Pro/Business) ou le plan-gate `online_payment`
+// (config/plans.php, accès de base, tous les plans) / `online_payment_control`
+// (capacité à désactiver soi-même, Pro/Business uniquement) : les trois
+// restent inopérants tant que ce verrou global est fermé. Une fois ouvert,
+// le plan Starter a le paiement en ligne actif et commissionné par défaut
+// (voir Services\PlanPricingService::commissionPct()).
 define('ONLINE_PAYMENTS_ENABLED', filter_var(env('ONLINE_PAYMENTS_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN));
 
 // Fonctionnalité temporaire : espace agents commerciaux (inscription/scan QR/

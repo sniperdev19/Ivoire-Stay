@@ -206,6 +206,19 @@
             </div>
           </div>
           <p class="stg-section-sub" style="margin-top:10px;">Prix annuel = prix mensuel × 12, avec 20 % de remise (cohérent avec le badge « –20 % » affiché sur /tarifs).</p>
+
+          <div class="stg-group-label" style="margin-top:22px;">Plan Starter</div>
+          <div class="stg-form-grid">
+            <div>
+              <label class="saas-label">Commission totale sur le paiement en ligne (%)</label>
+              <input class="saas-input" type="number" min="0" max="100" step="0.5" x-model.number="settings.plan_commission_starter_pct">
+            </div>
+            <div>
+              <label class="saas-label">Dont part répercutée au client (%)</label>
+              <input class="saas-input" type="number" min="0" max="100" step="0.5" x-model.number="settings.plan_commission_starter_client_pct">
+            </div>
+          </div>
+          <p class="stg-section-sub" style="margin-top:10px;">Sans abonnement, le plan Starter a le paiement en ligne des réservations toujours activé (non désactivable). La part client est ajoutée au prix affiché/facturé (recherche, fiche chambre, réservation) sans ligne de frais séparée ; le reste est prélevé sur le montant collecté par l'établissement au moment du paiement. Pro/Business restent à 0 % (paiement en ligne optionnel, sans commission).</p>
         </div>
 
         <!-- Carte : Primes agents commerciaux -->

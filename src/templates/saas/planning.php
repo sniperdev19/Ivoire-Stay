@@ -80,8 +80,11 @@
     <!-- Grille 6 semaines × 7 jours -->
     <div class="cal-month-grid">
       <template x-for="(cell, idx) in calendarCells" :key="idx">
-        <div :class="'cal-month-cell' + (!cell.isCurrentMonth ? ' outside' : '') + (cell.isToday ? ' today' : '')">
+        <div :class="'cal-month-cell' + (!cell.isCurrentMonth ? ' outside' : '') + (cell.isToday ? ' today' : '') + (selectedDay === cell.ymd ? ' selected' : '')"
+             @click="selectDay(cell.ymd)">
           <div class="cal-cell-number" x-text="cell.day"></div>
+
+          <!-- Desktop/tablette : chips nom + chambre, cliquables directement -->
           <div class="cal-cell-events">
             <template x-for="b in getBookingsForDay(cell.ymd).slice(0, 3)" :key="b.id">
               <div class="cal-chip"
@@ -97,10 +100,43 @@
                  x-text="'+' + (getBookingsForDay(cell.ymd).length - 3) + ' autre(s)'">
             </div>
           </div>
+
+          <!-- Mobile : points de couleur seulement — le texte des chips ne
+               tient pas dans une case aussi étroite (cf. capture utilisateur).
+               Le tap sur la case ouvre l'agenda du jour ci-dessous. -->
+          <div class="cal-cell-dots" x-show="getBookingsForDay(cell.ymd).length > 0">
+            <template x-for="b in getBookingsForDay(cell.ymd).slice(0, 4)" :key="b.id">
+              <span class="cal-dot" :style="'background:' + chipColor(b.status)"></span>
+            </template>
+            <span x-show="getBookingsForDay(cell.ymd).length > 4" class="cal-dot-more" x-text="'+' + (getBookingsForDay(cell.ymd).length - 4)"></span>
+          </div>
         </div>
       </template>
     </div>
 
+  </div>
+
+  <!-- Agenda du jour (mobile uniquement, cf. saas-planning.css) -->
+  <div x-show="!loading && selectedDay" x-cloak class="cal-agenda saas-card">
+    <div class="cal-agenda-header">
+      <span x-text="selectedDayLabel"></span>
+      <button type="button" class="cal-agenda-close" @click="selectedDay=null">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <template x-if="selectedDayBookings.length === 0">
+      <div class="cal-agenda-empty">Aucune réservation ce jour.</div>
+    </template>
+    <template x-for="b in selectedDayBookings" :key="b.id">
+      <div class="cal-agenda-item" @click="openDetail(b)">
+        <span class="cal-agenda-dot" :style="'background:' + chipColor(b.status)"></span>
+        <div class="cal-agenda-info">
+          <div class="cal-agenda-name" x-text="b.client_name"></div>
+          <div class="cal-agenda-room" x-text="roomName(b.room_id)"></div>
+        </div>
+        <span :class="statusBadge(b.status)" x-text="statusLabel(b.status)"></span>
+      </div>
+    </template>
   </div>
 
   <!-- Modal détail réservation -->

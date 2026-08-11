@@ -110,23 +110,49 @@
             <template x-for="room in roomsByFloor.flatMap(([floor, rooms]) => rooms)" :key="room.id">
               <div class="room-card room-card-rich" :class="'status-' + room.status" @click="openEditRoom(room)">
 
-                <div class="room-card-top">
+                <div class="card-header-row">
+                  <div style="min-width:0;">
+                    <div class="room-card-number-lg" x-text="room.number"></div>
+                    <div class="room-card-type-badge" x-show="room.room_type?.name">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5a1 1 0 01.707.293l8 8a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-8-8A1 1 0 015 9V4a1 1 0 011-1z"/></svg>
+                      <span x-text="room.room_type?.name"></span>
+                    </div>
+                  </div>
+                  <div class="card-icon-actions">
+                    <button type="button" class="card-icon-btn" title="Modifier" @click.stop="openEditRoom(room)">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
+                    <button type="button" class="card-icon-btn tarifs" title="Tarifs" @click.stop="room.room_type && (openEditType(room.room_type), typeTab = 2)" :disabled="!room.room_type">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5a1 1 0 01.707.293l8 8a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-8-8A1 1 0 015 9V4a1 1 0 011-1z"/></svg>
+                    </button>
+                    <button type="button" class="card-icon-btn danger" title="Supprimer" @click.stop="deleteRoom(room.id)">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="room-card-status-row">
                   <button type="button" class="room-card-status-trigger" @click.stop="statusMenuRoom = room.id">
                     <span class="status-dot" :style="{ background: statusCfg(room.status).dot }"></span>
                     <span x-text="statusCfg(room.status).label"></span>
                   </button>
-                  <div class="room-card-price-block">
-                    <div class="room-card-price" x-text="formatPrice(room.room_type?.base_price)"></div>
-                    <div class="room-card-price-sub">Tarif de base / nuit</div>
-                  </div>
+                  <span class="room-card-floor-tag" x-show="room.floor" x-text="'Étage ' + room.floor"></span>
                 </div>
 
-                <div class="room-card-number-lg" x-text="room.number"></div>
-                <div class="room-card-type-badge" x-show="room.room_type?.name">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5a1 1 0 01.707.293l8 8a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-8-8A1 1 0 015 9V4a1 1 0 011-1z"/></svg>
-                  <span x-text="room.room_type?.name"></span>
+                <div class="price-group" x-show="room.room_type">
+                  <div class="price-group-col price-group-main">
+                    <span class="price-group-label">Nuit</span>
+                    <span class="price-group-value" x-text="formatPrice(room.room_type?.base_price)"></span>
+                  </div>
+                  <div class="price-group-col">
+                    <span class="price-group-label">Week-end</span>
+                    <span class="price-group-value secondary" x-text="room.room_type?.weekend_price ? formatPrice(room.room_type.weekend_price) : '—'"></span>
+                  </div>
+                  <div class="price-group-col">
+                    <span class="price-group-label">Passage/h</span>
+                    <span class="price-group-value secondary" x-text="room.room_type?.passage_price ? formatPrice(room.room_type.passage_price) : '—'"></span>
+                  </div>
                 </div>
-                <span class="room-card-floor-tag" x-show="room.floor" x-text="'Étage ' + room.floor" style="margin-top:8px;display:inline-block;"></span>
 
                 <div class="room-card-amenities" x-show="room.room_type?.amenities?.length">
                   <template x-for="a in (room.room_type?.amenities || [])" :key="a">
@@ -135,32 +161,6 @@
                       <span x-text="a"></span>
                     </span>
                   </template>
-                </div>
-
-                <div class="type-card-price-rows" x-show="room.room_type" style="margin-top:14px;margin-bottom:0;">
-                  <div class="type-card-price-row">
-                    <span>Week-end</span>
-                    <strong x-text="room.room_type?.weekend_price ? formatPrice(room.room_type.weekend_price) : '—'"></strong>
-                  </div>
-                  <div class="type-card-price-row">
-                    <span>Passage / heure</span>
-                    <strong x-text="room.room_type?.passage_price ? formatPrice(room.room_type.passage_price) : '—'"></strong>
-                  </div>
-                </div>
-
-                <div class="room-card-actions">
-                  <button type="button" class="room-card-btn" @click.stop="openEditRoom(room)">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                    Modifier
-                  </button>
-                  <button type="button" class="room-card-btn room-card-btn-tarifs" @click.stop="room.room_type && (openEditType(room.room_type), typeTab = 2)" :disabled="!room.room_type">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5a1 1 0 01.707.293l8 8a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-8-8A1 1 0 015 9V4a1 1 0 011-1z"/></svg>
-                    Tarifs
-                  </button>
-                  <button type="button" class="room-card-btn room-card-btn-delete" @click.stop="deleteRoom(room.id)">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                    Supprimer
-                  </button>
                 </div>
 
                 <div x-show="statusMenuRoom === room.id" class="status-menu" @click.stop>
@@ -253,32 +253,41 @@
       <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;" class="room-grid">
         <template x-for="type in roomTypes" :key="type.id">
           <div class="type-card">
-            <div class="type-card-header">
-              <div>
+            <div class="card-header-row">
+              <div style="min-width:0;">
                 <div class="type-card-name" x-text="type.name"></div>
                 <div class="type-card-count">
                   <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                   <span x-text="(rooms.filter(r => r.room_type_id == type.id).length) + ' chambre(s)' "></span>
                 </div>
               </div>
-              <div class="type-card-badges">
-                <span class="type-card-tag" x-text="type.capacity + ' pers.'"></span>
-                <span class="type-card-tag" x-show="type.beds_count" x-text="type.beds_count + ' ' + (type.bed_type || 'lit(s)')"></span>
+              <div class="card-icon-actions">
+                <button type="button" class="card-icon-btn" title="Modifier" @click="openEditType(type)">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </button>
+                <button type="button" class="card-icon-btn danger" title="Supprimer le type" @click="deleteType(type.id)">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
               </div>
             </div>
 
-            <div class="type-card-price-hero">
-              <span class="type-card-price-label">Tarif de base / nuit</span>
-              <span class="type-card-price-value" x-text="formatPrice(type.base_price)"></span>
+            <div class="type-card-badges-row" x-show="type.capacity || type.beds_count">
+              <span class="type-card-tag" x-text="type.capacity + ' pers.'"></span>
+              <span class="type-card-tag" x-show="type.beds_count" x-text="type.beds_count + ' ' + (type.bed_type || 'lit(s)')"></span>
             </div>
-            <div class="type-card-price-rows">
-              <div class="type-card-price-row">
-                <span>Week-end</span>
-                <strong x-text="formatPrice(type.weekend_price)"></strong>
+
+            <div class="price-group">
+              <div class="price-group-col price-group-main">
+                <span class="price-group-label">Nuit</span>
+                <span class="price-group-value" x-text="formatPrice(type.base_price)"></span>
               </div>
-              <div class="type-card-price-row">
-                <span>Passage / heure</span>
-                <strong x-text="type.passage_price ? formatPrice(type.passage_price) : '—'"></strong>
+              <div class="price-group-col">
+                <span class="price-group-label">Week-end</span>
+                <span class="price-group-value secondary" x-text="type.weekend_price ? formatPrice(type.weekend_price) : '—'"></span>
+              </div>
+              <div class="price-group-col">
+                <span class="price-group-label">Passage/h</span>
+                <span class="price-group-value secondary" x-text="type.passage_price ? formatPrice(type.passage_price) : '—'"></span>
               </div>
             </div>
 
@@ -288,13 +297,6 @@
               <template x-for="a in (type.amenities || [])" :key="a">
                 <span class="type-amenity-tag" x-text="a"></span>
               </template>
-            </div>
-
-            <div class="type-card-footer">
-              <button type="button" class="btn-saas-secondary" style="flex:1;justify-content:center;" @click="openEditType(type)">Modifier</button>
-              <button type="button" class="type-card-delete" @click="deleteType(type.id)" title="Supprimer le type">
-                <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              </button>
             </div>
           </div>
         </template>

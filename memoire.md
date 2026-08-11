@@ -22,8 +22,7 @@ minishlink/web-push (notifications push), web-auth/webauthn-lib (passkeys).
 
 **Le répertoire `copy/` est un miroir de `src/`, `public/`, `config/` et
 `scripts/`, tenu manuellement à jour pour représenter ce qui doit être
-déployé en production** (le serveur de prod n'a qu'un accès phpMyAdmin, pas
-de shell/git — déploiement par upload manuel de fichiers).
+déployé en production.**
 
 **Règle impérative : toute modification dans `src/`, `public/`, `config/` ou
 `scripts/` doit être répliquée à l'identique dans `copy/`**, sauf si
@@ -33,6 +32,18 @@ doute). `copy/scripts/schema.sql` et `copy/scripts/wipe-db.sql` ont déjà
 dérivé une fois par le passé (remis à niveau le 2026-07-20) — rester
 vigilant sur ces fichiers de référence en particulier, faciles à oublier
 car non exécutés automatiquement.
+
+**Depuis le 2026-07-30, `copy/` est un `git worktree` de la branche `main`**
+(pas un simple dossier ignoré) : `git worktree list` le montre pointé sur
+`main`. Committer/pousser depuis `copy/` (`git -C copy add/commit/push`)
+revient à committer directement sur `main`, que l'hébergeur ira ensuite lier
+en pull/déploiement. `copy/.gitignore` (propre à la branche `main`, distinct
+du `.gitignore` racine de `developpement`) exclut `.env`, `/storage/` et
+`/public/assets/uploads/*` — `vendor/` reste committé sur `main` puisque
+l'hébergeur n'a pas d'accès shell/composer. `.env` doit être déposé
+manuellement sur l'hébergeur (jamais versionné). Après resynchronisation de
+`copy/`, penser à committer+pousser sur `main` en plus de resynchroniser les
+fichiers (les deux étapes sont désormais distinctes).
 
 ## Rôles & espaces applicatifs
 
@@ -160,10 +171,1113 @@ d'événements, audience superadmin, push voyageurs sans compte via
 `guest_push_subscriptions`, préférences utilisateur
 (`users.notification_muted_types`, JSON), auto-déclenchement sans cron
 (`SchedulerService`, déclenché sur requête HTTP authentifiée). SMS écarté
-comme canal (décision produit).
+comme canal (décision produit). `NotificationService::broadcastToOwners()`
+(2026-07-29) : annonce plateforme manuelle envoyée par un superadmin
+(`/admin/notifications`) à tous les owners, type `platform_announcement`.
 
 ## Journal des évolutions récentes
 
+- **2026-08-11** — `scripts/migre.sql` créé : fichier unique consolidant les
+  migrations DB pas encore appliquées à la base **en ligne** (prod), à
+  exécuter manuellement (ex. phpMyAdmin de l'hébergeur — pas d'accès
+  shell/composer côté hébergeur, cf. section duplication `src/`↔`copy/`).
+  - Périmètre déterminé par `git diff` de `copy/scripts/schema.sql` entre le
+    dernier commit poussé sur `main` (`8899f7d`) et l'état local actuel — pas
+    par une supposition sur les fichiers `migration_*.sql` un par un (ceux-ci
+    ne sont jamais committés sur `main`, seul `schema.sql` consolidé l'est).
+    Regroupe exactement `migration_plan_commission.sql` +
+    `migration_geniuspay_fees.sql` + `migration_webauthn_login.sql` — les
+    autres migrations du dossier (`migration_payouts.sql` etc.) sont déjà
+    dans le schema committé, donc déjà en ligne.
+  - **Vérifié par un test en base jetable** : schema du dernier commit chargé
+    dans une base MySQL locale temporaire, `migre.sql` appliqué dessus, puis
+    dump structure comparé au `schema.sql` local actuel — identiques
+    caractère pour caractère (bases + dumps supprimés après vérification).
+  - Contient encore la table `webauthn_login_credentials` bien que la
+    fonctionnalité soit désactivée côté UI (voir entrée juste en dessous) —
+    le code/les routes existent toujours et en ont besoin.
+  - Resynchronisé dans `copy/`. **Ce fichier n'est qu'un artefact local**
+    (comme les autres `migration_*.sql`, jamais committé sur `main`) — à
+    exécuter manuellement sur la base en ligne, aucune automatisation.
+
+- **2026-08-11** — Bug réel trouvé et corrigé sur le calcul de la commission
+  plateforme (plan Starter, paiement en ligne) : l'établissement se voyait
+  prélever le `commissionPct` entier (5%) sur le montant **majoré** déjà
+  encaissé auprès du client, au lieu de `establishmentSharePct` (4%) sur le
+  prix de **base**. Repéré par l'utilisateur sur les KPI de `/saas/payouts`
+  ("Commission plateforme" affichait 1313 FCFA pour un encaissement de 26260
+  FCFA, soit 5% du montant majoré — alors que le client ayant déjà payé 1% de
+  majoration inclus dans ces 26260, l'établissement n'aurait dû en perdre que
+  4%, soit 1300 FCFA, pour un solde disponible de 24960 et non 24947).
+  - Cause : `Invoice::registerPayment()` calculait
+    `commission_amount = $amount * $commissionPct / 100` directement sur
+    `$amount`, qui est déjà le montant TTC **après** majoration client
+    (`PlanGate::applyClientMarkup()`, appliqué en amont à la création de la
+    réservation — le prix de base n'est jamais conservé séparément).
+  - Fix : nouveau paramètre `float $clientSharePct = 0.0` sur
+    `registerPayment()` ; le prix de base est retrouvé par
+    `$amount / (1 + $clientSharePct/100)` avant d'appliquer `commissionPct`
+    dessus. `BookingPaymentController::recordOnlinePayment()` (seul appelant
+    concerné — les encaissements manuels/staff via `BookingController` et
+    `InvoiceController` ne passent jamais de commission) transmet désormais
+    `PlanGate::clientSharePct($estab)` en plus de `commissionPct($estab)`.
+  - Vérifié en CLI PHP direct (`Models\PayoutRequest::availableBalance(1)`
+    passe de 24947 à 24960 après correction) et par un appel isolé à
+    `registerPayment()` confirmant `commission_amount = 1300` (au lieu de
+    1313) pour les mêmes montants — testé avec un `booking_id` volontairement
+    invalide pour ne rien insérer réellement (contrainte FK rejette
+    l'insertion après calcul, aucun nettoyage nécessaire).
+  - La seule ligne `payments` déjà en base avec ce bug (id=1, données de test
+    de cette session) a été corrigée manuellement en DB locale
+    (`commission_amount` 1313 → 1300) pour que le dashboard reflète
+    immédiatement le calcul correct.
+  - Resynchronisé dans `copy/`.
+
+- **2026-08-09** — Refonte du système de plans : suppression du "vrai" plan
+  gratuit. `config/plans.php` conserve le slug `starter` (nom affiché
+  "Gratuit" → **"Starter"**) mais lui donne désormais **les mêmes
+  fonctionnalités que Pro** (factures, paiements, dépenses, rapports, export
+  PDF, chambres illimitées) — seule différence : le paiement en ligne des
+  réservations y est **forcé actif, non désactivable**, avec une **commission
+  plateforme de 10% par défaut** (éditable par l'admin) sur chaque paiement en
+  ligne, alors que Pro/Business restent à 0% de commission (paiement en ligne
+  optionnel, togglable).
+  - **Découverte clé** : `establishments.online_payment_enabled` a toujours eu
+    un défaut DB à `1` (aucun code ne le forçait à 0 pour `starter`) — le
+    blocage venait uniquement du fait que le code confondait deux notions sous
+    une seule feature `online_payment_control` : (1) l'établissement a-t-il
+    accès au paiement en ligne, (2) le propriétaire peut-il le désactiver
+    lui-même. Séparées en deux features distinctes dans `config/plans.php` :
+    `online_payment` (accès, vrai pour les 3 plans désormais) et
+    `online_payment_control` (contrôle du toggle, Pro/Business seulement,
+    inchangé). `Core\PlanGate::commissionPct()` (nouveau) lit le taux effectif
+    via `Services\PlanPricingService::commissionPct()`.
+  - 4 points d'appel corrigés pour utiliser `online_payment` au lieu de
+    `online_payment_control` : `BookingPaymentController::initiate()`,
+    `PublicController::room()`, `PayoutController::gate()` (point critique :
+    sans ce fix, un établissement Starter aurait pu encaisser via GeniusPay
+    mais jamais demander de retrait). `EstablishController::update()` reste
+    volontairement sur `online_payment_control` — c'est ce qui empêche déjà un
+    propriétaire Starter d'éditer le toggle, sans code de blocage
+    supplémentaire à écrire.
+  - **Commission tracée par paiement** (pas seulement au retrait), pour rester
+    stable même si le plan de l'établissement change ensuite : nouvelles
+    colonnes `payments.commission_pct`/`commission_amount`
+    (`scripts/migration_plan_commission.sql`, répercutées dans `schema.sql`),
+    remplies dans `Invoice::registerPayment()` (nouveau paramètre optionnel,
+    défaut 0 — les paiements manuels/espèces ne sont jamais commissionnés) via
+    `BookingPaymentController::recordOnlinePayment()`. `PayoutRequest::
+    availableBalance()` déduit désormais la commission totale du solde
+    retirable (`totalCommission()`, nouveau) — le commentaire "aucune
+    commission plateforme" de `migration_payouts.sql` n'est plus vrai, corrigé.
+  - **Taux éditable par l'admin** (`/admin/settings`, réglage
+    `plan_commission_starter_pct`), même pattern que les prix Pro/Business déjà
+    éditables (`Services\PlanPricingService`/`AdminSettingsController`) —
+    `PlanPricingService::effectivePlans()` répercute aussi ce taux effectif
+    pour le tableau comparatif de `saas/docs.php`.
+  - UI `/saas/settings` : le toggle "Paiement en ligne" est affiché **actif et
+    non cliquable** pour Starter (nouvel état `onlinePaymentForced`, remplace
+    l'ancien `onlinePaymentLocked` dont le sens "réservé Pro/Business" n'a plus
+    lieu d'être — plus aucun plan n'est bloqué à l'accès désormais), avec le
+    taux de commission affiché dynamiquement (passé en paramètre du composant
+    Alpine depuis le serveur, pas codé en dur côté JS).
+  - Vitrine (`pricing.php`, `home.php`, `contact.php`, `cgu.php`, etc.) et
+    copy SaaS (`register.php`) mis à jour pour ne plus annoncer "gratuit" sans
+    nuance — mention explicite de la commission partout où le plan Starter est
+    présenté, y compris dans les CGU (article 5/6) pour rester juridiquement
+    exact. `RoomController.php` : message d'erreur de limite de chambres
+    dé-hardcodé de "plan Gratuit" (aucun plan n'a plus de limite de chambres
+    désormais, ce gate devient vestigial mais reste en place si un futur plan
+    en réintroduit une).
+  - **`ONLINE_PAYMENTS_ENABLED` basculé à `true` en LOCAL** (`.env` de dev
+    uniquement, jamais versionné/répliqué dans `copy/`, donc aucun effet en
+    prod) pour permettre de tester le flux réel en sandbox GeniusPay (clés
+    déjà en `pk_sandbox_`/`sk_sandbox_`, `APP_ENV=development`) — voir
+    `online-payment-v1-lock` en mémoire auto. Le flag reste à `false` côté
+    hébergeur ; l'activer en prod est une décision de déploiement séparée, à
+    prendre explicitement après validation complète en local (et après avoir
+    renseigné un vrai `GENIUS_PAY_WEBHOOK_SECRET`, actuellement vide).
+  - **Bug trouvé juste après ce flip** : le lien de nav "Retraits" avait été
+    retiré de `saas/layout.php` le 2026-07-23 (verrou v1 fermé) — jamais
+    réintégré à la main comme le suggérait la mémoire d'alors. Une réservation
+    test payée en ligne a bien enregistré sa commission en base
+    (`payments.commission_amount` correct, vérifié directement en SQL), mais
+    la page `/saas/payouts` restait inaccessible depuis l'UI (aucun lien),
+    d'où l'impression que "la commission ne s'applique pas". Corrigé en
+    rendant le lien **auto-réapparaissant** plutôt que remis à la main : les
+    deux nav (sidebar desktop L207-256, `$moreTabs` mobile L679-684)
+    conditionnent maintenant l'entrée "Retraits" sur `ONLINE_PAYMENTS_ENABLED`
+    directement (`<?php if (ONLINE_PAYMENTS_ENABLED): ?>` / spread
+    conditionnel `...(ONLINE_PAYMENTS_ENABLED ? [...] : [])`) — plus besoin
+    d'y repenser à chaque futur flip du flag, dans un sens comme dans l'autre.
+  - Validé par `php -l`/`node --check` sur tous les fichiers touchés, migration
+    appliquée et vérifiée sur la base locale `hotel_sync` (colonnes présentes,
+    tous les établissements déjà à `online_payment_enabled=1`), `schema.sql`
+    revalidé par chargement complet dans une base jetable (structure
+    identique). Logique testée en CLI PHP directe (`PlanGate::can()`/
+    `commissionPct()`/`maxRooms()` pour starter vs pro : résultats conformes).
+    Pas de test navigateur réel (paiement en ligne non activable dans cet
+    environnement tant que `ONLINE_PAYMENTS_ENABLED=false`). Resynchronisé
+    dans `copy/` (diff vide sur les arborescences touchées), **non commité/
+    poussé depuis `copy/`** — décision de déploiement à valider explicitement.
+
+- **2026-08-11** — Rapporté en testant : cliquer sur le bouton "Se connecter"
+  (mot de passe classique, `submit()`) déclenche parfois le sélecteur natif
+  de clé d'accès du navigateur ("Utiliser une clé d'accès enregistrée pour
+  localhost"). **Confirmé que ce n'est pas notre code** : `submit()` ne fait
+  qu'un `fetch()` simple, aucun appel `navigator.credentials` — c'est une
+  suggestion native de Chrome/Edge (Gestionnaire de mots de passe Google),
+  déclenchée par la simple présence de clés d'accès enregistrées pour cette
+  origine et l'absence d'`autocomplete` explicite sur les champs email/mot de
+  passe. Mitigation appliquée : `autocomplete="off"` sur les deux champs de
+  `saas/login.php` — best-effort (comportement navigateur, pas garanti à
+  100% par la spec), à revérifier après ce changement. Si ça persiste, seul
+  un réglage utilisateur (Chrome → Mots de passe → Gestionnaire de mots de
+  passe Google → désactiver la connexion automatique par clé d'accès) le
+  supprime complètement.
+  - Bouton secondaire "Se connecter avec l'empreinte" du formulaire classique
+    signalé non visible — cause confirmée par l'utilisateur : couleurs
+    codées en dur en style inline (`color:#1B4332`, bordure `rgba(27,67,50,
+    0.15)` quasi transparente) pensées pour le fond clair desktop, invisibles
+    sur le fond vert plein `.lg-right` du panneau mobile (`@media max-width:
+    1024px`) — contrairement au reste du formulaire qui a ses propres
+    surcharges de couleur pour ce mode. Fix : nouvelle classe `.lg-btn-secondary`
+    (`login.css`) avec sa propre surcharge dans le bloc mobile (fond/bordure/
+    texte clairs), plus le `.lg-spinner` associé (blanc par défaut, recoloré
+    en sombre sur fond clair desktop, remis blanc sur fond vert mobile) — même
+    piège que celui déjà documenté le 2026-07-29 pour le centrage flex/grid :
+    un élément à fond transparent hérite silencieusement du fond de la page,
+    à toujours vérifier explicitement dans les deux modes clair/sombre de ce
+    fichier avant livraison.
+
+- **2026-08-11** — Deuxième bug réel trouvé en testant : le sélecteur natif
+  Windows Hello affichait, en plus de la vraie clé de connexion
+  ("claude@gmail.com"), 4 entrées orphelines "device-xxxxxxxx" — vestiges de
+  l'ancien gate "app installée" ([[pwa-app-only-login]], `WebauthnService`),
+  qui utilisait `residentKey: 'required'` alors qu'il n'a **jamais** besoin
+  d'une clé découvrable (il fonctionne par `device_token` opaque caché en
+  localStorage, jamais par sélection humaine dans un menu). Confirmé :
+  `webauthn_credentials` est **vide** en base (vidée par un `wipe-db.sql` à
+  un moment du développement) mais Windows Hello garde ces clés
+  indéfiniment — le stockage de clés d'accès de l'OS est totalement
+  indépendant de notre base de données applicative.
+  - Cause racine du mélange : les deux systèmes WebAuthn partagent le même
+    RP id (`localhost`, via le trait commun) — normal et correct
+    cryptographiquement (même origine), mais ça veut dire que TOUTES les
+    clés découvrables pour cette origine, peu importe quel système les a
+    créées, apparaissent ensemble dans le même sélecteur "usernameless" de
+    [[webauthn-biometric-login]].
+  - Fix : `WebauthnService::registrationOptions()`/`verifyRegistration()`
+    passent `residentKey` de `'required'` à `'discouraged'` — les futures
+    cérémonies du gate (s'il est un jour réactivé) ne pollueront plus le
+    sélecteur de connexion réelle. N'affecte QUE les futurs enregistrements,
+    ne nettoie pas les clés déjà orphelines côté Windows (aucune API web ne
+    permet à une page de les supprimer — seul l'utilisateur peut le faire
+    manuellement depuis les réglages Windows, purement cosmétique, sans
+    impact fonctionnel puisque `verifyLogin()` rejette proprement toute clé
+    absente de `webauthn_login_credentials`).
+  - Resynchronisé dans `copy/`.
+
+- **2026-08-11** — Bug réel trouvé et corrigé en testant la connexion rapide
+  par empreinte (entrée juste en dessous) : après une activation réussie
+  (confirmée en base, `webauthn_login_credentials` bien créée) puis une
+  déconnexion pour retester `/login`, l'écran "connexion rapide" ne
+  réapparaissait jamais. Cause : `saas.js::logout()` et le repli
+  session-expirée (même fichier, ligne ~68) font `localStorage.clear()` —
+  effaçant du même coup le témoin `biometric_login_hint` qui vient tout juste
+  d'être posé. Même bug dans `admin.js` (espace superadmin, symétrique).
+  - Fix : sauvegarder `biometric_login_hint` avant `localStorage.clear()`,
+    le restaurer juste après, dans les 4 occurrences (`saas.js` × 2,
+    `admin.js` × 2) — c'est un réglage de l'APPAREIL, pas de la session, il
+    doit survivre à une déconnexion.
+  - **Durci en plus** : `saas-settings.js::loadBiometricCredentials()`
+    resynchronise désormais le témoin sur l'état réel du serveur à CHAQUE
+    chargement de `/saas/settings` (présence d'au moins une empreinte active
+    → pose le témoin, sinon le retire) — au lieu de ne le gérer qu'aux
+    moments ponctuels d'activation/révocation. Auto-répare tout futur
+    désalignement sans manipulation manuelle ; a rendu redondants (et donc
+    retirés) les `localStorage.setItem`/`removeItem` explicites qui
+    dupliquaient cette même logique dans `enrollBiometric()`/`revokeBiometric()`.
+  - **Confirmation positive au passage** : `webauthn_login_credentials.last_used_at`
+    de la ligne de test montrait une vraie connexion réussie antérieure — la
+    cérémonie WebAuthn (enregistrement ET authentification) fonctionne bien de
+    bout en bout en conditions réelles, pas seulement en théorie.
+  - Resynchronisé dans `copy/`.
+
+- **2026-08-11** — Écran "connexion rapide" (entrée juste en dessous)
+  **redessiné en écran de verrouillage en deux temps**, sur référence visuelle
+  fournie par l'utilisateur (captures d'un écran de verrouillage mobile
+  générique) : (1) plein cadre vert forêt avec icône cadenas + "AfriStay
+  verrouillé" + bouton "Déverrouiller", (2) au clic, un bas-de-page (fond
+  `--mid`, coins arrondis façon bottom sheet) glisse avec "AfriStay" /
+  "Déverrouillez pour accéder à votre espace hôtelier" / "Utiliser mes
+  identifiants" / le bouton empreinte circulaire déjà existant
+  (`.lg-bio-btn`, réutilisé tel quel). Remplace l'ancienne version
+  "Bon retour parmi nous" à bouton unique (même déclencheur
+  `biometricFirstMode`, nouvel état `lockRevealed` pour le 2ᵉ temps).
+  - `.lg-lock` en `position:fixed;inset:0` : recouvre toute la mise en page
+    (grille desktop deux panneaux incluse) par un plein cadre unique, cohérent
+    avec la référence — contrairement au reste de la page, pas de variante
+    "mode clair desktop" à prévoir pour ce nouvel écran : toujours vert forêt
+    plein, quel que soit desktop/mobile.
+  - Réutilise `.lg-bio-btn`/`.lg-bio-fallback` existants (`loginWithBiometric()`/
+    `useCredentialsInstead()` inchangés) — seule une classe `.lg-lock-fallback`
+    ajoutée pour recolorer "Utiliser mes identifiants" en clair sur le fond
+    `--mid` du bas-de-page (même piège de couleur figée que celui corrigé
+    juste avant sur le bouton secondaire du formulaire classique — vérifié
+    cette fois dès l'écriture plutôt qu'après coup).
+  - **Bug réel trouvé au premier test** : le bas-de-page remontait collé en
+    haut de l'écran au lieu de rester ancré en bas. Cause : `.lg-lock` est un
+    conteneur flex-column avec `.lg-lock-top` (flex:1, pousse le reste vers le
+    bas) et `.lg-lock-sheet` (`margin:0 auto`, centrage horizontal seulement)
+    comme deux enfants — au clic sur "Déverrouiller", `.lg-lock-top` disparaît
+    du flux (`x-show`→`display:none`), donc plus rien ne pousse `.lg-lock-sheet`
+    vers le bas. Fix : `margin: auto auto 0` (au lieu de `0 auto`) — ancre le
+    bas-de-page au bas de `.lg-lock` de façon indépendante de la présence de
+    son ancien voisin flex, plutôt que de compter sur lui pour le pousser.
+  - Resynchronisé dans `copy/` après ce fix.
+
+- **2026-08-11** — Nouveau visuel pour le premier écran (`.lg-lock-top`) de
+  l'écran verrouillé façon écran de verrouillage mobile, sur référence visuelle
+  fournie par l'utilisateur : cadenas plein en dégradé or (au lieu de l'ancien
+  tracé ligne blanche), entouré de deux anneaux dorés concentriques
+  (`.lg-lock-ring-1/2`) et de petits points dispersés façon éclat
+  (`.lg-lock-dot-1` à `-6`, positions fixes en CSS) — même esprit décoratif que
+  `.lg-radial`/`.lg-ghost` déjà présents sur cette page. Sous-titre ajouté sous
+  le titre "AfriStay verrouillé" ("Déverrouillez pour accéder à votre espace
+  hôtelier sécurisé") — absent du premier écran jusqu'ici, présent seulement
+  dans le bas-de-page du second temps.
+  - `src/templates/saas/login.php` : `.lg-lock-icon` seul → `.lg-lock-badge`
+    (anneaux + points + icône), SVG cadenas plein avec `<linearGradient
+    id="lgLockGrad">` (or clair → bronze).
+  - `public/assets/css/pages/login.css` : nouvelles classes `.lg-lock-badge`,
+    `.lg-lock-ring`, `.lg-lock-dot-*`, `.lg-lock-subtitle` ; `.lg-lock-icon`
+    gagne un `filter: drop-shadow(...)` pour détacher le cadenas du fond vert.
+  - Purement visuel, aucun changement de logique JS. `php -l` OK, resynchronisé
+    dans `copy/`.
+  - **Rendu à confirmer par l'utilisateur en navigateur réel** (même réserve
+    habituelle pour tout ce qui touche `/login`).
+  - Suite (même jour) : capture réelle montrant le second temps (bas-de-page
+    `.lg-lock-sheet`, `lockRevealed = true`) — grand vide vert au-dessus, et
+    capteur d'empreinte quasi invisible (`.lg-bio-btn` en dégradé
+    `forest→mid`, sur un fond de bas-de-page déjà `var(--mid)` : les deux se
+    confondaient). Corrections :
+    - `.lg-lock-radial`/`.lg-lock-ghost` ajoutés en fond permanent de
+      `.lg-lock` (toujours dans le DOM, sans `x-show`) pour combler le vide
+      au-dessus du bas-de-page — même halo doré/lettrage fantôme "AS" que
+      `.lg-left` en desktop.
+    - Capteur d'empreinte du bas-de-page repris en dégradé or
+      (`#EAD08A→#B4872F`, icône vert forêt pour le contraste, au lieu de
+      blanc sur vert) et entouré d'un halo à deux anneaux
+      (`.lg-lock-sheet-badge`, même motif que le badge du cadenas) pour lui
+      donner du poids au lieu de flotter seul.
+    - Petit liseré doré ajouté en tête du bas-de-page (`.lg-lock-sheet::before`,
+      façon poignée de tiroir) pour casser l'angle nu.
+  - Resynchronisé dans `copy/`. Toujours à confirmer en navigateur réel.
+  - Suite (même jour) : capture réelle montrant que la zone haute reste
+    perçue comme vide malgré le halo/lettrage fantôme (`.lg-lock-ghost` à
+    0.05 d'opacité, quasi invisible en pratique). Cause racine : `.lg-lock-top`
+    était retiré du flux par `x-show="!lockRevealed"`, donc plus aucun
+    élément flex ne centrait quoi que ce soit dans le vide au-dessus du
+    bas-de-page une fois relevé — un simple halo de fond ne suffisait pas à
+    donner l'impression d'un écran "conçu".
+    - Restructuré : `.lg-lock-top` reste **toujours monté** (vrai `flex:1`,
+      centre son contenu nativement), son contenu bascule via deux enfants
+      `x-show` : `.lg-lock-face` (cadenas + titre + sous-titre + bouton,
+      verrouillé) et `.lg-lock-mark` (monogramme "AS" à double anneau doré +
+      légende "Espace hôtelier sécurisé", bas-de-page relevé) — même motif
+      d'anneaux que `.lg-lock-badge`/`.lg-lock-sheet-badge`, cohérence
+      visuelle entre les trois temps de l'écran.
+    - `.lg-lock-ghost` (lettrage géant inefficace) supprimé, remplacé par ce
+      contenu réellement visible ; `.lg-lock-radial` conservé (légère lueur
+      d'ambiance, opacité montée à 0.16).
+  - Resynchronisé dans `copy/`. Toujours à confirmer en navigateur réel.
+
+- **2026-08-11** — Écran "connexion rapide" par empreinte façon WhatsApp sur
+  `/login`, en complément de la connexion biométrique ajoutée plus tôt le même
+  jour (entrée juste en dessous). Si l'empreinte a déjà été activée sur
+  l'appareil courant, elle passe désormais **en priorité** devant le
+  formulaire classique (gros bouton circulaire tappable, pas de déclenchement
+  automatique de la cérémonie — évite les erreurs navigateur sur les OS qui
+  exigent un geste utilisateur explicite pour `navigator.credentials.get()`).
+  Toujours réversible via un bouton "Utiliser mes identifiants" — ne bloque
+  jamais l'accès au mot de passe, cohérent avec l'exigence "jamais un
+  remplacement" déjà posée pour cette fonctionnalité.
+  - Détection : pas de nouvel appel serveur pré-connexion (impossible de
+    savoir de façon fiable si CET appareil a un passkey sans déclencher la
+    cérémonie) — un simple indice `localStorage['biometric_login_hint']`,
+    posé par `saas-settings.js::enrollBiometric()` après une activation
+    réussie, et retiré par `revokeBiometric()` si c'était la dernière
+    empreinte du compte (sinon `/login` continuerait de proposer un chemin
+    voué à l'échec).
+  - `src/templates/saas/login.php` : nouvel écran (`.lg-gate` réutilisé pour
+    la mise en page, nouveau `.lg-bio-btn` circulaire + `.lg-bio-fallback`
+    dans `login.css`), affiché si `isApp && biometricFirstMode` ; le
+    formulaire classique passe à `isApp && !biometricFirstMode`. `login.js` :
+    nouvel état `biometricFirstMode` (lu une fois depuis localStorage à
+    l'init) + `useCredentialsInstead()` (bascule manuelle).
+  - Resynchronisé dans `copy/`.
+  - **Non testable sans navigateur réel avec authentificateur** — même
+    réserve que l'entrée précédente.
+
+- **2026-08-11** — Connexion par empreinte digitale **désactivée** à la
+  demande explicite de l'utilisateur, après les retouches visuelles
+  ci-dessus. Masquage pur (pas de suppression de code), sur le même principe
+  que `ONLINE_PAYMENTS_ENABLED` : backend (`WebauthnLoginService`, routes,
+  table `webauthn_login_credentials`) intact et réactivable en un flag.
+  - `public/assets/js/pages/login.js` : nouvelle constante
+    `BIOMETRIC_LOGIN_ENABLED = false` en tête de fichier ; `biometricFirstMode`
+    (écran verrouillé prioritaire) et la détection dans `init()`
+    (`biometricAvailable`, bouton secondaire) passent tous les deux par ce
+    flag — repassé à `true`, tout redevient actif sans autre changement.
+  - `public/assets/js/pages/saas-settings.js` : même flag, gate
+    `biometricSupported` (carte d'activation dans Paramètres → Compte →
+    Sécurité).
+  - Aucun changement PHP/template : les trois points d'entrée UI
+    (`.lg-lock`, bouton secondaire `/login`, carte `/saas/settings`)
+    utilisent déjà des `x-show` sur ces variables, donc les masquer côté JS
+    suffit à tout cacher.
+  - Resynchronisé dans `copy/`.
+
+- **2026-08-11** — Connexion optionnelle par empreinte digitale / Face ID /
+  Windows Hello (passkey), en complément du mot de passe — **jamais un
+  remplacement ni une obligation**, à la demande explicite de l'utilisateur.
+  Point d'histoire important : ce projet avait déjà un mécanisme WebAuthn,
+  mais pour l'usage inverse (gate "app installée uniquement", cérémonie
+  obligatoire à chaque connexion, retiré le 2026-07-17 pour friction — voir
+  `pwa-app-only-login`/`feedback_security_ux_friction` en mémoire auto). Cette
+  fois c'est un raccourci qui **réduit** la friction, jamais un blocage.
+  - **`WebauthnService.php` (gate existant) intentionnellement pas touché** —
+    anonyme par conception (`webauthn_credentials` sans `user_id`), usage
+    différent. Nouveau système séparé, lié à un vrai compte.
+  - Config RP/cérémonie/gestion des défis (`rpId`, `rp`, `ceremonyFactory`,
+    `serializer`, `storeChallenge`/`consumeChallenge`, etc.) extraite dans un
+    nouveau trait `Services\WebauthnRelyingPartyTrait` — pure extraction
+    depuis `WebauthnService.php` (comportement du gate existant inchangé,
+    revérifié par appel direct après refactor), réutilisée par le nouveau
+    `WebauthnLoginService`. Évite ~40 lignes de config sécurité dupliquées
+    entre les deux services (risque réel de dérive sinon).
+  - Nouvelle table `webauthn_login_credentials` (`user_id` NOT NULL, FK
+    CASCADE vers `users`, `credential_id` UNIQUE, `aaguid`, `public_key`,
+    `user_handle`, `counter`, `device_label` — même heuristique que
+    `user_sessions.device_label`, via `AuthService::deviceLabel()` passée de
+    `private` à `public`). `webauthn_challenges.type` étendu
+    `('register','login')` → `('register','login','login_register')` —
+    `'login'` existait déjà dans le schéma sans jamais avoir été câblé.
+  - **Connexion "discoverable"** (sans email préalable) : `allowCredentials`
+    vide à la connexion, le navigateur propose directement les passkeys
+    disponibles pour le site ; le compte est retrouvé via le `credential_id`
+    renvoyé par le navigateur (pas besoin de décoder le `user_handle` WebAuthn
+    pour ça). `authenticatorAttachment: 'platform'` à l'enrôlement (biométrie
+    intégrée à l'appareil uniquement, pas de clé de sécurité USB — cohérent
+    avec "empreinte digitale"), `userVerification: 'required'` partout
+    (enregistrement ET connexion) pour imposer une vraie vérification
+    biométrique/PIN, pas juste "appareil présent".
+  - `WebauthnLoginVerify` construit le JWT via `AuthService::encode()` avec
+    exactement le même payload que `login()` (mot de passe) — le frontend
+    (`login.js`) réutilise sa logique de stockage token/redirection sans
+    distinction, factorisée dans un nouveau `handleLoginSuccess()` partagé
+    (élimine la duplication qui existait entre les deux chemins).
+  - `pwa.js` : les helpers `b64urlToBuffer`/`bufferToB64url` (déjà utilisés en
+    interne par le gate existant) exposés sur `window.AfristayPWA` pour être
+    réutilisés par `saas-settings.js` (enrôlement) et `login.js` (connexion)
+    sans dupliquer ces conversions dans deux fichiers de plus.
+  - UI : nouvelle carte "Connexion par empreinte digitale" dans `/saas/settings`
+    (onglet Compte, sous "Appareils connectés", même style de liste),
+    masquée si le navigateur ne supporte pas WebAuthn. Bouton "Se connecter
+    avec l'empreinte" sur `/login`, affiché seulement si
+    `PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()`
+    résout `true` (détecte un authentificateur biométrique réel, pas juste le
+    support de l'API WebAuthn en général).
+  - Endpoints publics (`login-options`/`login-verify`) rate-limités par IP,
+    même pattern que `login()` classique.
+  - **Validé en conditions réelles (backend uniquement)** : cycle complet
+    testé via l'API réelle — génération des options d'enrôlement/connexion,
+    frontière IDOR vérifiée explicitement (un autre utilisateur ne peut ni
+    lister ni révoquer l'empreinte d'un compte qui n'est pas le sien, 404 même
+    message que "introuvable" pour ne pas fuiter l'existence), révocation par
+    le vrai propriétaire opérationnelle, gate app-only existant revérifié
+    intact après le refactor du trait. **La cérémonie WebAuthn elle-même
+    (`navigator.credentials.create()`/`get()`, boîte de dialogue biométrique)
+    n'a PAS pu être testée** — impossible à simuler en CLI/curl contrairement
+    aux paiements GeniusPay, nécessite un vrai navigateur avec authentificateur
+    (empreinte/Face ID/Windows Hello) pour une validation de bout en bout.
+  - Resynchronisé dans `copy/`.
+
+- **2026-08-10** — Correction du calcul des frais GeniusPay à l'encaissement :
+  le forfait de **100 XOF est prélevé D'ABORD, puis les 2.5% sont calculés sur
+  le montant RESTANT** (pas sur le montant brut), précision donnée
+  explicitement. `GeniusPayService::paymentFee()` : `100 + max(0, montant −
+  100) × 2.5%` au lieu de `100 + montant × 2.5%`. Écart faible mais réel (sur
+  15150 FCFA : 476,25 au lieu de 478,75) — revérifié en conditions réelles sur
+  le sandbox, valeur exacte confirmée. `withdrawalFee()` (1% au retrait)
+  inchangée, la précision ne portait que sur l'encaissement. Resynchronisé
+  dans `copy/`.
+
+- **2026-08-10** — Commission Starter recalculée : **7% → 5% au total**, **1.5%
+  → 1% côté client**, **5.5% → 4% côté établissement**, suite à la précision
+  donnée sur les frais réels GeniusPay (entrée juste au-dessus). Nouvelle
+  logique du taux, calée explicitement sur les coûts réels + une marge visée :
+  GeniusPay prend 2.5% à l'encaissement (1.5 pt absorbé par la plateforme, 1 pt
+  répercuté au client) + 1% au retrait (absorbé par la plateforme) + 1.5% de
+  marge plateforme voulue = **5% de commission totale, dont 1% côté client**.
+  - Seul `config/plans.php` a changé (`online_payment_commission_pct: 7→5`,
+    `online_payment_client_share_pct: 1.5→1`) — tout le reste (vitrine,
+    `saas/settings.php`, `saas/docs.php`, CGU, admin) lit dynamiquement via
+    `PlanPricingService`, donc s'est mis à jour sans aucune autre modif de
+    code. Seuls deux commentaires codaient "7%" en dur (docblocks de
+    `BookingPaymentController::recordOnlinePayment()` et
+    `PayoutRequest::availableBalance()`), corrigés en "5%".
+  - **Le forfait fixe de 100 XOF de GeniusPay n'est PAS inclus dans ce
+    pourcentage** — il reste uniquement tracé de façon informative
+    (`payments.geniuspay_fee_amount`, `AdminController::platformMargin()`,
+    cf. entrée précédente). Sur une petite réservation, ce forfait fixe mange
+    une partie de la marge de 1.5% visée par le taux — revérifié par calcul
+    réel (booking 15150 FCFA : marge nette réelle 134,82 FCFA, soit ~0,89% au
+    lieu des 1.5% théoriques asymptotiques, à cause du 100 XOF fixe qui pèse
+    plus sur ce montant qu'un gros panier).
+  - **Validé en conditions réelles** (2ᵉ passage) : nouvelle réservation
+    payée en sandbox à 15150 FCFA (15000 × 1.01) → `commission_pct=5.00`,
+    `commission_amount=757.50` (exact), `geniuspay_fee_amount=478.75` (100 +
+    15150×2.5%, exact). Solde établissement recalculé correctement
+    (`gross_online_collected=30150`, `total_commission=2257.5` — combine
+    l'ancien paiement à 10% et le nouveau à 5%, chacun figé à son taux
+    d'origine comme prévu). Données de test nettoyées.
+  - Aucune migration nécessaire (mêmes colonnes, juste la config par défaut).
+    Resynchronisé dans `copy/`.
+
+- **2026-08-10** — Frais réels GeniusPay tracés (purement informatif, aucun
+  montant facturé/versé ne change), suite à une précision donnée sur les vrais
+  coûts de la passerelle : **100 XOF + 2.5% à l'encaissement**, **1% au
+  retrait**. Objectif : donner au superadmin la marge nette réelle de la
+  plateforme (commission encaissée moins les frais GeniusPay), distincte de la
+  commission brute déjà affichée partout (7%/1.5%/5.5%, cf. entrée du dessus).
+  - `Services\GeniusPayService::paymentFee()`/`withdrawalFee()` (nouveau) —
+    colocalisé avec le reste du code GeniusPay plutôt qu'un nouveau service.
+  - Nouvelles colonnes (`scripts/migration_geniuspay_fees.sql`, répercutées
+    dans `schema.sql`) : `payments.geniuspay_fee_amount`,
+    `payout_requests.geniuspay_fee_amount`. Calculées à l'encaissement
+    (`Invoice::registerPayment()`, nouveau paramètre `bool $viaGeniusPay` —
+    **uniquement pour les paiements réellement passés par la passerelle**, un
+    encaissement manuel espèces/mobile money saisi par le personnel reste à
+    0) et à la création d'une demande de retrait (`PayoutController::store()`).
+  - **Important, vérifié explicitement** : `PayoutRequest::availableBalance()`
+    n'est PAS modifié — l'établissement voit et retire exactement le même
+    montant qu'avant, ces frais ne réduisent ni le prix client ni le net
+    établissement, contrairement à la commission plateforme elle-même.
+  - `AdminController::overview()` — nouveau bloc `platform_margin` (commission
+    encaissée, frais GeniusPay encaissement, frais GeniusPay retrait
+    [seulement les demandes déjà `'paid'`], marge nette). Nouvelle carte
+    "Marge nette plateforme" sur `/admin` (6ᵉ carte KPI, grille passée de
+    `repeat(5,1fr)` à `repeat(6,1fr)` dans `admin.css`).
+  - Portée : appliqué à **tous les plans** (pas seulement Starter) — c'est un
+    coût réel de la passerelle sur chaque paiement en ligne, indépendant de la
+    commission plateforme (qui elle reste 0% pour Pro/Business).
+  - **Validé en conditions réelles** : réservation payée en sandbox →
+    `geniuspay_fee_amount = 480.63` (= 100 + 15225×2.5%, exact) ; demande de
+    retrait de 10 000 → `geniuspay_fee_amount = 100` (= 1%, exact) ; une fois
+    le retrait marqué payé, `/api/admin/overview` a renvoyé
+    `net_margin = 1985.12` (= 2565.75 commission − 480.63 − 100, exact).
+    Données de test nettoyées après vérification. Resynchronisé dans `copy/`.
+
+- **2026-08-10** — Idempotence des deux flux de confirmation de paiement GeniusPay
+  (réservations en ligne ET abonnements SaaS), suite à un audit demandé
+  explicitement. Constat avant fix : `BookingPaymentController::callback()`
+  (webhook) et `SubscriptionController::callback()` faisaient un
+  `UPDATE ... WHERE id = ?` inconditionnel puis envoyaient l'email/notification
+  sans aucune garde — un rejeu de webhook (retry standard chez GeniusPay en cas
+  de non-réponse rapide) ou une course avec `verify()` (poll client) pouvait
+  dupliquer la ligne `payments`/déclencher la commission agent en double, et
+  garantissait un email de confirmation renvoyé à chaque rejeu. `Core\Database`
+  n'expose aucune primitive de verrou/transaction (`beginTransaction`,
+  `FOR UPDATE`) — confirmé par lecture directe.
+  - **Fix** : `UPDATE` conditionnel sur l'état actuel
+    (`WHERE pay_status != 'paid'` / `WHERE status != 'active'`) + vérification
+    de `PDOStatement::rowCount()`. Une seule requête `UPDATE` est atomique par
+    construction MySQL (verrouillage de ligne implicite) même sans transaction
+    explicite — un seul appelant obtient `rowCount() > 0`, tous les autres
+    (rejeu, course) deviennent des no-op silencieux. Marche aussi bien sur
+    `bookings` (InnoDB) que `subscriptions` (MyISAM, verrou de table plutôt que
+    de ligne mais même garantie d'atomicité par requête).
+  - `BookingPaymentController::confirmAndNotify()` (déjà existante, utilisée
+    par `verify()`) reçoit la garde + est réutilisée par `callback()` (qui
+    dupliquait la même logique inline avant) — un seul point d'entrée
+    désormais. **Bug additionnel corrigé au passage** : `confirmAndNotify()`
+    appelait `MailService::bookingPaid($booking)` avec le `$booking` reçu tel
+    quel, qui n'a jamais `client_email` selon l'appelant (`verify()` ne
+    sélectionne que `room_number`/`establishment_name`, pas les infos client)
+    → `bookingPaid()` abandonne silencieusement faute de destinataire
+    (`if (!$to) return;`). Corrigé en rechargeant systématiquement
+    `Booking::findWithDetails()` (source complète, client_email inclus) avant
+    l'envoi, quel que soit l'appelant.
+  - `SubscriptionController` : logique d'activation (webhook `callback()` et
+    poll `verify()`, ~80 lignes dupliquées à l'identique) extraite dans une
+    nouvelle méthode privée `activateSubscription()` avec la même garde
+    atomique — élimine la duplication ET l'idempotence en un seul refactor.
+    Le chemin "crédit de prorata couvre tout" dans `initiate()` (INSERT direct
+    en `active`, requête synchrone unique côté utilisateur authentifié, pas de
+    webhook/course possible) volontairement laissé tel quel — pas le même
+    risque.
+  - **Validé en conditions réelles** : réservation test créée, paiement
+    initié en sandbox GeniusPay, **webhook envoyé 3 fois de suite** (simulation
+    retry) → une seule ligne `payments` en base, `paid_at` stable (ne bouge
+    plus à chaque rejeu, avant il était réécrit à `NOW()` à chaque appel).
+    Données de test nettoyées après vérification.
+  - Resynchronisé dans `copy/`.
+
+- **2026-08-10** — Commission Starter revue à la baisse et répartie entre client
+  et établissement, sur demande explicite : 10% → **7% au total**, dont
+  **1.5% côté client** (inclus dans le prix affiché/facturé, pas de ligne de
+  frais séparée, même prix quel que soit le mode de paiement finalement
+  choisi — décision produit explicite) et **5.5% côté établissement**
+  (prélevés sur le montant collecté au paiement en ligne, comme avant).
+  - `config/plans.php` : nouvelle clé `online_payment_client_share_pct` (1.5
+    pour starter, 0 pour pro/business) à côté de `online_payment_commission_pct`
+    (7 au lieu de 10). `Services\PlanPricingService` : `clientSharePct()`,
+    `establishmentSharePct()` (= commissionPct - clientSharePct, jamais
+    stockée séparément pour éviter toute dérive) et `applyClientMarkup()`
+    (nouveau point d'entrée unique). `Core\PlanGate` : miroir
+    `clientSharePct()`/`applyClientMarkup()`, même pattern que
+    `commissionPct()` existant. Taux éditables séparément en admin
+    (`plan_commission_starter_pct` / `plan_commission_starter_client_pct`,
+    validation croisée : la part client ne peut pas dépasser le taux total).
+  - **Simplification assumée** : `commission_amount` déduite au retrait reste
+    calculée sur le montant réellement collecté (déjà majoré de 1.5%), PAS
+    reconstituée sur le prix de base avant majoration — plus simple/robuste
+    qu'un calcul inverse, au prix d'un écart de ~0.1 point (établissement perd
+    ~5.6% de son prix de base au lieu de 5.5% pile). Vérifié par calcul direct
+    en CLI PHP : base 15000 → prix client 15225, commission 1065.75, net
+    établissement 14159.25.
+  - **Majoration appliquée à la source unique du prix** plutôt que dupliquée :
+    `PublicController::room()`/`property()` majorent directement
+    `base_price`/`weekend_price`/`passage_price` avant de les renvoyer — comme
+    `booking.js` calcule déjà son estimation à partir de ces mêmes champs
+    (constaté par exploration du code), aucune modification JS n'a été
+    nécessaire pour que l'estimation client reflète la majoration. Idem
+    `search()`/`establishments()` sur `min_price` (post-traitement PHP après
+    la requête SQL, établissement par établissement). `PublicController::
+    bookingRequest()` applique la majoration une seule fois sur le montant
+    final (`Booking::calculateAmount()` puis `PlanGate::applyClientMarkup()`)
+    avant de créer la réservation/facture — **`Booking::calculateAmount()`
+    lui-même n'est volontairement pas touché** (fonction partagée avec
+    `BookingController::store()`, création interne SaaS par le personnel, qui
+    ne doit pas subir cette majoration ni le concept de "prix public").
+  - Textes mis à jour pour détailler la répartition (pas juste le taux total) :
+    `vitrine/pricing.php` (carte Starter + FAQ), `vitrine/cgu.php` (article 5),
+    `saas/settings.php` (message du toggle forcé, cadre le "manque à gagner"
+    réel pour l'établissement à 5.5% et non 7%), `saas/docs.php` (nouvelle
+    ligne "dont incluse dans le prix client" dans le tableau comparatif),
+    `admin/settings.php` (second champ "part client" à côté du taux total).
+  - Validé par `php -l`/`node --check` sur tous les fichiers touchés et calcul
+    manuel en CLI PHP (ci-dessus). Pas de nouvelle migration SQL (les colonnes
+    `payments.commission_pct`/`commission_amount` existaient déjà, seule la
+    valeur configurée change — les paiements déjà enregistrés à l'ancien taux
+    10% gardent leur `commission_pct` figé, comportement voulu). Resynchronisé
+    dans `copy/` (diff vide).
+
+- **2026-08-09** — Fix `vitrine/search.php` : erreur console Alpine
+  (`Cannot read properties of undefined (reading 'toFixed')`) sur
+  `p._distanceKm.toFixed(1)`, dans les deux vues (grille L125, liste L159).
+  Cause : `x-show` masque visuellement l'élément mais n'empêche pas Alpine
+  d'évaluer le `x-text` voisin — `_distanceKm` n'existe même pas sur les
+  objets tant que `geoActive` est `false` (état par défaut à l'arrivée sur la
+  page, voir `search.js::displayedResults` qui ne l'attache que si le filtre
+  "à proximité" est actif). Fix : garde redondante directement dans
+  l'expression `x-text` (`p._distanceKm != null ? (...) : ''`), ne plus
+  compter sur `x-show` pour protéger un `x-text` voisin. Vérifié qu'aucun
+  autre `x-text` avec `.toFixed(` dans le projet n'a le même risque
+  (`saas/settings.php:168` est protégé par un vrai `x-if`, qui retire
+  l'élément du DOM contrairement à `x-show` — pas de bug là).
+
+- **2026-08-04** — Contenu du site Docusaurus **entièrement réécrit**, à la
+  demande explicite de l'utilisateur ("retire les ancien fichier de
+  documentation dans le docusaurus fait un nouveau complet"), quelques
+  minutes après la mise en place initiale (entrée précédente juste en
+  dessous). Les 9 fichiers migrés depuis `documentation/*.md` (portage brut
+  d'anciens audits, certains datés de fin juin/mi-juillet 2026 et déjà
+  signalés comme partiellement obsolètes par leur propre contenu) ont été
+  **supprimés** du site et remplacés par 9 nouvelles pages écrites
+  directement à partir du code actuel (`config/routes.php`, `config/
+  plans.php`, `src/Core`, les 26 contrôleurs/23 modèles/14 services de
+  `src/Controllers`|`Models`|`Services`, `scripts/schema.sql` — 37 tables)
+  plutôt que copiées depuis d'anciens rapports : `intro`,
+  `architecture/{overview,backend,frontend,database}`, `auth-securite`,
+  `roles-plans`, `fonctionnalites`, `api-reference`, `deploiement`.
+  - Cette relecture directe du code a mis en évidence l'ampleur de la dérive
+    des anciens fichiers `documentation/` (jamais mis à jour après leur
+    session initiale de mi-juillet) : 26 contrôleurs actuels contre 11
+    documentés, 23 modèles contre 9, 37 tables contre ~20 — tout le pan
+    "agents commerciaux", "réglages plateforme éditables" (`Core\Settings`,
+    `platform_settings`), primes agents ponctuelles (`agent_bonus_awards`),
+    retraits (`payout_requests`/`PayoutController`), sauvegardes admin
+    (`BackupService`), newsletter, messages de contact et annonces vitrine
+    n'y figurait pas du tout.
+  - Sidebar (`sidebars.js`) reconstruite en conséquence (catégorie
+    "Architecture" à 4 pages + 6 pages de premier niveau) ; liens de pied de
+    page (`docusaurus.config.js`) mis à jour vers les nouveaux chemins.
+    `npm run build` revalidé sans erreur après la réécriture (les liens
+    croisés entre nouvelles pages utilisent des chemins de doc simples,
+    volontairement sans ancre de titre fragile — les ancres Docusaurus ne
+    sont pas vérifiées au build, une ancre fausse resterait silencieusement
+    cassée).
+  - `documentation/*.md` (à la racine du dépôt) **n'a pas été touché** —
+    seul le contenu déjà copié dans `docs-site/` a été retiré ; ces fichiers
+    restent disponibles tels quels comme archive de l'audit initial.
+
+- **2026-08-04** — Site de documentation **Docusaurus** ajouté (`docs-site/`), à la
+  demande explicite de l'utilisateur ("utilise docusaurus pour documenter le
+  projet"). Décisions confirmées par l'utilisateur avant implémentation :
+  **local uniquement** (non versionné, même convention que `documentation/`)
+  et **migration du contenu existant** plutôt qu'un site vide.
+  - Scaffold `create-docusaurus@latest classic --javascript` dans `docs-site/`
+    (npm). **Piège rencontré à l'install** : le tout premier `npm install`
+    (déclenché par le scaffold) a échoué silencieusement en laissant
+    `node_modules/` partiellement vide (`docusaurus` introuvable ensuite), et
+    même après un `npm install` réussi en apparence, le build échouait avec
+    `Cannot find module '@rspack/binding-win32-x64-msvc'` (dépendance
+    optionnelle native de `@docusaurus/faster` non installée — bug connu npm
+    sur Windows avec les dépendances optionnelles). Fix : suppression complète
+    de `node_modules/` + `package-lock.json` puis `npm install` propre depuis
+    zéro — plus fiable qu'un simple re-install par-dessus un état corrompu.
+    `npm run build` validé sans erreur ni warning après ce fix.
+  - **Mode "docs-only"** : `docusaurus.config.js` (`docs.routeBasePath: '/'`,
+    `blog: false`), page d'accueil par défaut (`src/pages/index.js` +
+    `HomepageFeatures`) et démo blog supprimées — `docs/intro.md`
+    (`slug: /`) sert de page d'accueil. Locale unique `fr`. Logo repris de
+    `logo.png` (racine du dépôt) pour la navbar.
+  - **Contenu migré** depuis `documentation/*.md` (9 fichiers) via un script
+    Node ponctuel (`migrate-docs.js`, non conservé dans le dépôt — un
+    one-shot, pas un outil réutilisable) : ajout de frontmatter
+    (titre/`sidebar_position`), réécriture des liens croisés entre ces
+    fichiers vers leurs nouveaux chemins Docusaurus, et **désamorçage des
+    liens vers des fichiers source du dépôt** (ex.
+    `[src/Models/User.php:21-28](src/Models/User.php#L21-L28)` dans
+    `FICHE_SECURITE.md`/`ACCES_PROFILS_ABONNEMENT.md`) en texte `code`
+    simple — ces chemins ne sont pas résolvables par Docusaurus
+    (`onBrokenLinks: 'throw'` les aurait fait échouer au build). Sidebar
+    manuelle (`sidebars.js`, pas d'autogénération) organisée en catégories :
+    Architecture, Sécurité & accès, Fonctionnel, Parcours utilisateurs
+    (audits historiques SaaS/B2C de fin juin 2026, à distinguer de
+    `FICHE_FONCTIONNELLE.md` qui fait foi sur l'état actuel), Journal
+    (`modif1.md` → historique de la toute première session).
+  - `.gitignore` racine : ajout de `/docs-site/` (node_modules déjà couvert
+    par la règle générique existante, mais config/sidebar/sources du site ne
+    l'étaient pas) — cohérent avec `*.md` qui exclut déjà tout
+    `documentation/`.
+  - **Non répliqué dans `copy/`** : `docs-site/` est un outil de
+    documentation interne, pas un artefact déployé sur l'hébergeur (contexte
+    différent de la règle habituelle de resynchronisation `src/public/config/
+    scripts` ↔ `copy/`).
+  - Pour lancer : `cd docs-site && npm start` (dev, `localhost:3000`) ou
+    `npm run build` (site statique dans `docs-site/build/`).
+
+- **2026-07-29** — Annonce vitrine repensée en **popup** au lieu du bandeau
+  fixe en haut de page (deux itérations de design ce même jour avant
+  celle-ci, cf. entrée suivante — le bandeau centré n'a pas convaincu, le
+  produit voulait un popup avec l'identité "Afri Stay"). `vitrineAnnouncementBanner()`
+  (vitrine.js) remplacée par `vitrineAnnouncementPopup()` — même logique de
+  chargement/mémorisation de fermeture par ID (`localStorage
+  afristay_announcement_dismissed`), mais affichage en **overlay modal**
+  (fond assombri + flou, carte centrée wordmark "Afri Stay" + icône 📢 +
+  titre/message + bouton "Compris") plutôt qu'en bandeau qui décalait la
+  mise en page. Conséquence en cascade : le mécanisme `Alpine.store(
+  'vitrineChrome', { bannerHeight })` qui décalait le `top` de la nav
+  flottante (ajouté pour le bandeau) devenait inutile — supprimé, nav
+  revenue à ses valeurs `top` fixes d'origine (16px replié / 0 déplié).
+  - **Piège d'environnement découvert et à retenir pour tout futur écran
+    de ce projet** : un `display:flex;align-items:center;justify-content:
+    center` sur l'overlay ne centrait PAS la carte modale en test réel
+    (carte collée en haut-gauche, alors que le CSS semblait correct à la
+    lecture) — exactement le même symptôme que le bug des graphiques
+    admin du jour (colonnes qui s'empilaient au lieu de s'aligner en
+    ligne). Fix identique : remplacer par `display:grid;place-items:
+    center`. Deux occurrences du même jour suggèrent un vrai problème
+    (pas juste une faute de frappe isolée) avec `align-items`/
+    `justify-content` en centrage flex dans cet environnement de rendu —
+    **réflexe à adopter systématiquement à partir de maintenant : préférer
+    CSS Grid (`place-items`/`grid-template-columns` explicite) à flexbox
+    dès qu'un centrage ou une répartition en colonnes est nécessaire**,
+    plutôt que flex + `align-items`/`justify-content`, qui s'est avéré
+    non fiable deux fois de suite ici. Revérifié en réel après fix (capture
+    desktop 1400px + mobile 390px + test du bouton "Compris" avec
+    persistance après rechargement de page) : centrage correct partout,
+    fermeture bien mémorisée.
+- **2026-07-29** — Fix du bandeau d'annonce vitrine (bandeau centré,
+  **remplacé par un popup dans l'entrée ci-dessus** le même jour — gardé
+  ici pour l'historique) : mise en page initiale jugée mal
+  adaptée (constatée par capture d'écran utilisateur) — titre + message +
+  bouton fermer tous alignés à gauche avec `margin-left:auto` sur le
+  bouton, laissant un grand vide à droite sur écran large, look
+  "à moitié vide" peu soigné. Corrigé : contenu (icône 📢 + titre + séparateur
+  `·` + message) centré dans un conteneur `max-width:1100px` (même largeur
+  que le reste du contenu vitrine), bouton fermer en `position:absolute`
+  ancré au bord droit (`right:12px`, centré verticalement) au lieu de
+  pousser par flex — reste à distance fixe du bord quel que soit la
+  longueur du texte, jamais de grand vide. Revérifié en réel (capture
+  desktop 1400px + mobile 390px, recette Playwright déjà documentée
+  ci-dessous) : rendu centré correct dans les deux cas, bouton fermer
+  jamais chevauché par le texte.
+- **2026-07-29** — Fix visuel des graphiques `/admin` (entrée précédente,
+  livrés le même jour) : en usage réel, les 6 colonnes mensuelles de
+  "Réservations par mois"/"Nouveaux établissements par mois" s'empilaient
+  **verticalement** au lieu de côte à côte (constaté par capture d'écran
+  utilisateur), alors que le CSS semblait correct à la lecture
+  (`display:flex` sur le conteneur, `flex:1` sur chaque colonne). Cause
+  exacte non identifiée avec certitude (piste : hauteur en `%` imbriquée
+  dans une colonne flex sans hauteur propre définie) — plutôt que de
+  continuer à deviner sans navigateur, **vérifié pour de vrai** : app
+  lancée localement (WAMP déjà actif), session admin simulée via un JWT
+  miniature signé directement en PHP CLI (`AuthService::encode()`, écrit
+  dans `localStorage` par un script d'init Playwright — évite de toucher
+  au mot de passe superadmin réel) + `matchMedia('(display-mode:
+  standalone)')` forcé à `true` (sinon `adminLayout()` redirige vers
+  `/login`, cf. section Authentification), page `/admin` chargée et
+  capturée à l'écran (`chromium` headless via `npx playwright`, pas
+  disponible autrement dans cet environnement). Root-cause confirmée visuellement,
+  puis **corrigé en réécrivant la grille de colonnes en CSS Grid explicite**
+  (`grid-template-columns: repeat(6, 1fr)`, classes `.chart-cols`/
+  `.chart-col`/`.chart-col-track` dans `admin.css`) au lieu de flexbox
+  imbriqué — élimine toute ambiguïté row/column. Recapturé après fix :
+  les 6 mois s'affichent bien côte à côte, et le bouton "Voir en tableau"
+  testé (clic simulé) bascule correctement vers le tableau. **Piège
+  d'outillage rencontré en testant** : le jeton JWT généré en pipant la
+  sortie d'un `php -r` dans une variable bash se faisait polluer par
+  l'avertissement `Warning: Module "mysqli" is already loaded` écrit sur
+  stdout (pas stderr, donc `2>/dev/null` ne le filtrait pas) — un retour à
+  la ligne au milieu du header `Authorization` cassait la requête HTTP
+  (400 Bad Request côté Apache, avant même PHP). Fix : `-d
+  display_errors=0` sur la commande CLI ponctuelle. **Réflexe à garder** :
+  quand un rendu visuel semble correct sur le papier mais ne l'est pas en
+  usage réel, vérifier dans un vrai navigateur avant de re-deviner en
+  boucle — ce projet n'a pas de skill `/run` dédié pour ce faire, la
+  recette ci-dessus (JWT direct + `matchMedia` forcé) peut être réutilisée
+  telle quelle pour tout futur test admin/saas sans navigateur.
+- **2026-07-29** — Graphiques ajoutés à `/admin` (Vue d'ensemble), suite à la
+  demande explicite de diagrammes. Suivi de la méthode du skill `dataviz`
+  (palette validée par script, pas à l'œil — voir `references/palette.md`
+  du skill).
+  - **Répartition par plan** : les 3 nombres bruts (Starter/Pro/Business)
+    sont désormais accompagnés d'une mini barre de progression par ligne.
+    Palette dédiée `#2a78d6`/`#eb6834`/`#1baf7a` (bleu/orange/aqua) —
+    **volontairement différente** des couleurs indigo/bleu déjà utilisées
+    ailleurs pour les badges de plan (`#2563EB`/`#6366F1`, cf.
+    `.admin-plan-pill` dans `admin.css`) : validées via
+    `node scripts/validate_palette.js`, ce doublet bleu/indigo échoue le
+    contrôle CVD (ΔE 1.9, quasi indiscernable en daltonisme) — inutilisable
+    pour un graphique, même s'il reste correct comme couleur de badge isolée
+    (une seule couleur à la fois, pas de comparaison série à série).
+  - **Deux nouveaux graphiques en colonnes** (6 derniers mois, zéro-remplis
+    pour les mois sans activité) : "Réservations par mois" et "Nouveaux
+    établissements par mois". `AdminController::monthlySeries()` (nouveau,
+    privé) — **piège rencontré et corrigé** : la première version utilisait
+    `strtotime("-N months")` depuis le jour courant, qui déborde sur le mois
+    suivant quand le jour courant (29/30/31) n'existe pas dans le mois cible
+    (ex. depuis un 29/30/31, -5 mois tombe sur un février qui n'a que 28/29
+    jours → PHP rallonge au lieu de clamper) : un mois dupliqué, un autre
+    jamais généré. Fix : partir du 1er jour du mois courant
+    (`new DateTime('first day of this month')`) avant de soustraire —
+    plus aucun débordement possible. Détecté par test direct contre la
+    vraie base (pas juste `php -l`), à garder en tête pour toute future
+    logique de plage de mois glissante.
+  - Chaque graphique en colonnes a un bouton "Voir en tableau" (bascule vers
+    un `<table>` classique) — la déclinaison accessible systématique
+    qu'exige le skill, plutôt qu'un survol comme seul accès à la valeur (les
+    valeurs sont de toute façon déjà en étiquette directe au-dessus de
+    chaque barre).
+  - **Piège de mise en page évité** : la hauteur de la barre (0–100%) doit
+    se résoudre contre une piste de hauteur fixe dédiée (`height:90px`), pas
+    contre toute la colonne flex qui contient aussi l'étiquette valeur et le
+    libellé du mois — sinon une barre à 100% déborde du conteneur (débordement
+    visuel constaté puis corrigé avant livraison).
+  - Non testé en navigateur réel (pas d'accès depuis cet environnement) —
+    validé par `php -l`, un test direct de `monthlySeries()` contre la vraie
+    base (6 mois consécutifs distincts, plus de doublon) et une relecture
+    manuelle de la mise en page contre les anti-patterns du skill dataviz.
+- **2026-07-29** — Espace admin étoffé : 4 nouveaux outils de gestion
+  (annonce/notification, messages de contact, newsletter, annonces vitrine)
+  + un fix de cohérence visuelle. Nouvelle référence
+  `scripts/migration_admin_tools.sql` (appliquée en local, schema.sql +
+  wipe-db.sql mis à jour et revalidés comme d'habitude — clone réel +
+  chargement base vierge, diffs vérifiés).
+  - **Cohérence visuelle admin** (audit préalable) : `admin/layout.php` ne
+    chargeait jamais `saas-modals.css` (contrairement à `saas/layout.php`)
+    — les classes `.modal-card`/`.modal-list-item`/etc. n'avaient donc aucun
+    effet côté admin. Ajouté. Également corrigé `.action-btn-success`
+    (bouton "Réactiver" de `/admin/establishments`) : cette classe n'existe
+    que dans `saas-bookings.css`, jamais chargée sur l'admin — redéfinie
+    dans `admin.css` (toujours chargé). Confirmé au passage que "suspendre/
+    réactiver un établissement" (`is_active`, `PUT /api/establishments/{id}`)
+    existait déjà et fonctionnait de bout en bout pour un superadmin
+    (`Guard::canAccessEstablishment()` bypass déjà en place) — seul le bug
+    CSS empêchait de le voir clairement.
+  - **Notification "annonce plateforme"** (`/admin/notifications`) :
+    `NotificationService::broadcastToOwners()` (nouveau) envoie à tous les
+    `users` de rôle `owner` (pas les receptionists), type
+    `platform_announcement` (icône 📢 ajoutée à `typeConfig()` dans
+    `saas.js`, composant partagé saas+admin). `AdminController::
+    broadcastNotification()` (`POST /api/admin/notifications/broadcast`).
+    Pas d'historique de campagnes conservé (contrairement à la newsletter
+    ci-dessous) — volontairement simple, un formulaire titre+message sans
+    tracking d'envois passés.
+  - **Messages de contact** (`/admin/contact-messages`) : le formulaire
+    `/contact` n'envoyait qu'un email (`MailService::sendContact()`),
+    jamais persisté — aucune trace consultable. Nouvelle table
+    `contact_messages`, `Models\ContactMessage`, `AdminContactController`
+    (index/markRead/destroy). **Ordre important dans
+    `PublicController::sendContact()`** : le message est désormais stocké
+    EN BASE avant toute tentative d'email (source de vérité), l'email
+    devient un canal best-effort en plus (`try/catch` qui n'échoue plus la
+    requête) — un SMTP en panne ne fait plus perdre le message du visiteur.
+  - **Newsletter** (`/admin/newsletter` + formulaire footer vitrine) :
+    tables `newsletter_subscribers` (jeton `unsubscribe_token` opaque,
+    même principe que `bookings.guest_token`) et `newsletter_campaigns`
+    (historique, `recipient_count`). `PublicController::
+    newsletterSubscribe()`/`newsletterUnsubscribe()`, `AdminNewsletterController`
+    (subscribers/campaigns/send). **Envoi synchrone** au clic "Envoyer" côté
+    admin (`MailService::newsletterCampaign()`, boucle sur tous les
+    abonnés actifs) — même limite assumée que `Services\BackupService` :
+    pas de file d'attente, à revoir si la liste grossit significativement.
+    Lien de désabonnement → `/newsletter/desabonnement?token=...`
+    (nouvelle page vitrine autonome, `vitrine/newsletter-unsubscribe.php`,
+    ajoutée à la détection `$pageName` de `vitrine/layout.php`).
+    Formulaire d'inscription dans le footer (`newsletterFooterForm()` dans
+    `vitrine.js`, colonne "Brand" du footer — pas de 5ᵉ colonne pour ne pas
+    toucher le grid CSS à 4 colonnes existant).
+  - **Annonces vitrine** (`/admin/announcements`) : table `announcements`,
+    `Models\Announcement`, `AdminAnnouncementController`. **Une seule
+    active à la fois PAR CONSTRUCTION** : `store()`/`update()` désactivent
+    systématiquement toutes les autres lignes avant d'en activer une
+    nouvelle (pas juste "la plus récente gagne") — évite que deux lignes
+    affichent "Active" simultanément dans le tableau admin alors qu'une
+    seule s'affiche réellement sur la vitrine.
+    - **Bandeau vitrine** (`vitrine/layout.php`) : la nav flottante
+      (`vitrineNav()`) est `position:fixed` en mode "pilule" permanent
+      (cf. journal 2026-07-19) — un bandeau ajouté naïvement au-dessus se
+      serait superposé à elle. Solution : `Alpine.store('vitrineChrome',
+      { bannerHeight })` partagé entre le composant bandeau
+      (`vitrineAnnouncementBanner()`, mesure sa propre hauteur réelle via
+      `$el.offsetHeight`, jamais une valeur devinée) et la nav, qui décale
+      son `top` fixe de cette valeur. Fermeture mémorisée par ID d'annonce
+      (`localStorage`), pas globalement — une nouvelle annonce publiée
+      plus tard réapparaît même si l'ancienne avait été fermée.
+  - **Non testé en navigateur réel** dans cette session (pas d'accès
+    navigateur depuis cet environnement) — validé par `php -l`/`node
+    --check`, un smoke test runtime complet (broadcast, contact message,
+    annonce active, abonnement/désabonnement newsletter, contre la vraie
+    base puis nettoyé) et les validations habituelles de schema.sql/
+    wipe-db.sql. À vérifier manuellement en priorité : le calage du
+    bandeau d'annonce avec la nav flottante sur mobile (largeur de texte
+    variable → hauteur mesurée différente), et l'envoi réel d'un email de
+    campagne newsletter (SMTP non testé dans cet environnement).
+- **2026-07-29** — Changement de palier de récompense agent : **5 premiers-
+  abonnements** (au lieu de 10) pour déclencher un versement, montant réduit
+  en proportion pour garder le même taux par abonnement (3 000 F/abonnement
+  Pro, 6 000 F/abonnement Business, inchangé) :
+  - `config/plans.php` : clé renommée `agent_reward_per_10` →
+    `agent_reward_per_5`, valeurs 30 000→**15 000** (Pro) et
+    60 000→**30 000** (Business).
+  - `CommissionService::BATCH_SIZE` : 10 → 5, et **rendue `public`** (au lieu
+    de `private`) pour être réutilisée telle quelle par
+    `AgentController::me()` (`progress[plan].target`) plutôt que de
+    dupliquer le chiffre dans deux fichiers — même classe de risque de
+    dérive que celle rencontrée le jour même sur `schema.sql`/`wipe-db.sql`.
+  - `src/templates/agent/dashboard.php` : barre de progression et libellés
+    ne codent plus "10" en dur, lisent désormais `progress[plan].target`
+    (valeur dynamique venant de l'API) — un futur changement de palier
+    n'impliquera donc plus qu'une seule modification (`CommissionService::
+    BATCH_SIZE` + `config/plans.php`), plus aucun texte de template à
+    modifier.
+  - Textes marketing mis à jour : `agent/register.php` ("tous les 5
+    abonnements") et `admin/agents.php` ("palier de 5 abonnements").
+  - **Rétrocompatible sans migration** : les lignes `agent_referrals`
+    déjà en attente (`payout_id IS NULL`), y compris celle backfillée plus
+    tôt dans la journée pour l'établissement #1, sont automatiquement
+    comptées sous la nouvelle règle dès le prochain scan/upgrade qui
+    déclenche `CommissionService::maybeCreatePayout()` — pas de colonne
+    "créé sous l'ancienne règle" à gérer, le calcul est toujours fait à la
+    volée sur `COUNT(payout_id IS NULL)`.
+  - Validé par un test runtime direct (`CommissionService::BATCH_SIZE` et
+    `config/plans.php` relus via PHP CLI) : `BATCH_SIZE=5`, récompenses
+    15000/30000 correctement résolues.
+- **2026-07-29** — `scripts/wipe-db.sql` remis à niveau : 5 tables manquantes
+  ajoutées (`agents`, `agent_establishments`, `agent_referrals`,
+  `agent_payouts`, `user_sessions`) — aucune n'était vidée depuis leur
+  introduction (agents : 2026-07-27 ; user_sessions : 2026-07-26), même
+  angle mort déjà rencontré le 2026-07-18 (9 tables manquantes à l'époque).
+  DELETE placés avant `establishments`/`agents`/`users` selon les FK
+  (`agent_referrals`/`agent_establishments` → agents+establishments CASCADE,
+  `agent_payouts` → agents CASCADE, `user_sessions` → users CASCADE) ;
+  `AUTO_INCREMENT` reseté pour les 5 (PK auto_increment sur toutes).
+  Validé en conditions réelles : clone de `hotel_sync` (mysqldump) dans une
+  base jetable, `wipe-db.sql` exécuté dessus, `SELECT COUNT(*)` = 0 sur les
+  5 tables + les tables existantes (les compteurs `information_schema.tables`
+  affichés juste après restent des estimations InnoDB périmées, à ignorer —
+  seul `COUNT(*)` fait foi juste après un DELETE).
+  - **Trouvé au passage, corrigé aussi** : `scripts/schema.sql` (snapshot
+    consolidé pour base vierge) n'avait **jamais** eu la table
+    `user_sessions` ni la colonne `users.avatar_path` ajoutées
+    (`migration_account_settings.sql`, 2026-07-26, jamais répercutée dans le
+    snapshot — contrairement à `agents`/etc. qui y étaient déjà). Une
+    install fraîche à partir de `schema.sql` aurait donc manqué la
+    fonctionnalité "Appareils connectés" de `/saas/settings`. Ajouté
+    (colonne + table, avec sa FK CASCADE vers `users`), validé par un load
+    complet dans une base jetable et comparaison `SHOW TABLES` avec la base
+    réelle (identique).
+  - **Piège à retenir** (déjà noté le 2026-07-20 mais reconfirmé ici) :
+    `schema.sql`/`wipe-db.sql` ne sont mis à jour par aucun mécanisme
+    automatique — chaque nouvelle table doit être ajoutée à la main aux
+    deux fichiers, sinon la dérive est invisible tant que personne ne fait
+    d'install fraîche ou de wipe complet.
+- **2026-07-29** — Nouvelle page **"Mon profil"** dans l'espace agents
+  commerciaux (`/agent/profile`), absente jusqu'ici (seul `/agent/dashboard`
+  existait). Édition nom/numéro/opérateur Mobile Money + changement de mot
+  de passe — même besoin que l'onglet Compte de `/saas/settings`, mais
+  l'espace agent n'a pas de layout partagé (`Response::render()` ne wrappe
+  que les préfixes `saas/`/`admin/`/`vitrine/` — `agent/*` reste toujours
+  autonome, cf. section Architecture technique), donc chaque page agent est
+  un document HTML complet indépendant.
+  - `AgentController::updateProfile()` (`PUT /api/agent/profile`) : valide
+    nom/numéro (`isValidCiPhone()`, déjà utilisée par `register()`) et
+    l'opérateur, vérifie l'unicité du numéro (identifiant de connexion,
+    `agents.numero` UNIQUE) hors le compte courant. **Point d'attention** :
+    `numero` sert aussi de `mobile_money_number` au moment de la création
+    d'un versement (`CommissionService::maybeCreatePayout()`) — un
+    changement de numéro ne modifie que les futurs versements, les
+    `agent_payouts` déjà créés gardent leur numéro figé au moment de leur
+    création (comportement normal, pas un bug).
+  - `AgentController::changePassword()` (`POST /api/agent/change-password`) :
+    même règles que `AuthController::changePassword()` (min. 8 caractères,
+    lettre+chiffre, rate-limit 5/h).
+  - `PageController::agentProfile()` + route `GET /agent/profile`.
+  - `src/templates/agent/profile.php` (nouveau) : même tête HTML que
+    `dashboard.php` (manifest/icônes agent dédiés). `agent-dashboard.css`
+    étendu (pas de nouveau fichier CSS) : `.ag-tabs`/`.ag-tab` (nav
+    Tableau de bord / Mon profil, ajoutée aussi en haut de `dashboard.php`
+    qui n'avait aucune navigation avant), `.ag-card`/`.ag-form-*` (styles de
+    formulaire, absents jusqu'ici de ce fichier).
+  - `public/assets/js/pages/agent-profile.js` (nouveau) : composant Alpine
+    `agentProfilePage()`, même structure que `agentDashboardPage()`
+    (token dans `localStorage['agent_token']`, cache `localStorage['agent']`).
+  - Non testé en navigateur réel dans cette session — vérifié par `php -l`
+    (fichiers PHP) et `node --check` (JS) uniquement.
+- **2026-07-29** — Resynchronisation complète `src`/`public`/`config`/`scripts`
+  ↔ `copy/` (`diff -rq` vide sur les quatre arborescences, hors
+  `public/assets/uploads/*` qui reste volontairement exclu — données
+  runtime, même règle que `storage/backups/`). Deux dérives préexistantes
+  (antérieures à cette session, jamais liées au travail du jour) trouvées et
+  corrigées au passage : `public/assets/js/anti-inspect.js` (protection
+  anti-inspection déjà désactivée côté `src`/`public` mais `copy/` gardait
+  l'ancienne version active) et `public/manifest-agent.webmanifest` (tiret
+  cadratin retiré de la description côté `src`, pas répercuté dans `copy/`).
+- **2026-07-29** — QR code établissement désactivé visuellement une fois
+  rattaché à un agent (`/saas/settings` → "Mon QR code"). Avant ce fix, le
+  modal affichait toujours le QR comme actif même après un premier scan
+  réussi — rien ne signalait qu'un rattachement existait déjà, alors que le
+  serveur refuse silencieusement (409/idempotent) tout nouveau scan
+  (`agent_establishments.establishment_id` UNIQUE, premier scan gagne,
+  jamais de réassignation — cf. section "Espace agents commerciaux").
+  - `EstablishController::qr()` (`GET /api/establishment/qr`) renvoie
+    désormais aussi `agent_linked` (bool, via
+    `AgentEstablishment::findByEstablishment()`).
+  - `saas-settings.js::openMyQrCode()` : nouvel état `qrAgentLinked`. Si
+    vrai, ne génère plus le QR canvas.
+  - `settings.php` : modal "Mon QR code" affiche un message "QR code
+    désactivé — déjà rattaché à un agent commercial" à la place du code
+    quand `qrAgentLinked` est vrai.
+  - Aucun changement côté `AgentController::scanQr()` : la protection
+    serveur (refus de réassignation) existait déjà, ce fix ne couvre que
+    l'affichage propriétaire qui ne la reflétait pas.
+- **2026-07-29** — Changement de règle métier sur la récompense agent
+  (section "Espace agents commerciaux" plus haut) : un établissement **déjà**
+  sur un plan payant (pro/business) au moment où l'agent scanne son QR
+  compte désormais immédiatement dans la progression 0/10, au lieu de
+  n'être crédité que si l'upgrade a lieu *après* le rattachement.
+  - Repéré via un cas réel : établissement "yao yoann" (id 1) passé en
+    Business à 14:05:46, scanné par l'agent à 15:15:30 (même jour) — le
+    dashboard affichait "1 établissement rattaché" mais 0/10, car
+    `CommissionService::recordFirstSubscription()` n'était appelée que
+    depuis `SubscriptionController` (upgrade), qui exige que le lien agent
+    existe déjà et que le plan précédent soit `starter` — un établissement
+    déjà payant au moment du scan ne déclenchait donc jamais de crédit.
+    Décision produit assumée : l'ancien comportement (anti-fraude, éviter
+    qu'un agent scanne un client déjà payant pour gonfler son compteur) est
+    volontairement abandonné au profit d'un crédit immédiat au scan.
+  - Fix : `AgentController::scanQr()` appelle désormais
+    `CommissionService::recordFirstSubscription((int)$estab['id'],
+    $estab['plan'])` juste après `AgentEstablishment::create()`, avec le
+    plan **courant** de l'établissement (pas nécessairement issu d'un
+    upgrade). Aucun changement dans `CommissionService` lui-même — la
+    fonction était déjà idempotente (`AgentReferral::findByEstablishment()`
+    empêche tout double comptage), donc un upgrade/renouvellement ultérieur
+    du même établissement ne recrédite pas une seconde fois. Docblock mis à
+    jour pour documenter les deux points d'appel.
+  - **Backfill ponctuel** : ligne `agent_referrals` créée manuellement en
+    base pour l'établissement #1 (via un appel direct à
+    `CommissionService::recordFirstSubscription(1, 'business')`) pour
+    refléter rétroactivement le nouveau comportement sur ce cas déjà scanné
+    — pas un mécanisme automatique, à refaire à la main si d'autres
+    établissements pré-existants sont dans le même cas.
+- **2026-07-29** — Fix scan QR agent (`/agent/dashboard`) : la caméra ne
+  s'ouvrait jamais (repli silencieux sur la saisie manuelle du code). Cause :
+  l'en-tête `Permissions-Policy` global de `public/index.php`
+  (appliqué à toutes les réponses, ajouté avant l'espace agents du
+  2026-07-27) fixait `camera=()` — interdiction de la caméra sur **toute**
+  origine, y compris le même site. `agent-dashboard.js::openScanner()`
+  (`getUserMedia`) échouait donc systématiquement, quel que soit le
+  navigateur/appareil. Fix : `camera=(self)` (même principe que
+  `geolocation=(self)` déjà en place pour `saas-settings.js::locateMe()`).
+  microphone reste bloqué (`microphone=()`), inutilisé. **Piège à retenir** :
+  toute nouvelle fonctionnalité utilisant une permission navigateur
+  (caméra, micro, géoloc...) doit vérifier `Permissions-Policy` dans
+  `public/index.php`, pas seulement le code JS qui l'appelle — l'échec est
+  silencieux côté navigateur (pas d'erreur console explicite reliant les
+  deux), seul `getUserMedia()` qui rejette le laisse deviner.
+- **2026-07-29** — Retrait complet du module "mode hors ligne SaaS" (Partie A
+  de `todo_list.md`, tranche 1 implémentée le 2026-07-23 — voir entrées
+  correspondantes plus bas, conservées pour l'historique mais **le code
+  qu'elles décrivent n'existe plus**). Décision produit : périmètre jugé trop
+  limité (check-in/check-out seulement) pour la complexité ajoutée, et aucune
+  suite (A4 idempotence, A5/A6) n'était prévue à court terme.
+  - Supprimé : `public/assets/js/offline-db.js` (wrapper IndexedDB en entier).
+  - `saas.js` : état `isOnline`/`outboxPending`/`syncing`, listeners
+    `online`/`offline`, ping périodique 15s, `refreshOutboxPending()`,
+    `handleReconnect()`, le helper `saasHelpers.offlineGuard()`, et le garde
+    `navigator.onLine` dans `notificationsPanel().load()` — tous retirés.
+    Les blocs `try/catch` autour des `fetch()` de `init()` et
+    `loadPendingBookingsCount()` redeviennent de simples gestions d'erreur
+    réseau génériques (comme avant le 2026-07-23).
+  - `saas-bookings.js` : write-through cache (`AfristayOffline.cacheBookings`),
+    lecture de secours (`getCachedBookings`, `usingCachedData`), mise en file
+    `queueBookingAction` + badge `pendingSync` dans `updateStatus()`, appels
+    `offlineGuard()` (`loadBookings`/`loadRooms`/`loadClientsList`), listener
+    `afristay:outbox-flushed` — tous retirés. `loadBookings()` retombe sur un
+    simple message d'erreur réseau en cas d'échec.
+  - `saas-planning.js`/`saas-rooms.js` : appels `offlineGuard()` retirés
+    (3 endroits).
+  - `saas/layout.php` : `<script src=".../offline-db.js">` retiré, bandeau
+    "Vous êtes hors ligne" (`.saas-offline-banner`) supprimé, bandeau email
+    non vérifié repassé en `x-show="showEmailVerifyBanner"` (sans la
+    condition `isOnline` devenue inutile).
+  - `bookings.php` : badge "⏳ En attente"/"En attente de synchro"
+    (`pendingSync`) retiré (liste + modal détail), bloc "Données hors ligne"
+    (`usingCachedData`) retiré.
+  - `saas-responsive.css` : règles `.saas-offline-banner` retirées.
+  - **Conservé volontairement** : la garde de précondition de statut dans
+    `BookingController::checkIn()/checkOut()` (409 si le booking n'est plus
+    `confirmed`/`checked_in`) — protège aussi le double-clic en ligne,
+    indépendamment de tout mécanisme hors ligne ; commentaire nettoyé de sa
+    référence à l'outbox. Également conservés les correctifs de `public/sw.js`
+    (bump `afristay-v8`, `OFFLINE_HTML`/`LOGIN_URL` en comparaison exacte,
+    `Response.error()` au lieu de `throw`) : ce sont des corrections de bugs
+    du Service Worker minimal préexistant (shell PWA), pas des ajouts du
+    module retiré — les garder évite de réintroduire le bug où une page SaaS
+    jamais mise en cache affichait à tort le formulaire de connexion lors
+    d'une navigation hors ligne.
+  - `todo_list.md` mis à jour en conséquence (Partie A repassée à l'état de
+    plan, rien d'implémenté).
+  - Resynchronisé dans `copy/` (diff vérifié vide sur tous les fichiers
+    touchés) ; validé par `php -l` (fichiers PHP) et `node --check` (fichiers
+    JS) uniquement — pas de test navigateur dans cette session.
 - **2026-07-27** — Espace agents commerciaux (fonctionnalité temporaire,
   démarchage terrain d'établissements). Verrou global **`AGENTS_ENABLED`**
   (`config/config.php`, défaut `true`) sur le même principe que

@@ -2,7 +2,7 @@
 .env
 .env.local
 .env.*.local
-
+*.sql
 # Données runtime (uploads, sauvegardes DB, sessions) — pas du code
 /storage/
 /public/assets/uploads/*

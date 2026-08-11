@@ -1,6 +1,9 @@
 ﻿<?php
 $base = $base_url ?? rtrim(APP_URL, '/');
 
+$starterCommission       = \Services\PlanPricingService::commissionPct('starter');
+$starterClientShare      = \Services\PlanPricingService::clientSharePct('starter');
+$starterEstabShare       = \Services\PlanPricingService::establishmentSharePct('starter');
 $proMonthly      = \Services\PlanPricingService::price('pro', 'monthly');
 $proYearly       = \Services\PlanPricingService::price('pro', 'yearly');
 $proYearlyPerMo  = round($proYearly / 12);
@@ -40,18 +43,18 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
     <div class="pr-card">
       <div class="pr-card-top"></div>
       <div class="pr-card-body">
-        <div class="pr-plan-name">Gratuit</div>
-        <p class="pr-plan-tagline">Pour tester et démarrer sans engagement.</p>
+        <div class="pr-plan-name">Starter</div>
+        <p class="pr-plan-tagline">Toutes les fonctionnalités du plan Pro, sans abonnement.</p>
         <div class="pr-price-block">
           <div class="pr-price">0 <small>FCFA</small></div>
-          <div class="pr-price-period">Toujours gratuit</div>
+          <div class="pr-price-period">Aucun abonnement</div>
         </div>
         <div class="pr-divider"></div>
         <ul class="pr-feature-list">
           <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Jusqu'à <strong>10 chambres</strong></span></li>
+              </svg></span><span>Chambres <strong>illimitées</strong></span></li>
           <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
@@ -59,21 +62,23 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
           <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
+              </svg></span><span>Facturation &amp; gestion des paiements</span></li>
+          <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
+                <polyline points="20 6 9 17 4 12" />
+              </svg></span><span>Rapports &amp; Analyses, export PDF</span></li>
+          <li class="pr-feature"><span class="pr-feature-check"><svg xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3">
+                <polyline points="20 6 9 17 4 12" />
               </svg></span><span>Support par email</span></li>
-          <li class="pr-feature pr-feature-disabled"><span class="pr-feature-check"><svg
-                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1B4332" stroke-width="3">
-                <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Facturation</span></li>
-          <li class="pr-feature pr-feature-disabled"><span class="pr-feature-check"><svg
-                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1B4332" stroke-width="3">
-                <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Gestion des paiements</span></li>
-          <li class="pr-feature pr-feature-disabled"><span class="pr-feature-check"><svg
-                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1B4332" stroke-width="3">
-                <polyline points="20 6 9 17 4 12" />
-              </svg></span><span>Rapports &amp; Analyses</span></li>
         </ul>
-        <a href="<?= $base ?>/register?plan=starter" class="pr-card-btn pr-btn-outline">Démarrer gratuitement</a>
+        <div class="pr-divider"></div>
+        <p class="pr-plan-tagline" style="margin:0 0 4px;"><strong>Paiement en ligne toujours activé</strong> — la
+          plateforme prélève <?= $fmt($starterCommission) ?>% de commission sur chaque réservation payée en ligne
+          (non désactivable sur ce plan, à la différence de Pro/Business) : <?= $fmt($starterClientShare) ?>% déjà
+          inclus dans le prix affiché, <?= $fmt($starterEstabShare) ?>% prélevés sur le montant reversé à
+          l'établissement.</p>
+        <a href="<?= $base ?>/register?plan=starter" class="pr-card-btn pr-btn-outline">Démarrer sans abonnement</a>
       </div>
     </div>
 
@@ -168,7 +173,7 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
       <thead>
         <tr>
           <th>Fonctionnalité</th>
-          <th>Gratuit</th>
+          <th>Starter</th>
           <th>Pro</th>
           <th>Business</th>
         </tr>
@@ -179,7 +184,7 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
         </tr>
         <tr>
           <td>Nombre de chambres</td>
-          <td>10</td>
+          <td>Illimité</td>
           <td>Illimité</td>
           <td>Illimité</td>
         </tr>
@@ -200,25 +205,25 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
         </tr>
         <tr>
           <td>Facturation</td>
-          <td><span class="pr-dash">—</span></td>
+          <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
         </tr>
         <tr>
           <td>Gestion des paiements</td>
-          <td><span class="pr-dash">—</span></td>
+          <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
         </tr>
         <tr>
-          <td>Contrôle du paiement en ligne</td>
-          <td><span class="pr-dash">—</span></td>
-          <td><span class="pr-check">✓</span></td>
-          <td><span class="pr-check">✓</span></td>
+          <td>Commission sur le paiement en ligne</td>
+          <td><?= $fmt($starterCommission) ?>% (non désactivable)</td>
+          <td>0% (optionnel)</td>
+          <td>0% (optionnel)</td>
         </tr>
         <tr>
           <td>Export PDF</td>
-          <td><span class="pr-dash">—</span></td>
+          <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
         </tr>
@@ -227,13 +232,13 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
         </tr>
         <tr>
           <td>Suivi des dépenses</td>
-          <td><span class="pr-dash">—</span></td>
+          <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
         </tr>
         <tr>
           <td>Rapports &amp; Analyses</td>
-          <td><span class="pr-dash">—</span></td>
+          <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
           <td><span class="pr-check">✓</span></td>
         </tr>
@@ -286,8 +291,13 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
       <div class="pr-faq-item" :class="open===2?'pr-faq-open':''">
         <button class="pr-faq-q" @click="open=open===2?null:2" type="button"><span>Y a-t-il une période d'essai
             ?</span><span class="pr-faq-icon">+</span></button>
-        <div class="pr-faq-a" x-show="open===2" x-transition>Le plan Gratuit est gratuit et sans limite de temps. Vous
-          pouvez tester les fonctionnalités Pro pendant 14 jours sans carte bancaire.</div>
+        <div class="pr-faq-a" x-show="open===2" x-transition>Le plan Starter est sans abonnement et sans limite de
+          temps : vous avez accès à toutes les fonctionnalités du plan Pro dès l'inscription, sans carte bancaire. En
+          contrepartie, le paiement en ligne des réservations y est toujours activé et la plateforme prélève
+          <?= $fmt($starterCommission) ?>% de commission dessus, répartie entre le client
+          (<?= $fmt($starterClientShare) ?>%, déjà inclus dans le prix affiché) et l'établissement
+          (<?= $fmt($starterEstabShare) ?>%, prélevés sur le montant reversé). Passez à Pro ou Business quand vous
+          préférez payer un abonnement fixe plutôt qu'une commission.</div>
       </div>
       <div class="pr-faq-item" :class="open===3?'pr-faq-open':''">
         <button class="pr-faq-q" @click="open=open===3?null:3" type="button"><span>Comment fonctionnent les paiements
@@ -316,10 +326,10 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
     <div class="pr-cta-body">
       <div>
         <h2 class="pr-cta-title">Prêt à rejoindre<br><em>Afristay ?</em></h2>
-        <p class="pr-cta-sub">Commencez gratuitement, sans carte bancaire. Upgrade quand vous voulez.</p>
+        <p class="pr-cta-sub">Commencez sans abonnement, sans carte bancaire. Upgrade quand vous voulez.</p>
       </div>
       <div class="pr-cta-btns">
-        <a href="<?= $base ?>/register?plan=starter" class="pr-cta-btn-p">Démarrer gratuitement →</a>
+        <a href="<?= $base ?>/register?plan=starter" class="pr-cta-btn-p">Démarrer sans abonnement →</a>
         <a href="<?= $base ?>/contact" class="pr-cta-btn-o">Contacter l'équipe</a>
       </div>
     </div>

@@ -4,7 +4,7 @@ namespace Controllers;
 
 use Core\{Request, Response, RateLimiter, Database};
 use Models\{User, Establishment};
-use Services\{AuthService, MailService, WebauthnService, NotificationService, UploadService};
+use Services\{AuthService, MailService, WebauthnService, WebauthnLoginService, NotificationService, UploadService};
 
 class AuthController
 {
@@ -86,6 +86,124 @@ class AuthController
 
         RateLimiter::clear($key);
 
+        $token = AuthService::encode([
+            'id'               => $user['id'],
+            'role'             => $user['role'],
+            'name'             => $user['name'],
+            'email'            => $user['email'],
+            'establishment_id' => $user['establishment_id'],
+        ]);
+
+        $estabs = Establishment::forUser($user);
+
+        Response::success([
+            'token' => $token,
+            'user'  => User::safe($user),
+            'establishments' => $estabs,
+        ], 'Connexion réussie');
+    }
+
+    // ─── Connexion optionnelle par empreinte digitale (WebAuthn/passkey) ───────
+    // Raccourci FACULTATIF en plus du mot de passe, jamais un remplacement ni
+    // une obligation — à ne pas confondre avec le gate "app installée"
+    // ci-dessus (WebauthnService, anonyme). Voir WebauthnLoginService.
+
+    /** Depuis Paramètres, utilisateur déjà connecté. */
+    public function webauthnLoginCredentialRegisterOptions(Request $req, array $params = []): void
+    {
+        $user = $_REQUEST['_user'];
+        Response::success(WebauthnLoginService::registrationOptions(
+            (int) $user['id'],
+            (string) ($user['email'] ?? ''),
+            (string) ($user['name'] ?? '')
+        ));
+    }
+
+    public function webauthnLoginCredentialRegisterVerify(Request $req, array $params = []): void
+    {
+        $user = $_REQUEST['_user'];
+
+        $state      = (string) $req->input('state', '');
+        $credential = $req->input('credential');
+
+        if (!$state || !is_array($credential)) {
+            Response::error('Requête invalide');
+        }
+
+        $ua = substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
+
+        try {
+            $id = WebauthnLoginService::verifyRegistration($state, $credential, (int) $user['id'], AuthService::deviceLabel($ua));
+        } catch (\Throwable $e) {
+            error_log('[AuthController] webauthnLoginCredentialRegisterVerify échec — ' . get_class($e) . ' : ' . $e->getMessage());
+            Response::error("Échec de l'enregistrement de l'empreinte", 400);
+        }
+
+        Response::success(['id' => $id], 'Empreinte activée sur cet appareil');
+    }
+
+    public function webauthnLoginCredentials(Request $req, array $params = []): void
+    {
+        $user = $_REQUEST['_user'];
+        Response::success(WebauthnLoginService::listForUser((int) $user['id']));
+    }
+
+    public function webauthnLoginCredentialRevoke(Request $req, array $params = []): void
+    {
+        $user = $_REQUEST['_user'];
+        $id   = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+
+        if (!WebauthnLoginService::revoke($id, (int) $user['id'])) {
+            Response::error('Empreinte introuvable', 404);
+        }
+        Response::success(null, 'Empreinte désactivée');
+    }
+
+    /** Public — c'est le moyen de se connecter, pas une action après connexion. */
+    public function webauthnLoginOptions(Request $req, array $params = []): void
+    {
+        $ip  = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $key = 'webauthn-login-options:' . $ip;
+
+        if (RateLimiter::tooManyAttempts($key, 30, 900)) {
+            Response::error('Trop de tentatives.', 429);
+        }
+        RateLimiter::hit($key, 900);
+
+        Response::success(WebauthnLoginService::loginOptions());
+    }
+
+    public function webauthnLoginVerify(Request $req, array $params = []): void
+    {
+        $ip  = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $key = 'webauthn-login-verify:' . $ip;
+
+        if (RateLimiter::tooManyAttempts($key, 10, 900)) {
+            Response::error('Trop de tentatives. Réessayez dans quelques minutes.', 429);
+        }
+
+        $state      = (string) $req->input('state', '');
+        $credential = $req->input('credential');
+
+        if (!$state || !is_array($credential)) {
+            Response::error('Requête invalide');
+        }
+
+        $userId = WebauthnLoginService::verifyLogin($state, $credential);
+        if (!$userId) {
+            RateLimiter::hit($key, 900);
+            Response::error('Échec de la connexion par empreinte', 401);
+        }
+
+        $user = User::find($userId);
+        if (!$user) {
+            Response::error('Compte introuvable', 401);
+        }
+
+        RateLimiter::clear($key);
+
+        // Même forme de réponse que login() (mot de passe) — le frontend réutilise
+        // sa logique de stockage/redirection sans distinction entre les deux.
         $token = AuthService::encode([
             'id'               => $user['id'],
             'role'             => $user['role'],

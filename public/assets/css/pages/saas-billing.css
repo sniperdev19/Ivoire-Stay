@@ -1,0 +1,60 @@
+/* ============================================================
+   Afristay — Page SaaS : Comptabilité (saas/billing.php)
+   ============================================================ */
+
+/* Listes factures/paiements mobile : évite le défilement horizontal des
+   tableaux (8-9 colonnes) sous ~600px. Les tableaux restent la vue
+   desktop/tablette ; en dessous de 768px (palier de la tabbar mobile,
+   cf. saas.css) on bascule sur des cartes empilées — même logique que
+   .booking-mobile-card (saas-bookings.css), dupliquée ici car les
+   fichiers CSS par page ne se chargent jamais ensemble. */
+.bill-mobile-list { display:none; }
+@media (max-width:768px) {
+  .bill-table-wrap { display:none; }
+  .bill-mobile-list { display:flex; flex-direction:column; gap:9px; }
+}
+
+/* Cartes KPI plus compactes que le .kpi-card générique (padding:20px 24px) —
+   scopé à ce fichier (chargé uniquement sur billing.php). */
+.saas-kpi-grid .kpi-card { padding: 10px 12px; }
+
+.bill-mobile-card {
+  display:flex; flex-direction:column; gap:7px;
+  padding:12px; border-radius:14px;
+  background:#fff; border:1px solid rgba(0,0,0,0.06);
+  box-shadow:0 1px 8px rgba(0,0,0,0.04);
+}
+.bill-mobile-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.bill-mobile-number {
+  font-family:Cormorant,serif; font-size:14px; font-weight:700; color:#C9A84C;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.bill-mobile-client-name { font-size:13px; font-weight:600; color:#111827; }
+.bill-mobile-client-email { font-size:11px; color:#9CA3AF; margin-top:1px; }
+
+/* Bloc tarifs unifié (TTC / Encaissé / Restant) — même principe que
+   .price-group (saas-rooms.css), redéfini ici (fichiers CSS non partagés). */
+.bill-price-group { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:3px; padding:9px 6px; background:#FAF7EE; border:1px solid rgba(201,168,76,0.18); border-radius:10px; }
+.bill-price-col { text-align:center; padding:0 3px; min-width:0; }
+.bill-price-col + .bill-price-col { border-left:1px dashed rgba(201,168,76,0.25); }
+.bill-price-label { display:block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; color:#8a7136; margin-bottom:3px; }
+.bill-price-value { font-size:12px; font-weight:800; color:#1B4332; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; }
+.bill-price-value.secondary { font-size:11px; font-weight:700; }
+
+.bill-mobile-bottom { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:7px; border-top:1px dashed rgba(0,0,0,0.08); }
+.bill-mobile-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:7px; border-top:1px dashed rgba(0,0,0,0.08); }
+.bill-mobile-date { font-size:11px; color:#9CA3AF; }
+.bill-mobile-actions { display:flex; gap:5px; flex-shrink:0; }
+.bill-mobile-amount { font-size:13px; font-weight:800; color:#111827; }
+.bill-mobile-method { display:flex; align-items:center; gap:5px; font-size:12px; color:#374151; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bill-mobile-method-dot { width:7px; height:7px; border-radius:3px; flex-shrink:0; }
+
+/* Bouton icône compact, réutilisé pour les actions PDF/Envoyer/Modifier
+   sur les cartes mobiles — même style que .card-icon-btn (saas-rooms.css). */
+.card-icon-btn {
+  width:26px; height:26px; border-radius:7px; flex-shrink:0;
+  border:1px solid rgba(0,0,0,0.08); background:white; color:#6B7280;
+  display:grid; place-items:center; cursor:pointer; transition:all .15s;
+}
+.card-icon-btn svg { width:12px; height:12px; flex-shrink:0; }
+.card-icon-btn:hover { background:#F9FAFB; color:#111827; }

@@ -118,7 +118,7 @@ class RoomController
                 'success'          => false,
                 'upgrade_required' => true,
                 'feature'          => 'rooms',
-                'message'          => "Limite de $max chambres atteinte avec le plan Gratuit. Passez au plan Pro pour des chambres illimitées.",
+                'message'          => "Limite de $max chambres atteinte pour ce plan. Passez à un plan supérieur pour des chambres illimitées.",
             ], 403);
             exit;
         }

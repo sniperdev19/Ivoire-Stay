@@ -5,6 +5,16 @@ AddType application/manifest+json .webmanifest
 
 RewriteEngine On
 
+# Redirection canonique : www → domaine racine (doit rester synchro avec
+# APP_URL en .env de prod). Sans ça, le CSP de public/index.php
+# (script-src/style-src 'self') bloque tous les assets quand un visiteur
+# arrive via www : APP_URL (sans www) sert de base à tous les <link>/<script>,
+# donc une origine différente de celle de la page = ressources refusées par
+# le navigateur → page rendue sans CSS/JS. Le RP ID WebAuthn (dérivé d'APP_URL
+# lui aussi) casserait pareil, en silence.
+RewriteCond %{HTTP_HOST} ^www\.afristay\.pro$ [NC]
+RewriteRule ^ https://afristay.pro%{REQUEST_URI} [L,R=301]
+
 # Passer le header Authorization à PHP (nécessaire en mode CGI/FastCGI)
 RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 

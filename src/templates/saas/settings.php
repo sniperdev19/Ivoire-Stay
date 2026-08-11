@@ -6,7 +6,7 @@
 <script src="<?= $base_url ?>/assets/vendor/qrcode/qrcode.min.js"></script>
 <?php endif; ?>
 
-<div x-data="settingsPage('<?= $base_url ?>', <?= ONLINE_PAYMENTS_ENABLED ? 'true' : 'false' ?>)" x-init="init()">
+<div x-data="settingsPage('<?= $base_url ?>', <?= ONLINE_PAYMENTS_ENABLED ? 'true' : 'false' ?>, <?= (float) \Services\PlanPricingService::commissionPct('starter') ?>, <?= (float) \Services\PlanPricingService::establishmentSharePct('starter') ?>)" x-init="init()">
 
   <!-- En-tête -->
   <div style="margin-bottom:20px;">
@@ -114,7 +114,7 @@
       </div>
 
       <!-- Carte : Identité -->
-      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'identity'">
+      <div class="saas-card" style="padding:18px;margin-bottom:14px;" x-show="generalSections[generalCardIndex] === 'identity'">
         <div class="stg-group-label">Identité</div>
         <div class="stg-form-grid">
           <div class="stg-col-2">
@@ -156,7 +156,7 @@
       </div>
 
       <!-- Carte : Localisation (auto-enregistrée dès la localisation) -->
-      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'location'">
+      <div class="saas-card" style="padding:18px;margin-bottom:14px;" x-show="generalSections[generalCardIndex] === 'location'">
         <div class="stg-group-label">Localisation</div>
         <div class="stg-locate">
           <div class="stg-locate-info">
@@ -185,7 +185,7 @@
       </div>
 
       <!-- Carte : Contact -->
-      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'contact'">
+      <div class="saas-card" style="padding:18px;margin-bottom:14px;" x-show="generalSections[generalCardIndex] === 'contact'">
         <div class="stg-group-label">Contact</div>
         <div class="stg-form-grid">
           <div>
@@ -219,38 +219,38 @@
       </div>
 
       <!-- Carte : Paiement des réservations (auto-enregistré au clic) -->
-      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'payment'">
+      <div class="saas-card" style="padding:18px;margin-bottom:14px;" x-show="generalSections[generalCardIndex] === 'payment'">
         <div class="stg-group-label">Paiement des réservations</div>
-        <div class="stg-payment-toggle" :class="(onlinePaymentComingSoon || onlinePaymentLocked) ? 'stg-locked' : ''">
+        <div class="stg-payment-toggle" :class="(onlinePaymentComingSoon || onlinePaymentForced) ? 'stg-locked' : ''">
           <div class="stg-payment-toggle-info">
             <div class="stg-payment-toggle-title">
               Paiement en ligne
               <span x-show="onlinePaymentComingSoon" class="stg-pro-badge">Bientôt</span>
-              <span x-show="!onlinePaymentComingSoon && onlinePaymentLocked" class="stg-pro-badge">PRO</span>
+              <span x-show="!onlinePaymentComingSoon && onlinePaymentForced" class="stg-pro-badge">TOUJOURS ACTIF</span>
             </div>
             <p class="stg-payment-toggle-desc" x-show="onlinePaymentComingSoon">
               Fonctionnalité en cours de développement, disponible prochainement. Vos clients règlent pour l'instant sur place.
             </p>
-            <p class="stg-payment-toggle-desc" x-show="!onlinePaymentComingSoon && !onlinePaymentLocked && !creatingEstab">
+            <p class="stg-payment-toggle-desc" x-show="!onlinePaymentComingSoon && !onlinePaymentForced && !creatingEstab">
               Désactivez pour n'accepter que le paiement sur place : vos clients devront régler directement à l'arrivée, sans option de paiement en ligne sur votre vitrine.
             </p>
-            <p class="stg-payment-toggle-desc" x-show="!onlinePaymentComingSoon && onlinePaymentLocked">
-              Réservé aux plans Pro et Business. Passez à niveau pour proposer le paiement en ligne à vos clients.
+            <p class="stg-payment-toggle-desc" x-show="!onlinePaymentComingSoon && onlinePaymentForced">
+              Toujours activé sur le plan Starter : vos clients peuvent payer leur réservation en ligne. La plateforme prélève <span x-text="commissionPct"></span>% de commission au total sur chaque paiement encaissé ainsi — une partie est déjà incluse dans le prix vu par vos clients, <span x-text="estabSharePct"></span>% seulement viennent réduire le montant que vous touchez. Passez au plan Pro ou Business pour le rendre optionnel et sans commission.
             </p>
-            <p class="stg-payment-toggle-desc" x-show="!onlinePaymentComingSoon && !onlinePaymentLocked && creatingEstab">
+            <p class="stg-payment-toggle-desc" x-show="!onlinePaymentComingSoon && !onlinePaymentForced && creatingEstab">
               Disponible une fois votre établissement créé.
             </p>
           </div>
-          <button type="button" class="stg-switch" :class="(!onlinePaymentComingSoon && !onlinePaymentLocked && form.online_payment_enabled) ? 'stg-switch-on' : ''"
-                  @click="toggleOnlinePayment()" :disabled="onlinePaymentComingSoon || onlinePaymentLocked || creatingEstab || savingPayment"
-                  :aria-pressed="(!onlinePaymentComingSoon && !onlinePaymentLocked && form.online_payment_enabled) ? 'true' : 'false'" aria-label="Activer ou désactiver le paiement en ligne">
+          <button type="button" class="stg-switch" :class="(!onlinePaymentComingSoon && (onlinePaymentForced || form.online_payment_enabled)) ? 'stg-switch-on' : ''"
+                  @click="toggleOnlinePayment()" :disabled="onlinePaymentComingSoon || onlinePaymentForced || creatingEstab || savingPayment"
+                  :aria-pressed="(!onlinePaymentComingSoon && (onlinePaymentForced || form.online_payment_enabled)) ? 'true' : 'false'" aria-label="Activer ou désactiver le paiement en ligne">
             <span class="stg-switch-dot"></span>
           </button>
         </div>
       </div>
 
       <!-- Carte : Visibilité (auto-enregistrée au clic) -->
-      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'visibility'">
+      <div class="saas-card" style="padding:18px;margin-bottom:14px;" x-show="generalSections[generalCardIndex] === 'visibility'">
         <div class="stg-group-label">Visibilité</div>
         <div class="stg-payment-toggle" :class="boostLocked ? 'stg-locked' : ''">
           <div class="stg-payment-toggle-info">
@@ -277,7 +277,7 @@
       </div>
 
       <!-- Carte : Présentation -->
-      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'presentation'">
+      <div class="saas-card" style="padding:18px;margin-bottom:14px;" x-show="generalSections[generalCardIndex] === 'presentation'">
         <div class="stg-group-label">Présentation</div>
         <div class="stg-form-grid">
           <div class="stg-col-2">
@@ -294,7 +294,7 @@
       </div>
 
       <!-- Carte : Horaires -->
-      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'hours'">
+      <div class="saas-card" style="padding:18px;margin-bottom:14px;" x-show="generalSections[generalCardIndex] === 'hours'">
         <div class="stg-group-label">Horaires</div>
         <div class="stg-form-grid">
           <div>
@@ -316,7 +316,7 @@
       </div>
 
       <!-- Carte : Photos (auto-enregistrées à l'ajout/suppression) -->
-      <div class="saas-card" style="padding:24px;margin-bottom:16px;" x-show="generalSections[generalCardIndex] === 'photos'">
+      <div class="saas-card" style="padding:18px;margin-bottom:14px;" x-show="generalSections[generalCardIndex] === 'photos'">
         <div class="stg-group-label">Photos <span class="stg-label-optional">(10 maximum)</span></div>
         <div class="stg-photo-grid">
           <template x-for="photo in photos" :key="photo.id">
@@ -343,7 +343,7 @@
       </div>
 
       <!-- Carte : création de l'établissement (uniquement en mode création) -->
-      <div class="saas-card" style="padding:24px;" x-show="generalSections[generalCardIndex] === 'create'" x-cloak>
+      <div class="saas-card" style="padding:18px;" x-show="generalSections[generalCardIndex] === 'create'" x-cloak>
         <div class="stg-feedback">
           <template x-if="saveSuccess">
             <div class="stg-alert stg-alert-success">
@@ -373,7 +373,7 @@
        ONGLET : Membres
        ════════════════════════════════════════════════════════ -->
   <div x-show="activeTab==='team'">
-    <div class="saas-card" style="padding:24px;">
+    <div class="saas-card" style="padding:18px;">
 
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;">
         <div class="stg-section-head">
@@ -521,7 +521,7 @@
     <p x-show="planActionError" x-text="planActionError" class="stg-locate-error" style="margin-top:10px;"></p>
 
     <!-- Historique des paiements d'abonnement -->
-    <div class="saas-card" style="padding:20px 24px;margin-top:24px;">
+    <div class="saas-card" style="padding:16px 18px;margin-top:18px;">
       <div class="stg-group-label" style="margin-bottom:14px;">Historique de facturation</div>
       <template x-if="!loadingSubHistory && subHistory.length === 0">
         <p style="font-size:13px;color:#9CA3AF;margin:0;">Aucune transaction pour le moment.</p>
@@ -559,7 +559,7 @@
        ONGLET : Compte
        ════════════════════════════════════════════════════════ -->
   <div x-show="activeTab==='account'">
-    <div class="saas-card" style="padding:24px;margin-bottom:16px;">
+    <div class="saas-card" style="padding:18px;margin-bottom:14px;">
 
       <!-- Avatar + infos utilisateur -->
       <div class="stg-account-hero">
@@ -632,7 +632,7 @@
     </div>
 
     <!-- Appareils connectés (sessions actives + historique de connexion) -->
-    <div class="saas-card" style="padding:24px;">
+    <div class="saas-card" style="padding:18px;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
         <div>
           <div class="stg-panel-title" style="margin-bottom:2px;">Appareils connectés</div>
@@ -668,13 +668,52 @@
         <p x-show="!sessionsLoading && sessions.length===0" style="font-size:13px;color:#9CA3AF;">Aucune connexion enregistrée.</p>
       </div>
     </div>
+
+    <!-- Connexion par empreinte digitale (WebAuthn/passkey) — facultatif, en plus du mot de passe -->
+    <div class="saas-card" style="padding:18px;margin-top:14px;" x-show="biometricSupported">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div class="stg-panel-title" style="margin-bottom:2px;">Connexion par empreinte digitale</div>
+          <p class="stg-payment-toggle-desc">
+            Ajoutez un raccourci de connexion plus rapide (empreinte, Face ID, Windows Hello selon votre appareil) — le mot de passe reste toujours disponible, cette option ne le remplace jamais.
+          </p>
+          <p class="stg-payment-toggle-desc" x-show="biometricError" style="color:#DC2626;" x-text="biometricError"></p>
+        </div>
+        <button type="button" class="btn-saas-secondary" style="font-size:12px;flex-shrink:0;"
+                @click="enrollBiometric()" :disabled="biometricEnrolling">
+          <span x-show="!biometricEnrolling">Activer sur cet appareil</span>
+          <span x-show="biometricEnrolling">Activation…</span>
+        </button>
+      </div>
+
+      <div style="margin-top:14px;">
+        <template x-for="c in biometricCredentials" :key="c.id">
+          <div class="stg-session-row">
+            <div class="stg-session-info">
+              <div class="stg-session-device">
+                <span x-text="c.device_label || 'Appareil inconnu'"></span>
+              </div>
+              <div class="stg-session-meta">
+                <span>Activée le </span><span x-text="formatDate(c.created_at)"></span>
+                <span x-show="c.last_used_at">&nbsp;·&nbsp;dernière utilisation <span x-text="formatDate(c.last_used_at)"></span></span>
+              </div>
+            </div>
+            <button type="button" class="btn-saas-secondary" style="font-size:12px;"
+                    @click="revokeBiometric(c.id)" :disabled="biometricActionLoading">
+              Désactiver
+            </button>
+          </div>
+        </template>
+        <p x-show="!biometricLoading && biometricCredentials.length===0" style="font-size:13px;color:#9CA3AF;">Aucune empreinte activée sur vos appareils.</p>
+      </div>
+    </div>
   </div>
 
   <!-- ════════════════════════════════════════════════════════
        ONGLET : Notifications
        ════════════════════════════════════════════════════════ -->
   <div x-show="activeTab==='notifications'">
-    <div class="saas-card" style="padding:24px;">
+    <div class="saas-card" style="padding:18px;">
 
       <!-- Notifications push (hors application) -->
       <div class="stg-payment-toggle" style="margin-bottom:20px;">

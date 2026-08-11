@@ -44,7 +44,11 @@ function adminLayout(baseUrl) {
         });
 
         if (res.status === 401 || res.status === 403) {
+          // Le témoin "empreinte activée sur cet appareil" (login.js::biometricFirstMode)
+          // doit survivre — réglage de l'appareil, pas de la session.
+          const biometricHint = localStorage.getItem('biometric_login_hint');
           localStorage.clear();
+          if (biometricHint) localStorage.setItem('biometric_login_hint', biometricHint);
           window.location.href = this.baseUrl + '/login';
           return;
         }
@@ -74,7 +78,9 @@ function adminLayout(baseUrl) {
     },
 
     logout() {
+      const biometricHint = localStorage.getItem('biometric_login_hint');
       localStorage.clear();
+      if (biometricHint) localStorage.setItem('biometric_login_hint', biometricHint);
       window.location.href = this.baseUrl + '/login';
     },
 

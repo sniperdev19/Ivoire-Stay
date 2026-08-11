@@ -78,8 +78,12 @@ class AuthService
         );
     }
 
-    /** Étiquette lisible ("Chrome sur Windows") à partir du User-Agent — heuristique simple, sans lib externe. */
-    private static function deviceLabel(string $ua): string
+    /**
+     * Étiquette lisible ("Chrome sur Windows") à partir du User-Agent — heuristique simple, sans lib externe.
+     * Public : réutilisée par WebauthnLoginService pour étiqueter les empreintes enregistrées, même heuristique
+     * que pour "Appareils connectés" (user_sessions) pour rester cohérent dans toute l'UI.
+     */
+    public static function deviceLabel(string $ua): string
     {
         if ($ua === '') return 'Appareil inconnu';
 

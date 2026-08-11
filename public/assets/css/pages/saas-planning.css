@@ -115,6 +115,37 @@
   cursor: default;
 }
 
+/* ── Points de couleur (mobile uniquement, cf. media query) ───── */
+.cal-cell-dots { display: none; }
+.cal-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.cal-dot-more { font-size: 8.5px; font-weight: 700; color: #6B7280; line-height: 6px; }
+
+.cal-month-cell.selected { background: rgba(201,168,76,0.1); box-shadow: inset 0 0 0 2px rgba(201,168,76,0.35); }
+
+/* ── Agenda du jour (mobile uniquement, cf. media query) ──────── */
+.cal-agenda { display: none; margin-top: 12px; padding: 16px; }
+.cal-agenda-header {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 13px; font-weight: 700; color: #111827; text-transform: capitalize;
+  margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.cal-agenda-close {
+  width: 26px; height: 26px; border-radius: 8px; border: none; background: #F3F4F6;
+  color: #6B7280; display: grid; place-items: center; cursor: pointer; flex-shrink: 0;
+}
+.cal-agenda-close svg { width: 13px; height: 13px; }
+.cal-agenda-empty { font-size: 13px; color: #9CA3AF; text-align: center; padding: 16px 0; }
+.cal-agenda-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 4px; border-bottom: 1px solid rgba(0,0,0,0.04);
+  cursor: pointer;
+}
+.cal-agenda-item:last-child { border-bottom: none; }
+.cal-agenda-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.cal-agenda-info { flex: 1; min-width: 0; }
+.cal-agenda-name { font-size: 13px; font-weight: 600; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-agenda-room { font-size: 11px; color: #9CA3AF; margin-top: 1px; }
+
 /* ── Légende des statuts ──────────────────────────────── */
 .plan-legend-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
 .plan-legend-item { display: flex; align-items: center; gap: 5px; }
@@ -143,9 +174,15 @@
   .plan-add-btn-label { display: none; }
 
   .cal-month-dow { padding: 8px 4px; font-size: 10px; }
-  .cal-month-cell { min-height: 62px; padding: 4px 3px; }
+  .cal-month-cell { min-height: 52px; padding: 4px 3px; cursor: pointer; }
+
+  /* Les chips nom+chambre ne tiennent pas dans une case aussi étroite
+     (texte tronqué/débordant, cf. capture utilisateur) : on bascule sur de
+     simples points de couleur, le détail passant dans l'agenda du jour
+     affiché sous le calendrier au tap sur une case. */
+  .cal-cell-events { display: none; }
+  .cal-cell-dots { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; }
+
   .cal-cell-number { width: 18px; height: 18px; font-size: 11px; margin-bottom: 2px; }
-  .cal-chip { padding: 2px 5px; font-size: 9.5px; }
-  .cal-chip-room { font-size: 9px; }
-  .cal-more { font-size: 9px; padding: 1px 5px; }
+  .cal-agenda { display: block; }
 }

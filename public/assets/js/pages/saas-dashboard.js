@@ -83,6 +83,15 @@ function dashboardPage(baseUrl) {
       }[s]) ?? base + 'background:rgba(148,163,184,0.12);color:#334155;';
     },
 
+    /* Couleur pleine (liseré de carte mobile) — même palette que statusStyle */
+    statusAccent(s) {
+      return ({
+        confirmed: '#10B981', pending: '#FBBF24', cancelled: '#EF4444',
+        checked_in: '#38BDF8', checked_out: '#F97316',
+        checkin: '#38BDF8', checkout: '#F97316',
+      }[s]) ?? '#94A3B8';
+    },
+
     get recentBookings() {
       return this.stats?.recent_bookings ?? [];
     },
