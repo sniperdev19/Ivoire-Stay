@@ -87,6 +87,10 @@
           <div class="report-kpi-body">
             <p class="report-kpi-label" x-text="'CA ' + periodLabel"></p>
             <p class="report-kpi-value" x-text="formatPrice(revenue)"></p>
+            <p x-show="revenueChangePct !== null" style="margin:2px 0 0;font-size:11px;font-weight:600;" :style="{ color: revenueChangePct >= 0 ? '#16a34a' : '#DC2626' }">
+              <span x-text="(revenueChangePct >= 0 ? '▲ +' : '▼ ') + revenueChangePct + '%'"></span>
+              <span style="color:#9CA3AF;font-weight:400;" x-text="prevPeriodLabel"></span>
+            </p>
           </div>
         </div>
 
@@ -97,6 +101,10 @@
           <div class="report-kpi-body">
             <p class="report-kpi-label">Dépenses</p>
             <p class="report-kpi-value" x-text="formatPrice(expTotal)"></p>
+            <p x-show="expensesChangePct !== null" style="margin:2px 0 0;font-size:11px;font-weight:600;" :style="{ color: expensesChangePct <= 0 ? '#16a34a' : '#DC2626' }">
+              <span x-text="(expensesChangePct >= 0 ? '▲ +' : '▼ ') + expensesChangePct + '%'"></span>
+              <span style="color:#9CA3AF;font-weight:400;" x-text="prevPeriodLabel"></span>
+            </p>
           </div>
         </div>
 
@@ -107,6 +115,10 @@
           <div class="report-kpi-body">
             <p class="report-kpi-label">Bénéfice net</p>
             <p class="report-kpi-value" :style="{ color: netProfit>=0?'#16a34a':'#DC2626' }" x-text="formatPrice(netProfit)"></p>
+            <p x-show="netProfitChangePct !== null" style="margin:2px 0 0;font-size:11px;font-weight:600;" :style="{ color: netProfitChangePct >= 0 ? '#16a34a' : '#DC2626' }">
+              <span x-text="(netProfitChangePct >= 0 ? '▲ +' : '▼ ') + netProfitChangePct + '%'"></span>
+              <span style="color:#9CA3AF;font-weight:400;" x-text="prevPeriodLabel"></span>
+            </p>
           </div>
         </div>
 
@@ -128,6 +140,10 @@
             <div class="report-kpi-body">
               <p class="report-kpi-label">Taux d'occupation</p>
               <p class="report-kpi-value" x-text="occupancy + '%'"></p>
+              <p x-show="occupancyChangePct !== null" style="margin:2px 0 0;font-size:11px;font-weight:600;" :style="{ color: occupancyChangePct >= 0 ? '#16a34a' : '#DC2626' }">
+                <span x-text="(occupancyChangePct >= 0 ? '▲ +' : '▼ ') + occupancyChangePct + '%'"></span>
+                <span style="color:#9CA3AF;font-weight:400;" x-text="prevPeriodLabel"></span>
+              </p>
             </div>
           </div>
           <div style="height:6px;background:#F3F4F6;border-radius:6px;overflow:hidden;"><div :style="'height:100%;width:'+occupancy+'%;background:#2563EB;'"></div></div>
@@ -181,24 +197,69 @@
         </div>
       </div>
 
-      <!-- ROW 3: Paiements récents -->
-      <div class="saas-card report-section-card">
-        <h3 class="report-section-title"><span class="report-section-dot"></span>Paiements reçus</h3>
+      <!-- ROW 2b: Répartition du CA par type de chambre -->
+      <div class="saas-card report-section-card" style="margin-bottom:12px;">
+        <h3 class="report-section-title"><span class="report-section-dot"></span>Répartition du CA par type de chambre</h3>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <template x-for="item in revenueByRoomType" :key="item.type">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="min-width:140px;display:flex;align-items:center;gap:8px;"><div style="width:9px;height:9px;border-radius:3px;flex-shrink:0;" :style="{ background: item.color }"></div><div style="font-size:12px;color:#111827;" x-text="item.type"></div></div>
+              <div style="flex:1;background:#F3F4F6;border-radius:6px;height:6px;overflow:hidden;margin-right:8px;"><div :style="'height:100%;width:'+item.pct+'%;background:'+item.color+';'"></div></div>
+              <div style="width:70px;text-align:right;color:#9CA3AF;font-size:11.5px;" x-text="item.count + ' résa' + (item.count > 1 ? 's' : '')"></div>
+              <div style="font-weight:700;color:#111827;font-size:13px;min-width:100px;text-align:right;" x-text="formatPrice(item.amt)"></div>
+              <div style="width:40px;text-align:right;color:#9CA3AF;font-size:10.5px;" x-text="item.pct+'%' "></div>
+            </div>
+          </template>
+          <div x-show="!revenueByRoomType.length" style="color:#9CA3AF;font-size:12px;padding:8px 0;">Aucun revenu sur cette période.</div>
+        </div>
+      </div>
+
+      <!-- ROW 2c: Meilleurs clients -->
+      <div class="saas-card report-section-card" style="margin-bottom:12px;">
+        <h3 class="report-section-title"><span class="report-section-dot"></span>Meilleurs clients</h3>
         <div style="overflow-x:auto;">
           <table class="saas-table" style="width:100%;">
-            <thead><tr><th>Référence</th><th>Client</th><th>Montant</th><th>Méthode</th><th>Date</th></tr></thead>
+            <thead><tr><th>#</th><th>Client</th><th>Réservations</th><th>CA généré</th></tr></thead>
+            <tbody>
+              <template x-for="(c, idx) in topClients" :key="c.name + idx">
+                <tr>
+                  <td style="color:#9CA3AF;" x-text="idx + 1"></td>
+                  <td>
+                    <div style="font-weight:600;color:#111827;" x-text="c.name"></div>
+                    <div x-show="c.email" style="font-size:11px;color:#9CA3AF;" x-text="c.email"></div>
+                  </td>
+                  <td x-text="c.count"></td>
+                  <td style="font-weight:800;" x-text="formatPrice(c.spent)"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+          <div x-show="!topClients.length" style="color:#9CA3AF;font-size:12px;padding:8px 0;">Aucun client sur cette période.</div>
+        </div>
+      </div>
+
+      <!-- ROW 3: Paiements -->
+      <div class="saas-card report-section-card">
+        <h3 class="report-section-title"><span class="report-section-dot"></span>Paiements <span x-show="payments.length" style="color:#9CA3AF;font-weight:400;" x-text="'(' + payments.length + ')'"></span></h3>
+        <div style="overflow-x:auto;max-height:360px;overflow-y:auto;">
+          <table class="saas-table" style="width:100%;">
+            <thead><tr><th>Référence</th><th>Client</th><th>Montant net</th><th>Méthode</th><th>Date</th></tr></thead>
             <tbody>
               <template x-for="p in payments" :key="p.id">
                 <tr>
                   <td x-text="p.reference || '—'"></td>
                   <td x-text="p.client_name"></td>
-                  <td style="font-weight:800;" x-text="formatPrice(p.amount)"></td>
+                  <td>
+                    <div style="font-weight:800;" x-text="formatPrice(p.net_amount)"></div>
+                    <div x-show="p.commission_amount > 0" style="font-size:11px;color:#9CA3AF;" x-text="formatPrice(p.amount) + ' encaissé − ' + formatPrice(p.commission_amount) + ' commission'"></div>
+                  </td>
                   <td x-text="p.method"></td>
                   <td x-text="new Date(p.paid_at).toLocaleDateString('fr-FR')"></td>
                 </tr>
               </template>
             </tbody>
           </table>
+          <div x-show="!payments.length" style="color:#9CA3AF;font-size:12px;padding:8px 0;">Aucun paiement sur cette période.</div>
         </div>
       </div>
       </div>

@@ -129,14 +129,17 @@ class PublicController
         }
         unset($room);
 
-        // is_available reflète toujours le statut de la chambre (mis à jour depuis le
-        // SaaS) ; si des dates sont fournies, on affine avec la disponibilité réelle
-        // sur ces dates (Room::available() vérifie déjà statut + chevauchement réservations).
+        // is_available reflète le statut de la chambre (mis à jour depuis le SaaS) ;
+        // si des dates sont fournies, on affine avec la disponibilité réelle sur ces
+        // dates (Room::available() vérifie déjà statut + chevauchement réservations).
+        // Sans dates, seul maintenance/bloquée (mise hors-vente indéfinie) rend la
+        // chambre indisponible — "occupée"/"ménage" sont des statuts du jour qui ne
+        // doivent pas décourager un client cherchant à réserver un autre jour.
         $availableIds = ($checkIn && $checkOut) ? array_column(Room::available($id, $checkIn, $checkOut), 'id') : null;
         foreach ($rooms as &$room) {
             $room['is_available'] = $availableIds !== null
                 ? in_array($room['id'], $availableIds)
-                : ($room['status'] === 'available');
+                : !in_array($room['status'], ['maintenance', 'blocked'], true);
         }
         unset($room);
 
@@ -197,10 +200,13 @@ class PublicController
         )->fetch();
         if (!$room) Response::notFound('Chambre introuvable');
 
-        // Rejet serveur si la chambre a été mise hors-vente (occupée/ménage/
-        // maintenance/bloquée) depuis le SaaS — filet de sécurité si le client
-        // a contourné les vérifications côté page (onglet resté ouvert, appel direct à l'API).
-        if ($room['status'] !== 'available') {
+        // Rejet serveur si la chambre a été mise hors-vente indéfiniment (maintenance/
+        // bloquée) depuis le SaaS — filet de sécurité si le client a contourné les
+        // vérifications côté page (onglet resté ouvert, appel direct à l'API).
+        // "occupée"/"ménage" sont des statuts du jour, sans date de fin : ils ne
+        // bloquent pas une réservation sur un autre jour, seul le conflit de dates
+        // réel compte (vérifié juste après via Booking::isRoomAvailable).
+        if (in_array($room['status'], ['maintenance', 'blocked'], true)) {
             Response::error("Cette chambre n'est plus disponible.", 409);
         }
 
@@ -315,10 +321,12 @@ class PublicController
 
         if (!$room) Response::notFound('Chambre introuvable');
 
-        // Une chambre marquée occupée/ménage/maintenance/bloquée depuis le SaaS
-        // ne doit pas rester réservable sur la vitrine tant que le statut n'est
-        // pas repassé à "available" — même règle que Room::available() (recherche).
-        if ($room['status'] !== 'available') {
+        // Seule une chambre mise hors-vente indéfiniment (maintenance/bloquée) depuis
+        // le SaaS reste totalement injoignable sur la vitrine — même règle que
+        // Room::available() (recherche). "occupée"/"ménage" sont des statuts du jour,
+        // sans date de fin connue : la chambre reste consultable/réservable pour un
+        // autre jour, seul le conflit de dates réel bloque (Booking::isRoomAvailable).
+        if (in_array($room['status'], ['maintenance', 'blocked'], true)) {
             Response::error("Cette chambre n'est pas disponible à la réservation actuellement.", 409);
         }
 

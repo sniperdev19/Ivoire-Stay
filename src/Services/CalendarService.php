@@ -8,15 +8,18 @@ class CalendarService
 {
     public static function getRoomAvailability(int $roomId, string $from, string $to): array
     {
-        // Une chambre mise hors-vente depuis le SaaS (occupée/ménage/maintenance/
-        // bloquée) n'a aucun jour disponible tant que le statut n'est pas remis à
-        // "available", indépendamment des réservations enregistrées.
-        $roomStatus = Database::query('SELECT status FROM rooms WHERE id = ?', [$roomId])->fetchColumn();
+        // Une chambre mise hors-vente indéfiniment depuis le SaaS (maintenance/bloquée)
+        // n'a aucun jour disponible tant que le statut n'est pas remis à "available".
+        // "occupée"/"ménage" sont des statuts du jour, sans date de fin : ils ne
+        // rendent indisponible que les jours réellement couverts par une réservation
+        // en cours, pas tout le calendrier.
+        $roomStatus     = Database::query('SELECT status FROM rooms WHERE id = ?', [$roomId])->fetchColumn();
+        $indefinitelyOut = in_array($roomStatus, ['maintenance', 'blocked'], true);
 
         // Un "passage" a check_in == check_out en base (aucune heure précise stockée) :
         // sans normalisation, `check_out > ?` échoue toujours et la réservation n'est ni
         // récupérée ici, ni détectée dans la boucle de jours plus bas.
-        $bookings = $roomStatus === 'available' ? Database::query(
+        $bookings = !$indefinitelyOut ? Database::query(
             "SELECT check_in, check_out, status FROM bookings
              WHERE room_id = ? AND status NOT IN ('cancelled','checked_out')
                AND check_in < ?
@@ -31,7 +34,7 @@ class CalendarService
 
         while ($current < $end) {
             $date = $current->format('Y-m-d');
-            $days[$date] = $roomStatus === 'available' ? 'available' : 'unavailable';
+            $days[$date] = $indefinitelyOut ? 'unavailable' : 'available';
 
             foreach ($bookings as $b) {
                 $checkOut = $b['check_out'] > $b['check_in']

@@ -592,18 +592,32 @@ class PdfService
             $pdf->Cell(34, 8, '', 1, 1, 'R', true);
         } else {
             // ── 4 INDICATEURS CLÉS ────────────────────────────────────────────
+            // Variation vs période précédente (ReportController::previousPeriodComparison) —
+            // pour les dépenses, une hausse est défavorable (couleur inversée). Pas de
+            // flèche Unicode (▲/▼) : absente des polices core FPDF + ISO-8859-1, ressortirait
+            // en "?" — voir même remarque plus haut pour "—"/"→".
+            $prev = $data['previous'] ?? null;
+            $pctLabel = fn(?float $p): string => $p === null ? '' :
+                ($p >= 0 ? '+' : '') . number_format($p, 1, ',', ' ') . ' % vs préc.';
+            $pctColor = fn(?float $p, bool $invert = false): array => $p === null ? $gray
+                : ((($invert ? $p <= 0 : $p >= 0)) ? [22, 163, 74] : [220, 38, 38]);
+
             $kpis = [
-                ['Revenus',       $fmt((float) ($data['revenue']     ?? 0)), [22, 163, 74]],
-                ['Dépenses',      $fmt((float) ($data['expenses']    ?? 0)), [220, 38, 38]],
-                ['Bénéfice net',  $fmt((float) ($data['net_profit']  ?? 0)), ((float) ($data['net_profit'] ?? 0)) >= 0 ? [22, 163, 74] : [220, 38, 38]],
-                ["Taux d'occupation", number_format((float) ($data['occupancy_rate'] ?? 0), 1, ',', ' ') . ' %', [37, 99, 235]],
+                ['Revenus',       $fmt((float) ($data['revenue']     ?? 0)), [22, 163, 74],
+                    $pctLabel($prev['revenue_pct']    ?? null), $pctColor($prev['revenue_pct']    ?? null)],
+                ['Dépenses',      $fmt((float) ($data['expenses']    ?? 0)), [220, 38, 38],
+                    $pctLabel($prev['expenses_pct']   ?? null), $pctColor($prev['expenses_pct']   ?? null, true)],
+                ['Bénéfice net',  $fmt((float) ($data['net_profit']  ?? 0)), ((float) ($data['net_profit'] ?? 0)) >= 0 ? [22, 163, 74] : [220, 38, 38],
+                    $pctLabel($prev['net_profit_pct'] ?? null), $pctColor($prev['net_profit_pct'] ?? null)],
+                ["Taux d'occupation", number_format((float) ($data['occupancy_rate'] ?? 0), 1, ',', ' ') . ' %', [37, 99, 235],
+                    $pctLabel($prev['occupancy_pct']  ?? null), $pctColor($prev['occupancy_pct']  ?? null)],
             ];
             $kpiW = $W / 4;
             $kpiY = $pdf->GetY(); // fixe une bonne fois : Cell(...,0,2) déplace le curseur à chaque itération
-            foreach ($kpis as $i => [$label, $value, $color]) {
+            foreach ($kpis as $i => [$label, $value, $color, $pctText, $pctCol]) {
                 $x = 15 + $i * $kpiW;
                 $pdf->SetFillColor(...$light);
-                $pdf->Rect($x, $kpiY, $kpiW - 2, 20, 'F');
+                $pdf->Rect($x, $kpiY, $kpiW - 2, 24, 'F');
                 $pdf->SetXY($x + 3, $kpiY + 3);
                 $pdf->SetFont('Arial', '', 7);
                 $pdf->SetTextColor(...$gray);
@@ -612,8 +626,14 @@ class PdfService
                 $pdf->SetFont('Arial', 'B', 11);
                 $pdf->SetTextColor(...$color);
                 $pdf->Cell($kpiW - 6, 6, $u($value), 0, 2);
+                if ($pctText !== '') {
+                    $pdf->SetX($x + 3);
+                    $pdf->SetFont('Arial', '', 7);
+                    $pdf->SetTextColor(...$pctCol);
+                    $pdf->Cell($kpiW - 6, 4, $u($pctText), 0, 2);
+                }
             }
-            $pdf->SetY($kpiY + 26);
+            $pdf->SetY($kpiY + 30);
 
             // ── DÉPENSES PAR CATÉGORIE ───────────────────────────────────────
             $byCategory = $data['expenses_by_category'] ?? [];
@@ -642,33 +662,95 @@ class PdfService
                 $pdf->Ln(6);
             }
 
-            // ── PAIEMENTS RÉCENTS ─────────────────────────────────────────────
-            $payments = $data['recent_payments'] ?? [];
-            if ($payments) {
+            // ── CA PAR TYPE DE CHAMBRE ────────────────────────────────────────
+            $byRoomType = $data['revenue_by_room_type'] ?? [];
+            if ($byRoomType) {
                 $pdf->SetFont('Arial', 'B', 11);
                 $pdf->SetTextColor(...$dark);
                 $pdf->SetX(15);
-                $pdf->Cell($W, 7, $u('Paiements récents'), 0, 1);
+                $pdf->Cell($W, 7, $u('Répartition du CA par type de chambre'), 0, 1);
 
                 $pdf->SetFillColor(...$green);
                 $pdf->SetTextColor(...$white);
                 $pdf->SetFont('Arial', 'B', 8);
                 $pdf->SetX(15);
-                $pdf->Cell(45, 7, $u('Référence'), 1, 0, 'L', true);
-                $pdf->Cell(55, 7, $u('Client'), 1, 0, 'L', true);
-                $pdf->Cell(40, 7, $u('Montant'), 1, 0, 'R', true);
-                $pdf->Cell(40, 7, $u('Date'), 1, 1, 'R', true);
+                $pdf->Cell(90, 7, $u('Type de chambre'), 1, 0, 'L', true);
+                $pdf->Cell(30, 7, $u('Réservations'), 1, 0, 'R', true);
+                $pdf->Cell(60, 7, $u('Revenus'), 1, 1, 'R', true);
 
+                $pdf->SetFont('Arial', '', 9);
+                foreach ($byRoomType as $i => $rt) {
+                    $pdf->SetFillColor(...($i % 2 === 0 ? [255, 255, 255] : $light));
+                    $pdf->SetTextColor(...$dark);
+                    $pdf->SetX(15);
+                    $pdf->Cell(90, 6, $u((string) ($rt['room_type'] ?? '—')), 1, 0, 'L', true);
+                    $pdf->Cell(30, 6, $u((string) ($rt['bookings_count'] ?? 0)), 1, 0, 'R', true);
+                    $pdf->Cell(60, 6, $u($fmt((float) ($rt['total'] ?? 0))), 1, 1, 'R', true);
+                }
+                $pdf->Ln(6);
+            }
+
+            // ── MEILLEURS CLIENTS ──────────────────────────────────────────────
+            $topClients = $data['top_clients'] ?? [];
+            if ($topClients) {
+                $pdf->SetFont('Arial', 'B', 11);
+                $pdf->SetTextColor(...$dark);
+                $pdf->SetX(15);
+                $pdf->Cell($W, 7, $u('Meilleurs clients'), 0, 1);
+
+                $pdf->SetFillColor(...$green);
+                $pdf->SetTextColor(...$white);
+                $pdf->SetFont('Arial', 'B', 8);
+                $pdf->SetX(15);
+                $pdf->Cell(90, 7, $u('Client'), 1, 0, 'L', true);
+                $pdf->Cell(30, 7, $u('Réservations'), 1, 0, 'R', true);
+                $pdf->Cell(60, 7, $u('CA généré'), 1, 1, 'R', true);
+
+                $pdf->SetFont('Arial', '', 9);
+                foreach ($topClients as $i => $c) {
+                    $pdf->SetFillColor(...($i % 2 === 0 ? [255, 255, 255] : $light));
+                    $pdf->SetTextColor(...$dark);
+                    $pdf->SetX(15);
+                    $pdf->Cell(90, 6, $u((string) ($c['client_name'] ?? '—')), 1, 0, 'L', true);
+                    $pdf->Cell(30, 6, $u((string) ($c['bookings_count'] ?? 0)), 1, 0, 'R', true);
+                    $pdf->Cell(60, 6, $u($fmt((float) ($c['total_spent'] ?? 0))), 1, 1, 'R', true);
+                }
+                $pdf->Ln(6);
+            }
+
+            // ── PAIEMENTS ─────────────────────────────────────────────────────
+            $payments = $data['recent_payments'] ?? [];
+            if ($payments) {
+                $pdf->SetFont('Arial', 'B', 11);
+                $pdf->SetTextColor(...$dark);
+                $pdf->SetX(15);
+                $pdf->Cell($W, 7, $u('Paiements (' . count($payments) . ')'), 0, 1);
+
+                $pdf->SetFillColor(...$green);
+                $pdf->SetTextColor(...$white);
+                $pdf->SetFont('Arial', 'B', 8);
+                $pdf->SetX(15);
+                $pdf->Cell(40, 7, $u('Référence'), 1, 0, 'L', true);
+                $pdf->Cell(45, 7, $u('Client'), 1, 0, 'L', true);
+                $pdf->Cell(35, 7, $u('Montant net'), 1, 0, 'R', true);
+                $pdf->Cell(30, 7, $u('Commission'), 1, 0, 'R', true);
+                $pdf->Cell(30, 7, $u('Date'), 1, 1, 'R', true);
+
+                // Montant net (amount - commission_amount) : ce que l'établissement
+                // garde réellement — voir ReportController::gatherSummary(). La
+                // commission plateforme est affichée à part, pas déjà déduite en amont.
                 $pdf->SetFont('Arial', '', 9);
                 foreach ($payments as $i => $p) {
                     $pdf->SetFillColor(...($i % 2 === 0 ? [255, 255, 255] : $light));
                     $pdf->SetTextColor(...$dark);
                     $pdf->SetX(15);
-                    $pdf->Cell(45, 6, $u((string) ($p['reference'] ?? '—')), 1, 0, 'L', true);
-                    $pdf->Cell(55, 6, $u((string) ($p['client_name'] ?? '—')), 1, 0, 'L', true);
-                    $pdf->Cell(40, 6, $u($fmt((float) ($p['amount'] ?? 0))), 1, 0, 'R', true);
+                    $pdf->Cell(40, 6, $u((string) ($p['reference'] ?? '—')), 1, 0, 'L', true);
+                    $pdf->Cell(45, 6, $u((string) ($p['client_name'] ?? '—')), 1, 0, 'L', true);
+                    $pdf->Cell(35, 6, $u($fmt((float) ($p['net_amount'] ?? $p['amount'] ?? 0))), 1, 0, 'R', true);
+                    $commission = (float) ($p['commission_amount'] ?? 0);
+                    $pdf->Cell(30, 6, $u($commission > 0 ? $fmt($commission) : '—'), 1, 0, 'R', true);
                     $dateStr = !empty($p['paid_at']) ? date('d/m/Y', strtotime($p['paid_at'])) : '—';
-                    $pdf->Cell(40, 6, $u($dateStr), 1, 1, 'R', true);
+                    $pdf->Cell(30, 6, $u($dateStr), 1, 1, 'R', true);
                 }
             }
         }

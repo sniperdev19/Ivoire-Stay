@@ -11,23 +11,25 @@ return [
         // voir 'online_payment_commission_pct' et Core\PlanGate::commissionPct().
         // Taux calé sur les frais RÉELS de GeniusPay (Services\GeniusPayService::
         // paymentFee()/withdrawalFee()) + une marge plateforme visée de 1.5% :
-        // GeniusPay prend 2.5% à l'encaissement (dont 1.5% absorbé par la plateforme,
-        // 1% répercuté au client) + 1% au retrait (absorbé par la plateforme) + 1.5%
-        // de marge plateforme = 5% de commission totale, dont 1% côté client.
+        // GeniusPay prend 100 XOF fixe + 2.5% à l'encaissement (dont 1% répercuté
+        // au client, le reste — 100 XOF + 1.5% — absorbé par la plateforme) + 1%
+        // au retrait (absorbé par la plateforme) + 1.5% de marge plateforme fixée
+        // à 100 XOF + 1.5% (le forfait fixe compense le 100 XOF de GeniusPay que le
+        // % seul ne couvre jamais sur une petite réservation, voir
+        // AdminController::platformMargin() — sans lui la marge réelle passe
+        // négative en dessous d'un certain montant). Total : 5% + 200 XOF de
+        // commission, dont 1% côté client.
         // - 'online_payment_client_share_pct' est ajoutée au prix affiché/facturé au
         //   client (Services\PlanPricingService::applyClientMarkup(), appliquée partout
         //   où le prix est montré/calculé, quel que soit le mode de paiement finalement
-        //   choisi — un seul prix, pas de ligne de frais séparée).
-        // - Le reste (commission_pct - client_share_pct = 4%) est absorbé par
-        //   l'établissement, prélevé sur le montant collecté au moment du paiement en
-        //   ligne (payments.commission_amount = montant collecté × commission_pct, PAS
-        //   recalculé sur le prix hors majoration — approximation volontaire, simple et
-        //   robuste plutôt qu'une reconstitution exacte du prix de base). Le forfait fixe
-        //   de 100 XOF de GeniusPay n'est pas dans ce %, seulement tracé (informatif,
-        //   payments.geniuspay_fee_amount) — sur une petite réservation, il peut manger
-        //   une partie de la marge de 1.5% visée (voir AdminController::platformMargin()).
+        //   choisi — un seul prix, pas de ligne de frais séparée). Le forfait fixe
+        //   n'est PAS répercuté au client, uniquement prélevé côté établissement.
+        // - Le reste (commission_pct - client_share_pct = 4%, + le forfait fixe de
+        //   200 XOF en entier) est absorbé par l'établissement, prélevé sur le
+        //   montant collecté au moment du paiement en ligne (voir Invoice::registerPayment()).
         'online_payment_commission_pct'    => 5,
         'online_payment_client_share_pct'  => 1,
+        'online_payment_commission_fixed'  => 200,
         'features' => [
             'invoices'  => true,
             'payments'  => true,

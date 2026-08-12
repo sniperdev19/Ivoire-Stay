@@ -86,8 +86,15 @@ class PublicClient extends BaseModel
      *                             clients ayant au moins une réservation dans ces
      *                             établissements.
      */
-    public static function allWithBookingCount(?array $estabIds = null): array
+    public static function allWithBookingCount(?array $estabIds = null, string $search = ''): array
     {
+        $search  = trim($search);
+        $like    = '%' . $search . '%';
+        $searchSql = $search !== ''
+            ? ' AND (pc.first_name LIKE ? OR pc.last_name LIKE ? OR pc.email LIKE ? OR pc.phone LIKE ?)'
+            : '';
+        $searchParams = $search !== '' ? [$like, $like, $like, $like] : [];
+
         if ($estabIds === null) {
             return Database::query(
                 "SELECT pc.*, COUNT(DISTINCT b.id) as booking_count,
@@ -97,8 +104,10 @@ class PublicClient extends BaseModel
                  LEFT JOIN bookings b ON b.public_client_id = pc.id
                  LEFT JOIN invoices i ON i.booking_id = b.id
                  LEFT JOIN payments p ON p.invoice_id = i.id AND p.status = 'completed'
+                 WHERE 1=1{$searchSql}
                  GROUP BY pc.id
-                 ORDER BY pc.created_at DESC"
+                 ORDER BY pc.created_at DESC",
+                $searchParams
             )->fetchAll();
         }
 
@@ -114,10 +123,10 @@ class PublicClient extends BaseModel
              JOIN rooms r ON r.id = b.room_id
              LEFT JOIN invoices i ON i.booking_id = b.id
              LEFT JOIN payments p ON p.invoice_id = i.id AND p.status = 'completed'
-             WHERE r.establishment_id IN ($in)
+             WHERE r.establishment_id IN ($in){$searchSql}
              GROUP BY pc.id
              ORDER BY pc.created_at DESC",
-            $estabIds
+            array_merge($estabIds, $searchParams)
         )->fetchAll();
     }
 

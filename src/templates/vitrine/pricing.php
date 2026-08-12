@@ -1,9 +1,8 @@
 ﻿<?php
 $base = $base_url ?? rtrim(APP_URL, '/');
 
-$starterCommission       = \Services\PlanPricingService::commissionPct('starter');
-$starterClientShare      = \Services\PlanPricingService::clientSharePct('starter');
 $starterEstabShare       = \Services\PlanPricingService::establishmentSharePct('starter');
+$starterCommissionFixed  = \Services\PlanPricingService::commissionFixedAmount('starter');
 $proMonthly      = \Services\PlanPricingService::price('pro', 'monthly');
 $proYearly       = \Services\PlanPricingService::price('pro', 'yearly');
 $proYearlyPerMo  = round($proYearly / 12);
@@ -73,11 +72,10 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
               </svg></span><span>Support par email</span></li>
         </ul>
         <div class="pr-divider"></div>
-        <p class="pr-plan-tagline" style="margin:0 0 4px;"><strong>Paiement en ligne toujours activé</strong> — la
-          plateforme prélève <?= $fmt($starterCommission) ?>% de commission sur chaque réservation payée en ligne
-          (non désactivable sur ce plan, à la différence de Pro/Business) : <?= $fmt($starterClientShare) ?>% déjà
-          inclus dans le prix affiché, <?= $fmt($starterEstabShare) ?>% prélevés sur le montant reversé à
-          l'établissement.</p>
+        <p class="pr-plan-tagline" style="margin:0 0 4px;"><strong>Paiement en ligne toujours activé.</strong><br>La
+          plateforme prélève <?= $fmt($starterEstabShare) ?>%<?= $starterCommissionFixed > 0 ? ' + ' . $fmt($starterCommissionFixed) . ' FCFA' : '' ?> de
+          commission sur chaque réservation payée en ligne (non désactivable sur ce plan, à la différence de
+          Pro/Business), prélevés sur le montant reversé à l'établissement.</p>
         <a href="<?= $base ?>/register?plan=starter" class="pr-card-btn pr-btn-outline">Démarrer sans abonnement</a>
       </div>
     </div>
@@ -217,7 +215,7 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
         </tr>
         <tr>
           <td>Commission sur le paiement en ligne</td>
-          <td><?= $fmt($starterCommission) ?>% (non désactivable)</td>
+          <td><?= $fmt($starterEstabShare) ?>%<?= $starterCommissionFixed > 0 ? ' + ' . $fmt($starterCommissionFixed) . ' FCFA' : '' ?> (non désactivable)</td>
           <td>0% (optionnel)</td>
           <td>0% (optionnel)</td>
         </tr>
@@ -294,9 +292,8 @@ $fmt = fn($n) => number_format($n, 0, ',', ' ');
         <div class="pr-faq-a" x-show="open===2" x-transition>Le plan Starter est sans abonnement et sans limite de
           temps : vous avez accès à toutes les fonctionnalités du plan Pro dès l'inscription, sans carte bancaire. En
           contrepartie, le paiement en ligne des réservations y est toujours activé et la plateforme prélève
-          <?= $fmt($starterCommission) ?>% de commission dessus, répartie entre le client
-          (<?= $fmt($starterClientShare) ?>%, déjà inclus dans le prix affiché) et l'établissement
-          (<?= $fmt($starterEstabShare) ?>%, prélevés sur le montant reversé). Passez à Pro ou Business quand vous
+          <?= $fmt($starterEstabShare) ?>%<?= $starterCommissionFixed > 0 ? ' + ' . $fmt($starterCommissionFixed) . ' FCFA' : '' ?> de
+          commission dessus, prélevés sur le montant reversé à l'établissement. Passez à Pro ou Business quand vous
           préférez payer un abonnement fixe plutôt qu'une commission.</div>
       </div>
       <div class="pr-faq-item" :class="open===3?'pr-faq-open':''">

@@ -40,7 +40,7 @@ $defaultTab = $defaultTab ?? 'invoices';
           <div style="font-size:16px;font-weight:800;color:#16a34a;" x-text="kpi.paidInv"></div>
         </div>
         <div class="kpi-card saas-card">
-          <div style="font-size:10px;color:#9CA3AF;margin-bottom:3px;">Encaissé</div>
+          <div style="font-size:10px;color:#9CA3AF;margin-bottom:3px;">Encaissé (net)</div>
           <div style="font-size:13px;font-weight:800;color:#1B4332;" x-text="formatPrice(kpi.encaisse)"></div>
         </div>
         <div class="kpi-card saas-card">
@@ -293,7 +293,10 @@ $defaultTab = $defaultTab ?? 'invoices';
                       <td><span style="display:inline-block;padding:4px 8px;border-radius:6px;background:rgba(201,168,76,0.1);font-weight:700;color:#C9A84C;font-size:12px;" x-text="p.reference ?? '#' + p.id"></span></td>
                       <td style="font-weight:600;" x-text="p.client_name ?? '—'"></td>
                       <td style="font-size:12px;color:#6B7280;" x-text="p.invoice_number ?? '—'"></td>
-                      <td style="font-weight:800;" x-text="formatPrice(p.amount)"></td>
+                      <td>
+                        <div style="font-weight:800;" x-text="formatPrice(p.amount - (p.commission_amount||0))"></div>
+                        <div x-show="p.commission_amount > 0" style="font-size:11px;color:#9CA3AF;" x-text="formatPrice(p.amount) + ' encaissé − ' + formatPrice(p.commission_amount) + ' commission'"></div>
+                      </td>
                       <td>
                         <div style="display:inline-flex;align-items:center;gap:6px;">
                           <div :style="'width:8px;height:8px;border-radius:3px;background:' + methodColor(p.method)"></div>
@@ -341,7 +344,7 @@ $defaultTab = $defaultTab ?? 'invoices';
                       <span class="bill-mobile-method-dot" :style="'background:' + methodColor(p.method)"></span>
                       <span x-text="methodLabel(p.method) + ' · ' + typeLabel(p.type)"></span>
                     </div>
-                    <span class="bill-mobile-amount" x-text="formatPrice(p.amount)"></span>
+                    <span class="bill-mobile-amount" x-text="formatPrice(p.amount - (p.commission_amount||0))"></span>
                   </div>
                   <div class="bill-mobile-footer">
                     <span>

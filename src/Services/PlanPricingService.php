@@ -58,6 +58,19 @@ class PlanPricingService
     }
 
     /**
+     * Montant fixe (XOF) de commission, en plus du taux — jamais répercuté au client
+     * (seul le taux clientSharePct l'est via applyClientMarkup()), entièrement absorbé
+     * par l'établissement. Compense le forfait fixe réel de GeniusPay à l'encaissement
+     * (Services\GeniusPayService::paymentFee()) qu'un taux proportionnel seul ne peut
+     * jamais couvrir sur une petite réservation.
+     */
+    public static function commissionFixedAmount(string $plan): float
+    {
+        $default = (float) (self::plans()[$plan]['online_payment_commission_fixed'] ?? 0);
+        return Settings::getFloat("plan_commission_{$plan}_fixed", $default);
+    }
+
+    /**
      * Applique la majoration client à un montant (prix chambre, total réservation…).
      * Un seul prix affiché/facturé du début à la fin (recherche, fiche chambre,
      * réservation, facture) quel que soit le mode de paiement finalement choisi —
@@ -84,8 +97,9 @@ class PlanPricingService
             }
         }
         foreach ($plans as $plan => $config) {
-            $plans[$plan]['online_payment_commission_pct']   = self::commissionPct($plan);
-            $plans[$plan]['online_payment_client_share_pct'] = self::clientSharePct($plan);
+            $plans[$plan]['online_payment_commission_pct']    = self::commissionPct($plan);
+            $plans[$plan]['online_payment_client_share_pct']  = self::clientSharePct($plan);
+            $plans[$plan]['online_payment_commission_fixed']  = self::commissionFixedAmount($plan);
         }
         return $plans;
     }

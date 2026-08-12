@@ -76,7 +76,7 @@ class Room extends BaseModel
              FROM rooms r
              JOIN room_types rt ON rt.id = r.room_type_id
              WHERE r.establishment_id = ?
-               AND r.status = 'available'
+               AND r.status NOT IN ('maintenance', 'blocked')
                AND r.id NOT IN (
                    SELECT room_id FROM bookings
                    WHERE status NOT IN ('cancelled', 'checked_out')

@@ -23,7 +23,7 @@
         <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Total paiements</div><div style="font-size:18px;font-weight:800;" x-text="payments.length"></div></div>
         <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Complétés</div><div style="font-size:18px;font-weight:800;color:#16a34a;" x-text="payments.filter(p=>p.status==='completed').length"></div></div>
         <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">En attente</div><div style="font-size:18px;font-weight:800;color:#D97706;" x-text="payments.filter(p=>p.status==='pending').length"></div></div>
-        <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Volume complété</div><div style="font-size:16px;font-weight:800;color:#1B4332;" x-text="formatPrice(payments.filter(p=>p.status==='completed').reduce((s,p)=>s+(p.amount||0),0))"></div></div>
+        <div class="kpi-card saas-card"><div style="font-size:12px;color:#9CA3AF;">Volume net complété</div><div style="font-size:16px;font-weight:800;color:#1B4332;" x-text="formatPrice(payments.filter(p=>p.status==='completed').reduce((s,p)=>s+((p.amount||0)-(p.commission_amount||0)),0))"></div></div>
       </div>
 
       <!-- Filters -->
@@ -48,13 +48,16 @@
         <template x-if="!loading && !upgradeRequired">
           <div style="overflow-x:auto;">
             <table class="saas-table" style="width:100%;">
-              <thead><tr><th>Référence</th><th>Client</th><th>Montant</th><th>Méthode</th><th>Type</th><th>Statut</th><th>Date</th><th>Action</th></tr></thead>
+              <thead><tr><th>Référence</th><th>Client</th><th>Montant net</th><th>Méthode</th><th>Type</th><th>Statut</th><th>Date</th><th>Action</th></tr></thead>
               <tbody>
                 <template x-for="p in payments" :key="p.id">
                   <tr>
                     <td><div style="display:inline-block;padding:6px 8px;border-radius:8px;background:rgba(201,168,76,0.08);font-weight:700;color:#C9A84C;" x-text="p.reference"></div></td>
                     <td x-text="p.client_name"></td>
-                    <td style="font-weight:800;" x-text="formatPrice(p.amount)"></td>
+                    <td>
+                      <div style="font-weight:800;" x-text="formatPrice(p.amount - (p.commission_amount||0))"></div>
+                      <div x-show="p.commission_amount > 0" style="font-size:11px;color:#9CA3AF;" x-text="formatPrice(p.amount) + ' encaissé − ' + formatPrice(p.commission_amount) + ' commission'"></div>
+                    </td>
                     <td><div style="display:inline-flex;align-items:center;gap:8px;"><div style="width:10px;height:10px;border-radius:4px;" :style="{ background: methodIcon(p.method) }"></div><span x-text="methodLabel(p.method)"></span></div></td>
                     <td x-text="typeLabel(p.type)" style="color:#9CA3AF;"></td>
                     <td><span :class="statusCfg(p.status).badge" x-text="statusCfg(p.status).label"></span></td>

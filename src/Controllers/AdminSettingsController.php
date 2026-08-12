@@ -17,6 +17,7 @@ class AdminSettingsController
         'agent_reward_pro', 'agent_reward_business',
         'bonus_first_to_5_amount', 'bonus_first_business_amount',
         'bonus_fast_conversion_amount', 'bonus_monthly_top_amount',
+        'plan_commission_starter_fixed',
     ];
 
     /** Prix des plans payants : jamais 0 (contrairement aux primes, qui peuvent l'être pour se désactiver). */
@@ -51,6 +52,7 @@ class AdminSettingsController
 
             'plan_commission_starter_pct'        => PlanPricingService::commissionPct('starter'),
             'plan_commission_starter_client_pct' => PlanPricingService::clientSharePct('starter'),
+            'plan_commission_starter_fixed'      => PlanPricingService::commissionFixedAmount('starter'),
 
             'agent_reward_pro'      => Settings::getFloat('agent_reward_pro', (float) ($plans['pro']['agent_reward_per_5'] ?? 0)),
             'agent_reward_business' => Settings::getFloat('agent_reward_business', (float) ($plans['business']['agent_reward_per_5'] ?? 0)),

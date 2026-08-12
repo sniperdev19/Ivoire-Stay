@@ -164,7 +164,8 @@ class Invoice extends BaseModel
         ?string $notes = null,
         float $commissionPct = 0.0,
         bool $viaGeniusPay = false,
-        float $clientSharePct = 0.0
+        float $clientSharePct = 0.0,
+        float $commissionFixed = 0.0
     ): int {
         $now = date('Y-m-d H:i:s');
 
@@ -178,12 +179,20 @@ class Invoice extends BaseModel
         // constaté en conditions réelles le 2026-08-11 (5% prélevés au lieu de 4%).
         $baseAmount = $clientSharePct > 0 ? $amount / (1 + $clientSharePct / 100) : $amount;
 
+        // $commissionFixed (PlanGate::commissionFixedAmount()) n'est jamais répercuté
+        // au client (contrairement à clientSharePct) : entièrement absorbé par
+        // l'établissement, en plus du taux — compense le forfait fixe réel de
+        // GeniusPay (Services\GeniusPayService::paymentFee()) qu'un taux proportionnel
+        // seul ne couvre jamais sur une petite réservation. Nul pour un encaissement
+        // manuel ($viaGeniusPay = false), qui n'engendre aucun frais GeniusPay réel.
+        $commissionAmount = round($baseAmount * $commissionPct / 100, 2) + ($viaGeniusPay ? $commissionFixed : 0);
+
         $paymentId = Payment::create([
             'booking_id'           => $bookingId,
             'invoice_id'           => $invoiceId,
             'amount'               => $amount,
             'commission_pct'       => $commissionPct,
-            'commission_amount'    => round($baseAmount * $commissionPct / 100, 2),
+            'commission_amount'    => $commissionAmount,
             // Frais réels GeniusPay (informatif, cf. GeniusPayService::paymentFee) : uniquement
             // pour les paiements réellement passés par la passerelle, jamais pour un encaissement
             // manuel (espèces/mobile money saisi à la main par le personnel).

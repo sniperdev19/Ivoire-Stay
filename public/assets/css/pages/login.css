@@ -397,9 +397,10 @@ body {
 @media (max-width: 1024px) {
   body { grid-template-columns: 1fr; }
   .lg-left { display: none; }
-  /* Bouton retour et lien d'inscription retirés sur mobile (demande explicite) —
-     .lg-mobile-back garde son display:none de base au lieu d'être réaffiché ici. */
-  .lg-form-footer { display: none; }
+  /* Bouton retour retiré sur mobile (demande explicite) — .lg-mobile-back
+     garde son display:none de base au lieu d'être réaffiché ici. Le lien
+     d'inscription (.lg-form-footer), lui, a été remis sur mobile — retiré
+     un temps avec le bouton retour, mais demandé de nouveau. */
   .lg-separator { display: none; }
   .lg-right { background: var(--forest); min-height: 100vh; height: auto; }
   .lg-form-title, .lg-form-eyebrow span { color: white; }
@@ -413,6 +414,9 @@ body {
   .lg-toggle-btn { color: rgba(255,255,255,0.45); }
   .lg-forgot { color: rgba(255,255,255,0.4); }
   .lg-forgot:hover { color: white; }
+  .lg-form-footer { color: rgba(255,255,255,0.5); }
+  .lg-form-footer a { color: var(--gold); border-bottom-color: rgba(201,168,76,0.3); }
+  .lg-form-footer a:hover { border-color: var(--gold); }
   .lg-bio-fallback { color: rgba(255,255,255,0.45); }
   .lg-bio-fallback:hover { color: white; }
   .lg-btn-secondary { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.18); color: white; }
