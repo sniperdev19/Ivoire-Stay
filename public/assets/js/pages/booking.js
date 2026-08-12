@@ -66,7 +66,7 @@ function bookingPage(apiBase, roomId) {
     },
     errors: {},
     payMode:   'online',
-    payMethod: 'orange',
+    payMethod: 'wave',
     booking: null,
     submitting: false,
     bookingError: null,
@@ -81,6 +81,15 @@ function bookingPage(apiBase, roomId) {
 
     get isPassage() {
       return !!(this.form.check_in && this.form.check_out && this.form.check_in === this.form.check_out);
+    },
+
+    /* Passage de moins de 4h : trop court pour justifier les frais du paiement en ligne, réglé sur place obligatoirement. */
+    get passageOnsiteOnly() {
+      return this.isPassage && Number(this.form.hours) < 4;
+    },
+
+    get onlinePaymentAvailable() {
+      return this.room?.online_payment_enabled !== false && !this.passageOnsiteOnly;
     },
 
     get nights() {
@@ -310,7 +319,7 @@ function bookingPage(apiBase, roomId) {
       if (!this.form.check_out) this.errors.check_out = 'Date de départ requise';
       if (this.isPassage) {
         const h = Number(this.form.hours);
-        if (!h || h < 1 || h > 23) this.errors.hours = 'Veuillez choisir un nombre d\'heures valide (1 – 23)';
+        if (!h || h < 1 || h > 4) this.errors.hours = 'Veuillez choisir un nombre d\'heures valide (1 – 4)';
       } else if (this.form.check_in && this.form.check_out && this.nights <= 0) {
         this.errors.check_out = "La date de départ doit être après la date d'arrivée";
       }
@@ -323,11 +332,17 @@ function bookingPage(apiBase, roomId) {
 
     validateStep2() {
       this.errors = {};
-      if (!this.form.first_name.trim()) this.errors.first_name = 'Prénom requis';
-      if (!this.form.last_name.trim())  this.errors.last_name  = 'Nom requis';
+      const firstName = this.form.first_name.trim();
+      const lastName  = this.form.last_name.trim();
+      const phone     = this.form.phone.trim();
+      if (!firstName)              this.errors.first_name = 'Prénom requis';
+      else if (firstName.length < 2) this.errors.first_name = 'Prénom trop court';
+      if (!lastName)                 this.errors.last_name  = 'Nom requis';
+      else if (lastName.length < 2)  this.errors.last_name  = 'Nom trop court';
       if (!this.form.email)             this.errors.email       = 'Email requis';
       else if (!/^\S+@\S+\.\S+$/.test(this.form.email)) this.errors.email = 'Email invalide';
-      if (!this.form.phone)             this.errors.phone       = 'Téléphone requis';
+      if (!phone)                    this.errors.phone      = 'Téléphone requis';
+      else if (!/^[0-9+\s]{8,20}$/.test(phone)) this.errors.phone = 'Numéro de téléphone invalide';
       return Object.keys(this.errors).length === 0;
     },
 
@@ -338,6 +353,7 @@ function bookingPage(apiBase, roomId) {
           const avail = await this.checkAvailability();
           if (!avail) return;
         }
+        if (!this.onlinePaymentAvailable) this.payMode = 'onsite';
         this.step = 2;
       } else if (this.step === 2) {
         if (!this.validateStep2()) return;

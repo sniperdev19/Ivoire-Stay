@@ -16,7 +16,8 @@ class ClientController
         // mélangés, quel que soit celui sélectionné dans l'interface.
         $estabId = Guard::resolveEstabId($req);
         if (!$estabId) Response::error('establishment_id requis');
-        Response::success(PublicClient::allWithBookingCount([$estabId]));
+        $search = trim((string) ($req->get('search') ?? ''));
+        Response::success(PublicClient::allWithBookingCount([$estabId], $search));
     }
 
     public function show(Request $req, array $params = []): void

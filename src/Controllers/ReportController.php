@@ -33,9 +33,11 @@ class ReportController
 
         if ($estab) PlanGate::require($estab, 'reports');
 
+        $anchor = $req->get('date') ?? date('Y-m-d');
         [$period, $from, $to, $months] = self::resolvePeriod($req);
 
         $data = self::gatherSummary($estabIds, $from, $to, $months);
+        $data['previous'] = self::previousPeriodComparison($estabIds, $period, $anchor, $data);
         $data = ['period' => $period, 'from' => $from, 'to' => $to, 'scope' => $scope] + $data;
 
         Response::success($data);
@@ -63,7 +65,8 @@ class ReportController
     /** Export PDF — mêmes paramètres/portées que summary()/compare() (mode=single|all|compare). */
     public function pdf(Request $req, array $params = []): void
     {
-        $mode = in_array($req->get('mode'), ['all', 'compare'], true) ? $req->get('mode') : 'single';
+        $mode   = in_array($req->get('mode'), ['all', 'compare'], true) ? $req->get('mode') : 'single';
+        $anchor = $req->get('date') ?? date('Y-m-d');
         [$period, $from, $to, $months] = self::resolvePeriod($req);
 
         try {
@@ -98,6 +101,7 @@ class ReportController
                 if ($estab) PlanGate::require($estab, 'reports');
 
                 $data = self::gatherSummary($estabIds, $from, $to, $months);
+                $data['previous'] = self::previousPeriodComparison($estabIds, $period, $anchor, $data);
                 $path = PdfService::generateReport(
                     ['mode' => $mode, 'title' => $title, 'period' => $period, 'from' => $from, 'to' => $to] + $data
                 );
@@ -179,6 +183,55 @@ class ReportController
         return [$period, $from, $to, $months];
     }
 
+    /** @return array{0:string,1:string,2:string[]} [from, to, months] de la période immédiatement précédente. */
+    private static function resolvePreviousPeriod(string $period, string $anchor): array
+    {
+        if ($period === 'year') {
+            $prevAnchor = date('Y-m-d', strtotime($anchor . ' -1 year'));
+            $year   = date('Y', strtotime($prevAnchor));
+            $from   = "$year-01-01";
+            $to     = "$year-12-31";
+            $months = [];
+            for ($m = 1; $m <= 12; $m++) $months[] = sprintf('%s-%02d', $year, $m);
+        } else {
+            $prevAnchor = date('Y-m-d', strtotime($anchor . ' -1 month'));
+            $month  = date('Y-m', strtotime($prevAnchor));
+            $from   = "$month-01";
+            $to     = date('Y-m-t', strtotime($prevAnchor));
+            $months = [$month];
+        }
+        return [$from, $to, $months];
+    }
+
+    /**
+     * Comparaison vs la période immédiatement précédente (mois dernier si
+     * period=month, année dernière si period=year) — revenus/dépenses/bénéfice/
+     * occupation + variation en %. Recalcule un gatherSummary() complet sur la
+     * période précédente (léger surcoût de requêtes, acceptable pour une page
+     * de rapports peu sollicitée) plutôt que dupliquer une version allégée.
+     */
+    private static function previousPeriodComparison(array $estabIds, string $period, string $anchor, array $current): array
+    {
+        [$prevFrom, $prevTo, $prevMonths] = self::resolvePreviousPeriod($period, $anchor);
+        $prev = self::gatherSummary($estabIds, $prevFrom, $prevTo, $prevMonths);
+
+        $pct = function (float $curr, float $prev): float {
+            if ($prev == 0.0) return $curr > 0 ? 100.0 : 0.0;
+            return round(($curr - $prev) / $prev * 100, 1);
+        };
+
+        return [
+            'revenue'          => $prev['revenue'],
+            'expenses'         => $prev['expenses'],
+            'net_profit'       => $prev['net_profit'],
+            'occupancy_rate'   => $prev['occupancy_rate'],
+            'revenue_pct'      => $pct($current['revenue'], $prev['revenue']),
+            'expenses_pct'     => $pct($current['expenses'], $prev['expenses']),
+            'net_profit_pct'   => $pct($current['net_profit'], $prev['net_profit']),
+            'occupancy_pct'    => $pct($current['occupancy_rate'], $prev['occupancy_rate']),
+        ];
+    }
+
     /** Cœur du calcul, scopé à un ou plusieurs établissements (IN (...) au lieu de =). */
     private static function gatherSummary(array $estabIds, string $from, string $to, array $months): array
     {
@@ -186,8 +239,12 @@ class ReportController
 
         // Une réservation annulée après encaissement ne doit plus compter
         // dans le CA (voir Payment::totalByEstablishment, même règle).
+        // SUM(amount - commission_amount) : voir Payment::totalByEstablishment()
+        // pour l'explication — sur le plan Starter (paiement en ligne commissionné),
+        // amount seul est le montant BRUT payé par le client, une partie
+        // (commission_amount) ne revient jamais à l'établissement.
         $revenue = (float) Database::query(
-            "SELECT COALESCE(SUM(p.amount), 0)
+            "SELECT COALESCE(SUM(p.amount - p.commission_amount), 0)
              FROM payments p
              JOIN bookings b ON b.id = p.booking_id
              JOIN rooms r ON r.id = b.room_id
@@ -233,8 +290,31 @@ class ReportController
             $estabIds
         )->fetchColumn();
 
+        $revenueByRoomType = Database::query(
+            "SELECT rt.name AS room_type, COALESCE(SUM(p.amount - p.commission_amount), 0) as total, COUNT(DISTINCT b.id) as bookings_count
+             FROM payments p
+             JOIN bookings b ON b.id = p.booking_id
+             JOIN rooms r ON r.id = b.room_id
+             JOIN room_types rt ON rt.id = r.room_type_id
+             WHERE r.establishment_id IN ($in) AND p.status = 'completed'
+               AND b.status != 'cancelled'
+               AND DATE(p.paid_at) BETWEEN ? AND ?
+             GROUP BY rt.id, rt.name
+             ORDER BY total DESC",
+            [...$estabIds, $from, $to]
+        )->fetchAll();
+
+        // Plus de LIMIT 5 : un rapport téléchargé/consulté doit lister TOUS les
+        // paiements de la période, pas juste les 5 derniers (sinon inexploitable
+        // comme export réel dès qu'il y a plus de 5 encaissements sur le mois/l'année).
+        // p.amount reste le montant BRUT réellement transféré par le client (utile
+        // pour rapprocher un relevé GeniusPay) ; net_amount (amount - commission_amount)
+        // est ce que l'établissement en garde réellement — c'est net_amount qui doit
+        // s'additionner pour retomber sur le CA affiché plus haut, pas amount seul.
         $recentPayments = Database::query(
-            "SELECT p.id, i.invoice_number as reference, p.amount, p.method, p.status, p.paid_at,
+            "SELECT p.id, i.invoice_number as reference, p.amount,
+                (p.amount - p.commission_amount) as net_amount, p.commission_amount,
+                p.method, p.status, p.paid_at,
                 COALESCE(CONCAT(pc.first_name, ' ', pc.last_name), u.name) as client_name
              FROM payments p
              JOIN bookings b ON b.id = p.booking_id
@@ -245,12 +325,43 @@ class ReportController
              WHERE r.establishment_id IN ($in) AND p.status = 'completed'
                AND b.status != 'cancelled'
                AND DATE(p.paid_at) BETWEEN ? AND ?
-             ORDER BY p.paid_at DESC LIMIT 5",
+             ORDER BY p.paid_at DESC",
+            [...$estabIds, $from, $to]
+        )->fetchAll();
+
+        // Classement clients : identifiant stable même si le client est un
+        // public_client (réservation en ligne) OU un user (réservation créée par
+        // le personnel) — encodage COALESCE(id, -user_id) pour grouper sans
+        // collision, les deux espaces d'ID démarrant à 1 (voir même pattern
+        // client_name que Booking::allWithFilters()/recentPayments ci-dessus).
+        // MIN(...) plutôt qu'une sélection directe de client_name/client_email : le
+        // GROUP BY porte sur une expression (COALESCE), pas sur les colonnes
+        // sélectionnées telles quelles — ONLY_FULL_GROUP_BY (mode strict par défaut
+        // depuis MySQL 5.7) rejetterait sinon la requête même si chaque groupe ne
+        // contient réellement qu'une seule valeur possible pour ces deux colonnes.
+        $topClients = Database::query(
+            "SELECT MIN(COALESCE(CONCAT(pc.first_name, ' ', pc.last_name), u.name)) as client_name,
+                    MIN(COALESCE(pc.email, u.email)) as client_email,
+                    COUNT(DISTINCT b.id) as bookings_count,
+                    COALESCE(SUM(p.amount - p.commission_amount), 0) as total_spent
+             FROM payments p
+             JOIN bookings b ON b.id = p.booking_id
+             JOIN rooms r ON r.id = b.room_id
+             LEFT JOIN public_clients pc ON pc.id = b.public_client_id
+             LEFT JOIN users u ON u.id = b.user_id
+             WHERE r.establishment_id IN ($in) AND p.status = 'completed'
+               AND b.status != 'cancelled'
+               AND DATE(p.paid_at) BETWEEN ? AND ?
+             GROUP BY COALESCE(b.public_client_id, -b.user_id)
+             ORDER BY total_spent DESC
+             LIMIT 10",
             [...$estabIds, $from, $to]
         )->fetchAll();
 
         return [
             'revenue'              => $revenue,
+            'revenue_by_room_type' => $revenueByRoomType,
+            'top_clients'          => $topClients,
             'expenses'             => $expTotal,
             'expenses_by_category' => $expByCategory,
             'net_profit'           => $revenue - $expTotal,

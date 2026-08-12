@@ -61,6 +61,13 @@ class PlanGate
         return \Services\PlanPricingService::clientSharePct($plan);
     }
 
+    /** Montant fixe (XOF) de commission, jamais répercuté au client — voir PlanPricingService::commissionFixedAmount(). */
+    public static function commissionFixedAmount(array $estab): float
+    {
+        $plan = self::getPlan($estab);
+        return \Services\PlanPricingService::commissionFixedAmount($plan);
+    }
+
     /** Applique la majoration client au montant, selon le plan effectif de cet établissement. */
     public static function applyClientMarkup(float $amount, array $estab): float
     {

@@ -107,6 +107,37 @@ function reportsPage(baseUrl) {
       .sort((a, b) => b.amt - a.amt);
   },
 
+  get revenueByRoomType() {
+    const rows  = this.summary?.revenue_by_room_type ?? [];
+    const total = this.revenue || 1;
+    const palette = ['#1B4332', '#2563EB', '#D97706', '#9333EA', '#0D9488', '#DC2626'];
+    return rows
+      .map((r, i) => ({
+        type:  r.room_type || 'Sans nom',
+        amt:   Number(r.total) || 0,
+        count: Number(r.bookings_count) || 0,
+        pct:   Math.round((Number(r.total) || 0) / total * 100),
+        color: palette[i % palette.length],
+      }))
+      .sort((a, b) => b.amt - a.amt);
+  },
+
+  get topClients() {
+    return (this.summary?.top_clients ?? []).map(c => ({
+      name:  c.client_name || 'Client',
+      email: c.client_email || '',
+      count: Number(c.bookings_count) || 0,
+      spent: Number(c.total_spent) || 0,
+    }));
+  },
+
+  /* Comparaison vs période précédente (mois dernier / année dernière selon this.period) */
+  get prevPeriodLabel() { return this.period === 'year' ? "vs l'année dernière" : 'vs le mois dernier'; },
+  get revenueChangePct()    { return this.summary?.previous?.revenue_pct    ?? null; },
+  get expensesChangePct()   { return this.summary?.previous?.expenses_pct   ?? null; },
+  get netProfitChangePct()  { return this.summary?.previous?.net_profit_pct ?? null; },
+  get occupancyChangePct()  { return this.summary?.previous?.occupancy_pct  ?? null; },
+
   get compareTotals() {
     return this.compareRows.reduce((acc, r) => ({
       revenue:  acc.revenue  + (Number(r.revenue)    || 0),

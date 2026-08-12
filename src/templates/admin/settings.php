@@ -217,8 +217,12 @@
               <label class="saas-label">Dont part répercutée au client (%)</label>
               <input class="saas-input" type="number" min="0" max="100" step="0.5" x-model.number="settings.plan_commission_starter_client_pct">
             </div>
+            <div>
+              <label class="saas-label">Montant fixe additionnel (FCFA)</label>
+              <input class="saas-input" type="number" min="0" step="10" x-model.number="settings.plan_commission_starter_fixed">
+            </div>
           </div>
-          <p class="stg-section-sub" style="margin-top:10px;">Sans abonnement, le plan Starter a le paiement en ligne des réservations toujours activé (non désactivable). La part client est ajoutée au prix affiché/facturé (recherche, fiche chambre, réservation) sans ligne de frais séparée ; le reste est prélevé sur le montant collecté par l'établissement au moment du paiement. Pro/Business restent à 0 % (paiement en ligne optionnel, sans commission).</p>
+          <p class="stg-section-sub" style="margin-top:10px;">Sans abonnement, le plan Starter a le paiement en ligne des réservations toujours activé (non désactivable). La part client est ajoutée au prix affiché/facturé (recherche, fiche chambre, réservation) sans ligne de frais séparée ; le reste (+ le montant fixe, jamais répercuté au client) est prélevé sur le montant collecté par l'établissement au moment du paiement. Le fixe compense le forfait GeniusPay que le taux seul ne couvre pas sur une petite réservation. Pro/Business restent à 0 % (paiement en ligne optionnel, sans commission).</p>
         </div>
 
         <!-- Carte : Primes agents commerciaux -->

@@ -62,9 +62,13 @@ class DashboardController
         $expenses = Expense::totalByMonth($estabId, $month);
 
         // Revenue received — exclut les paiements liés à une réservation
-        // depuis annulée (voir Payment::totalByEstablishment).
+        // depuis annulée (voir Payment::totalByEstablishment). SUM(amount -
+        // commission_amount), pas SUM(amount) seul : voir même remarque que
+        // Payment::totalByEstablishment() — sinon ce chiffre restait gonflé
+        // du montant de commission plateforme (plan Starter) alors même que
+        // 'revenue' juste au-dessus (qui utilise ce modèle) l'était déjà.
         $paymentsReceived = (float) Database::query(
-            "SELECT COALESCE(SUM(p.amount), 0)
+            "SELECT COALESCE(SUM(p.amount - p.commission_amount), 0)
              FROM payments p
              JOIN bookings b ON b.id = p.booking_id
              JOIN rooms r ON r.id = b.room_id
@@ -78,7 +82,7 @@ class DashboardController
         // gérant voie *pourquoi* le revenu a baissé plutôt que de le
         // constater silencieusement.
         $paymentsCancelled = (float) Database::query(
-            "SELECT COALESCE(SUM(p.amount), 0)
+            "SELECT COALESCE(SUM(p.amount - p.commission_amount), 0)
              FROM payments p
              JOIN bookings b ON b.id = p.booking_id
              JOIN rooms r ON r.id = b.room_id

@@ -27,9 +27,16 @@
 
     <div class="saas-card" style="padding:16px;border-top:3px solid #0D9488;"
       :title="'Commission encaissée : ' + formatPrice(overview?.platform_margin?.commission_collected ?? 0) + ' — frais GeniusPay (encaissement) : ' + formatPrice(overview?.platform_margin?.geniuspay_payment_fees ?? 0) + ' — frais GeniusPay (retrait) : ' + formatPrice(overview?.platform_margin?.geniuspay_withdrawal_fees ?? 0)">
-      <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Marge nette plateforme</div>
+      <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Marge nette AfriStay</div>
       <div style="font-size:20px;font-weight:800;color:#0D9488;" x-text="formatPrice(overview?.platform_margin?.net_margin ?? 0)"></div>
       <div style="font-size:10px;color:#9CA3AF;margin-top:4px;">Commission − frais GeniusPay réels</div>
+    </div>
+
+    <div class="saas-card" style="padding:16px;border-top:3px solid #EA580C;"
+      :title="'Frais d\'encaissement : ' + formatPrice(overview?.platform_margin?.geniuspay_payment_fees ?? 0) + ' — frais de retrait : ' + formatPrice(overview?.platform_margin?.geniuspay_withdrawal_fees ?? 0)">
+      <div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Marge GeniusPay</div>
+      <div style="font-size:20px;font-weight:800;color:#EA580C;" x-text="formatPrice((overview?.platform_margin?.geniuspay_payment_fees ?? 0) + (overview?.platform_margin?.geniuspay_withdrawal_fees ?? 0))"></div>
+      <div style="font-size:10px;color:#9CA3AF;margin-top:4px;">Frais encaissement + retrait</div>
     </div>
 
     <div class="saas-card" style="padding:16px;border-top:3px solid #9333EA;">

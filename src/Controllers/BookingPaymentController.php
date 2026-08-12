@@ -264,7 +264,8 @@ class BookingPaymentController
         // amount_ttc inclut déjà la majoration client (PlanGate::applyClientMarkup)
         // — nécessaire pour qu'Invoice::registerPayment() calcule la commission sur
         // le prix de base et non sur le montant majoré, voir son docblock.
-        $clientSharePct  = $row ? PlanGate::clientSharePct($estabForGate) : 0.0;
+        $clientSharePct   = $row ? PlanGate::clientSharePct($estabForGate) : 0.0;
+        $commissionFixed  = $row ? PlanGate::commissionFixedAmount($estabForGate) : 0.0;
 
         Invoice::registerPayment(
             $bookingId,
@@ -275,7 +276,8 @@ class BookingPaymentController
             'Paiement en ligne GeniusPay' . ($payMethod ? " ($payMethod)" : ''),
             $commissionPct,
             true, // viaGeniusPay — frais réels de la passerelle applicables ici, jamais pour un encaissement manuel
-            $clientSharePct
+            $clientSharePct,
+            $commissionFixed
         );
     }
 }

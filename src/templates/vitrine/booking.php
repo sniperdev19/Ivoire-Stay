@@ -242,9 +242,6 @@
               <option value="2">2 heures</option>
               <option value="3">3 heures</option>
               <option value="4">4 heures</option>
-              <option value="6">6 heures</option>
-              <option value="8">8 heures</option>
-              <option value="12">12 heures</option>
             </select>
             <span x-show="errors.hours" class="bk-error" x-text="errors.hours"></span>
           </div>
@@ -267,23 +264,27 @@
         <div class="bk-field-row">
           <div class="bk-field">
             <label class="bk-label">Prénom</label>
-            <input type="text" class="bk-input" placeholder="Kouamé" x-model="form.first_name" required>
+            <input type="text" class="bk-input" placeholder="Kouamé" x-model="form.first_name" required
+                   minlength="2" maxlength="60" autocomplete="given-name">
             <span x-show="errors.first_name" class="bk-error" x-text="errors.first_name"></span>
           </div>
           <div class="bk-field">
             <label class="bk-label">Nom</label>
-            <input type="text" class="bk-input" placeholder="Kobenan" x-model="form.last_name" required>
+            <input type="text" class="bk-input" placeholder="Kobenan" x-model="form.last_name" required
+                   minlength="2" maxlength="60" autocomplete="family-name">
             <span x-show="errors.last_name" class="bk-error" x-text="errors.last_name"></span>
           </div>
         </div>
         <div class="bk-field">
           <label class="bk-label">Email</label>
-          <input type="email" class="bk-input" placeholder="votre@email.com" x-model="form.email" required>
+          <input type="email" class="bk-input" placeholder="votre@email.com" x-model="form.email" required
+                 maxlength="120" autocomplete="email" inputmode="email">
           <span x-show="errors.email" class="bk-error" x-text="errors.email"></span>
         </div>
         <div class="bk-field">
           <label class="bk-label">Téléphone</label>
-          <input type="tel" class="bk-input" placeholder="+225 01 23 45 67 89" x-model="form.phone" required>
+          <input type="tel" class="bk-input" placeholder="+225 01 23 45 67 89" x-model="form.phone" required
+                 minlength="8" maxlength="20" pattern="[0-9+\s]+" autocomplete="tel" inputmode="tel">
           <span x-show="errors.phone" class="bk-error" x-text="errors.phone"></span>
         </div>
         <div class="bk-field-row">
@@ -298,7 +299,8 @@
           </div>
           <div class="bk-field">
             <label class="bk-label">Numéro de pièce <span style="font-weight:400;">(optionnel)</span></label>
-            <input type="text" class="bk-input" placeholder="Ex : CI001234567" x-model="form.id_doc_number">
+            <input type="text" class="bk-input" placeholder="Ex : CI001234567" x-model="form.id_doc_number"
+                   maxlength="30">
           </div>
         </div>
         <div class="bk-form-nav">
@@ -324,7 +326,7 @@
       </div>
 
       <!-- Choix du mode de paiement (uniquement si l'établissement accepte le paiement en ligne) -->
-      <template x-if="room?.online_payment_enabled !== false">
+      <template x-if="onlinePaymentAvailable">
         <div>
           <div class="bk-label" style="margin-bottom:16px;">Comment souhaitez-vous payer ?</div>
           <div class="bk-payment-opts" style="margin-bottom:28px;">
@@ -333,7 +335,7 @@
               <div class="bk-pay-icon" style="background:#1B4332;font-size:16px;">💳</div>
               <div>
                 <div class="bk-pay-name">Payer en ligne</div>
-                <div class="bk-pay-sub">Paiement sécurisé via GeniusPay · Orange Money, Wave, MTN</div>
+                <div class="bk-pay-sub">Paiement sécurisé via GeniusPay · Wave</div>
               </div>
             </div>
             <div class="bk-pay-opt" :class="payMode==='onsite'?'bk-selected':''" @click="payMode='onsite'">
@@ -347,7 +349,10 @@
           </div>
         </div>
       </template>
-      <template x-if="room?.online_payment_enabled === false">
+      <template x-if="!onlinePaymentAvailable && passageOnsiteOnly">
+        <div class="bk-label" style="margin-bottom:16px;">Pour un passage de moins de 4h, le règlement se fait uniquement sur place à l'arrivée.</div>
+      </template>
+      <template x-if="!onlinePaymentAvailable && !passageOnsiteOnly">
         <div class="bk-label" style="margin-bottom:16px;">Le paiement en ligne arrive bientôt. Réglez votre séjour directement sur place pour l'instant.</div>
       </template>
 
@@ -355,20 +360,10 @@
       <div x-show="payMode==='online'" x-transition>
         <div class="bk-label" style="margin-bottom:16px;">Choisissez votre opérateur</div>
         <div class="bk-payment-opts" style="margin-bottom:8px;">
-          <div class="bk-pay-opt" :class="payMethod==='orange'?'bk-selected':''" @click="payMethod='orange'">
-            <div class="bk-pay-radio"><div class="bk-pay-radio-dot"></div></div>
-            <div class="bk-pay-icon" style="background:#FF6B00;">OM</div>
-            <div><div class="bk-pay-name">Orange Money</div><div class="bk-pay-sub">Paiement instantané via Orange CI</div></div>
-          </div>
           <div class="bk-pay-opt" :class="payMethod==='wave'?'bk-selected':''" @click="payMethod='wave'">
-            <div class="bk-pay-radio"><div class="bk-pay-radio-dot"></div></div>
+            <div class="bk-pay-radio"><div class="bk-pay-radio-dot" :style="payMethod==='wave'?'opacity:1;transform:scale(1)':''"></div></div>
             <div class="bk-pay-icon" style="background:#00B9F2;">WV</div>
             <div><div class="bk-pay-name">Wave</div><div class="bk-pay-sub">Sans frais de transaction</div></div>
-          </div>
-          <div class="bk-pay-opt" :class="payMethod==='mtn'?'bk-selected':''" @click="payMethod='mtn'">
-            <div class="bk-pay-radio"><div class="bk-pay-radio-dot"></div></div>
-            <div class="bk-pay-icon" style="background:#FFCB00;color:#1B1B1B;">MTN</div>
-            <div><div class="bk-pay-name">MTN Mobile Money</div><div class="bk-pay-sub">Disponible 24h/24</div></div>
           </div>
         </div>
       </div>

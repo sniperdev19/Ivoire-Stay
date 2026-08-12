@@ -45,8 +45,14 @@ class Payment extends BaseModel
         // Une réservation annulée après encaissement ne doit plus compter
         // dans le CA — sinon le revenu reste gonflé indéfiniment par des
         // paiements liés à des séjours qui n'auront jamais lieu.
+        // SUM(p.amount - p.commission_amount) et non SUM(p.amount) seul : sur le
+        // plan Starter (paiement en ligne commissionné), p.amount est le montant
+        // BRUT payé par le client, dont une partie (commission_amount) ne revient
+        // jamais à l'établissement — l'afficher tel quel gonflait le CA affiché.
+        // commission_amount vaut 0 pour tout encaissement non commissionné
+        // (Pro/Business, ou paiement manuel), donc sans effet ailleurs.
         return (float) Database::query(
-            "SELECT COALESCE(SUM(p.amount), 0)
+            "SELECT COALESCE(SUM(p.amount - p.commission_amount), 0)
              FROM payments p
              JOIN bookings b ON b.id = p.booking_id
              JOIN rooms r ON r.id = b.room_id

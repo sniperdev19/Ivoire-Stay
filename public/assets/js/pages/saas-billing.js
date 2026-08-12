@@ -291,11 +291,15 @@ function billingPage(baseUrl, defaultTab) {
     // bascule déjà la facture en 'cancelled' côté serveur (voir
     // Invoice::cancelForBooking), donc totalTtc/paidInv l'excluent
     // naturellement ; encaisse doit filtrer sur la réservation du paiement.
+    // amount - commission_amount (pas amount seul) : sur le plan Starter
+    // (paiement en ligne commissionné), amount est le montant BRUT payé par
+    // le client — une partie (commission_amount) ne revient jamais à
+    // l'établissement, même correction que Dashboard/Rapports/Paiements.
     const totalTtc   = this.invoices.filter(i => i.status !== 'cancelled').reduce((s, i) => s + (Number(i.amount_ttc) || 0), 0);
     const paidInv    = this.invoices.filter(i => i.status === 'paid').length;
     const pendingInv = this.invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled').length;
-    const encaisse   = this.payments.filter(p => p.status === 'completed' && p.booking_status !== 'cancelled').reduce((s, p) => s + (Number(p.amount) || 0), 0);
-    const enAttente  = this.payments.filter(p => p.status === 'pending').reduce((s, p) => s + (Number(p.amount) || 0), 0);
+    const encaisse   = this.payments.filter(p => p.status === 'completed' && p.booking_status !== 'cancelled').reduce((s, p) => s + ((Number(p.amount) || 0) - (Number(p.commission_amount) || 0)), 0);
+    const enAttente  = this.payments.filter(p => p.status === 'pending').reduce((s, p) => s + ((Number(p.amount) || 0) - (Number(p.commission_amount) || 0)), 0);
     return { totalTtc, paidInv, pendingInv, encaisse, enAttente };
   },
   };

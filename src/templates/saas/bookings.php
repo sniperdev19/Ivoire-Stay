@@ -513,9 +513,6 @@
                 <option value="2">2 heures</option>
                 <option value="3" selected>3 heures</option>
                 <option value="4">4 heures</option>
-                <option value="6">6 heures</option>
-                <option value="8">8 heures</option>
-                <option value="12">12 heures</option>
               </select>
             </div>
           </div>

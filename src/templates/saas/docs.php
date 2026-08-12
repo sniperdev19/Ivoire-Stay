@@ -31,8 +31,8 @@ $modules = [
             [
                 'title' => 'Accéder rapidement à une action',
                 'steps' => [
-                    'Utilisez le bloc « Actions rapides » en bas de page.',
-                    'Cliquez sur « Nouvelle réservation », « Ajouter chambre », « Voir le planning » ou « Rapports » pour être redirigé directement.',
+                    'Utilisez les deux boutons en haut à droite de la page : « Nouvelle réservation » et « Chambres ».',
+                    'Vous pouvez aussi cliquer directement sur une ligne du tableau des réservations récentes, ou sur « Voir tout »/« Gérer » dans l\'en-tête de chaque bloc pour rejoindre la page correspondante.',
                 ],
             ],
         ],
@@ -42,17 +42,18 @@ $modules = [
         'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
         'desc' => "Calendrier visuel des arrivées, départs et de l'occupation des chambres.",
         'points' => [
-            'Deux vues : Semaine (une ligne par chambre, type planning) et Mois (calendrier classique)',
+            'Vue calendrier mensuelle (grille de 6 semaines), une puce par réservation dans chaque case',
             'Code couleur : Confirmée (vert), Arrivée (bleu), En attente (orange), Annulée (rouge)',
             "Navigation par flèches précédent/suivant et bouton « Aujourd'hui »",
+            "Sur mobile, cliquer sur un jour ouvre l'agenda du jour en bas de page (les cases affichent des points de couleur plutôt que le détail, trop étroit pour le texte)",
         ],
         'workflows' => [
             [
                 'title' => 'Consulter et ouvrir une réservation depuis le planning',
                 'steps' => [
-                    'Basculez entre « Semaine » et « Mois » selon la vue souhaitée.',
-                    'Cliquez sur une barre (vue semaine) ou une puce (vue mois) pour voir le détail : client, chambre, dates, montant.',
-                    'Cliquez sur « + Réservation » pour être redirigé vers la page Réservations et en créer une nouvelle.',
+                    "Naviguez au mois souhaité avec les flèches ou revenez à aujourd'hui.",
+                    "Cliquez directement sur une puce (desktop) ou sur le jour puis sur une ligne de l'agenda (mobile) pour voir le détail : statut, chambre, dates, montant.",
+                    'Cliquez sur « Réservation » en haut à droite pour être redirigé vers la page Réservations et en créer une nouvelle.',
                 ],
             ],
         ],
@@ -65,6 +66,7 @@ $modules = [
             'Onglets de statut : Toutes, En attente, Confirmée, Arrivée, Départ, Annulée',
             "Recherche par client/chambre/téléphone + filtre par date d'arrivée",
             'Tableau : client, chambre/catégorie, type de séjour, arrivée, départ/durée, montant, statut',
+            'Un passage (réservation à l\'heure) est limité à 4h maximum (1h, 2h, 3h ou 4h)',
         ],
         'workflows' => [
             [
@@ -104,7 +106,7 @@ $modules = [
             [
                 'title' => 'Ajouter une chambre',
                 'steps' => [
-                    'Cliquez sur « + Nouvelle chambre ».',
+                    'Cliquez sur « Ajouter une chambre ».',
                     "Renseignez le numéro/nom et l'étage.",
                     'Choisissez un type existant, ou cliquez sur « + Créer un nouveau type » pour définir capacité, type de lit, tarifs (base/week-end/passage) et équipements en même temps que la chambre.',
                     'Choisissez le statut initial et ajoutez jusqu\'à 3 photos.',
@@ -116,7 +118,7 @@ $modules = [
                 'steps' => [
                     'Cliquez sur le statut affiché en haut de la carte (Disponible, Occupée, Ménage, Maintenance, Bloquée).',
                     "Choisissez le nouveau statut dans le menu, pas besoin d'ouvrir la fiche complète.",
-                    "Une chambre non « Disponible » disparaît automatiquement de la vitrine publique tant qu'elle n'est pas remise à ce statut.",
+                    "« Maintenance » et « Bloquée » retirent la chambre de la vitrine publique pour toute date, jusqu'au retour à un autre statut. « Occupée » et « Ménage » sont des statuts du jour : la chambre reste consultable et réservable en ligne pour une autre date, seules les dates réellement couvertes par une réservation en cours sont grisées dans le calendrier.",
                 ],
             ],
         ],
@@ -127,7 +129,7 @@ $modules = [
         'desc' => 'Base de données des clients ayant déjà réservé.',
         'points' => [
             'Recherche par nom, email ou téléphone',
-            'KPI : total clients, clients avec réservations, revenu total',
+            'KPI : total clients, clients avec réservations',
             'Fiche client : coordonnées, historique des séjours, total dépensé',
         ],
         'workflows' => [
@@ -146,9 +148,9 @@ $modules = [
         'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
         'desc' => "Factures et paiements de l'établissement.",
         'points' => [
-            'KPI : total factures, montant TTC, factures payées, encaissé, en attente',
-            'Onglet Factures : recherche, filtre par statut (Brouillon/Envoyée/Payée), téléchargement PDF, envoi par email',
-            'Onglet Paiements : filtre par méthode (Mobile Money/Espèces/Carte/Virement) et par statut',
+            'KPI : total factures, montant TTC, factures payées, encaissé (net), en attente',
+            'Onglet Factures : recherche, filtre par statut (Brouillon/Envoyée/Payée), téléchargement PDF, envoi par email — le montant encaissé/restant y reste affiché brut (par rapport au montant TTC facturé au client), pour un suivi fiable du solde de la facture',
+            "Onglet Paiements : filtre par méthode (Mobile Money/Espèces/Carte/Virement) et par statut — montant affiché net de la commission plateforme (plan Starter, paiement en ligne), avec le détail « encaissé − commission » quand elle s'applique",
             'Une facture est déjà créée automatiquement à chaque réservation, pas besoin de tout saisir à la main',
         ],
         'workflows' => [
@@ -194,7 +196,7 @@ $modules = [
         'icon' => 'M17 9V7a4 4 0 00-8 0v2M5 9h14l1 11H4L5 9z',
         'desc' => "Solde et demandes de retrait des paiements en ligne encaissés par la plateforme pour le compte de l'établissement.",
         'points' => [
-            'Trois indicateurs : encaissé en ligne, en attente/déjà retiré, solde disponible',
+            'Quatre indicateurs : encaissé en ligne, commission plateforme prélevée, en attente/déjà retiré, solde disponible',
             'Historique des demandes avec leur statut : en attente, payé, rejeté',
         ],
         'workflows' => [
@@ -213,17 +215,18 @@ $modules = [
         'icon' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
         'desc' => "Analyses de performance construites à partir des factures, dépenses et paiements.",
         'points' => [
-            'Filtre par mois ou par année, export PDF',
-            "5 indicateurs : chiffre d'affaires, dépenses, bénéfice net, encaissé, taux d'occupation",
-            'Dépenses par catégorie, bilan de la période, tableau des paiements reçus',
+            'Filtre par mois ou par année, export PDF ; vue « Tous les établissements » et comparatif pour les comptes multi-établissements (plan Business)',
+            "4 indicateurs clés (chiffre d'affaires net, dépenses, bénéfice net, taux d'occupation), chacun avec sa variation en % vs la période précédente",
+            'Dépenses par catégorie, répartition du chiffre d\'affaires par type de chambre, classement des meilleurs clients',
+            'Liste complète des paiements de la période (pas seulement les derniers), montant net affiché avec le détail de la commission plateforme le cas échéant',
         ],
         'workflows' => [
             [
                 'title' => 'Consulter et exporter un rapport',
                 'steps' => [
                     'Choisissez la période (mois ou année).',
-                    'Consultez le bilan et la répartition des dépenses par catégorie.',
-                    'Cliquez sur « Exporter PDF » pour imprimer ou sauvegarder le rapport.',
+                    "Consultez le bilan, la répartition par type de chambre/catégorie de dépense et le classement des clients — chaque indicateur affiche son évolution par rapport à la période précédente.",
+                    'Cliquez sur « Exporter PDF » pour imprimer ou sauvegarder le rapport complet (mêmes sections que la page).',
                 ],
             ],
         ],
@@ -231,12 +234,13 @@ $modules = [
     [
         'name' => 'Paramètres', 'anchor' => 'settings', 'plan' => null, 'role' => 'owner',
         'icon' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
-        'desc' => "Configuration de l'établissement, de l'équipe, de l'abonnement et du compte (4 onglets).",
+        'desc' => "Configuration de l'établissement, de l'équipe, de l'abonnement, du compte et des notifications (5 onglets).",
         'points' => [
             "Général : identité, localisation, contact, activation du paiement en ligne (Pro+) et du boost (Business), description, photos",
             "Membres : liste de l'équipe (nom, email, téléphone, rôle), ajout/modification/suppression de réceptionnistes",
             "Abonnement : plan actuel et expiration, comparaison des 3 formules, changement/downgrade/annulation, historique de facturation",
-            'Compte : profil, notifications push, sécurité',
+            'Compte : profil, sécurité (mot de passe), appareils connectés (sessions actives, révocation à distance)',
+            'Notifications : activation des notifications hors application (push) et choix des types reçus (nouvelle réservation, paiement…)',
         ],
         'workflows' => [
             [
@@ -390,8 +394,17 @@ $modules = [
               <tr>
                 <td style="font-weight:600;">Commission paiement en ligne</td>
                 <?php foreach ($plans as $key => $p): ?>
-                  <?php $pct = (float) ($p['online_payment_commission_pct'] ?? 0); ?>
-                  <td style="text-align:center;" class="<?= $key === 'pro' ? 'docs-plan-highlight' : '' ?>"><?= $pct > 0 ? number_format($pct, 0, ',', ' ') . '% (imposé)' : '0% (optionnel)' ?></td>
+                  <?php
+                    $pct   = (float) ($p['online_payment_commission_pct'] ?? 0);
+                    $fixed = (float) ($p['online_payment_commission_fixed'] ?? 0);
+                  ?>
+                  <td style="text-align:center;" class="<?= $key === 'pro' ? 'docs-plan-highlight' : '' ?>">
+                    <?php if ($pct > 0): ?>
+                      <?= number_format($pct, 0, ',', ' ') ?>%<?= $fixed > 0 ? ' + ' . number_format($fixed, 0, ',', ' ') . ' FCFA' : '' ?> (imposé)
+                    <?php else: ?>
+                      0% (optionnel)
+                    <?php endif; ?>
+                  </td>
                 <?php endforeach; ?>
               </tr>
               <tr>
