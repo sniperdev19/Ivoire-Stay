@@ -482,11 +482,6 @@ class PdfService
         return 'storage/pdf/' . $filename;
     }
 
-    private const EXPENSE_CAT_LABELS = [
-        'maintenance' => 'Maintenance', 'salaries' => 'Salaires', 'supplies' => 'Fournitures',
-        'utilities'   => 'Énergie / Eau', 'marketing' => 'Marketing', 'other' => 'Autre',
-    ];
-
     /**
      * Rapport financier — simple/combiné (mode 'single'/'all') ou comparatif
      * entre établissements (mode 'compare'). Même charte graphique que
@@ -655,7 +650,7 @@ class PdfService
                     $pdf->SetFillColor(...($i % 2 === 0 ? [255, 255, 255] : $light));
                     $pdf->SetTextColor(...$dark);
                     $pdf->SetX(15);
-                    $label = self::EXPENSE_CAT_LABELS[$cat['category'] ?? ''] ?? ($cat['category'] ?? '—');
+                    $label = $cat['category'] ?? '—';
                     $pdf->Cell(120, 6, $u($label), 1, 0, 'L', true);
                     $pdf->Cell(60, 6, $u($fmt((float) ($cat['total'] ?? 0))), 1, 1, 'R', true);
                 }

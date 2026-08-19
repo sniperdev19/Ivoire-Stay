@@ -2,8 +2,8 @@
 
 namespace Controllers;
 
-use Core\{Request, Response, PlanGate, Guard};
-use Models\{Expense, Establishment};
+use Core\{Request, Response, Database, PlanGate, Guard};
+use Models\{Expense, ExpenseCategory, Establishment};
 use Services\UploadService;
 
 class ExpenseController
@@ -95,5 +95,86 @@ class ExpenseController
         Guard::requireExpense($id);
         Expense::delete($id);
         Response::success(null, 'Dépense supprimée');
+    }
+
+    // ─── Catégories de dépenses ───────────────────────────────────────────────
+
+    public function indexCategories(Request $req, array $params = []): void
+    {
+        $estabId = $this->estabId($req);
+        if (!$estabId) Response::error('establishment_id requis');
+        Response::success(ExpenseCategory::findByEstablishment($estabId));
+    }
+
+    public function storeCategory(Request $req, array $params = []): void
+    {
+        $data    = $req->all();
+        $estabId = $this->estabId($req);
+        if (!$estabId) Response::error('establishment_id requis');
+
+        $name = trim((string) ($data['name'] ?? ''));
+        if ($name === '') Response::error('Nom requis');
+
+        $color = (string) ($data['color'] ?? '#6B7280');
+        if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $color)) Response::error('Couleur invalide');
+
+        if (ExpenseCategory::first(['establishment_id' => $estabId, 'name' => $name])) {
+            Response::error('Cette catégorie existe déjà', 409);
+        }
+
+        $id = ExpenseCategory::create(['establishment_id' => $estabId, 'name' => $name, 'color' => $color]);
+        Response::success(ExpenseCategory::find($id), 'Catégorie créée', 201);
+    }
+
+    public function updateCategory(Request $req, array $params = []): void
+    {
+        $id  = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+        $cat = Guard::requireExpenseCategory($id);
+
+        $data   = $req->all();
+        $update = [];
+
+        if (isset($data['name'])) {
+            $name = trim((string) $data['name']);
+            if ($name === '') Response::error('Nom requis');
+            $existing = ExpenseCategory::first(['establishment_id' => $cat['establishment_id'], 'name' => $name]);
+            if ($existing && (int) $existing['id'] !== $id) Response::error('Cette catégorie existe déjà', 409);
+            $update['name'] = $name;
+        }
+        if (isset($data['color'])) {
+            if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $data['color'])) Response::error('Couleur invalide');
+            $update['color'] = $data['color'];
+        }
+
+        if ($update) {
+            // Les dépenses déjà enregistrées référencent la catégorie par son
+            // nom (texte libre, pas de FK) — un renommage doit les suivre pour
+            // ne pas les rendre orphelines de leur catégorie.
+            if (isset($update['name']) && $update['name'] !== $cat['name']) {
+                Database::query(
+                    'UPDATE expenses SET category = ? WHERE establishment_id = ? AND category = ?',
+                    [$update['name'], $cat['establishment_id'], $cat['name']]
+                );
+            }
+            ExpenseCategory::update($id, $update);
+        }
+        Response::success(ExpenseCategory::find($id), 'Catégorie mise à jour');
+    }
+
+    public function destroyCategory(Request $req, array $params = []): void
+    {
+        $id  = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+        $cat = Guard::requireExpenseCategory($id);
+
+        $inUse = (int) Database::query(
+            'SELECT COUNT(*) FROM expenses WHERE establishment_id = ? AND category = ?',
+            [$cat['establishment_id'], $cat['name']]
+        )->fetchColumn();
+        if ($inUse > 0) {
+            Response::error("Impossible de supprimer : $inUse dépense(s) utilisent cette catégorie", 409);
+        }
+
+        ExpenseCategory::delete($id);
+        Response::success(null, 'Catégorie supprimée');
     }
 }

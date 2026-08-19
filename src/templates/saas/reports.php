@@ -80,13 +80,11 @@
       <div>
       <!-- ROW 1: 5 KPI -->
       <div class="saas-kpi-grid">
-        <div class="saas-card report-kpi">
-          <div class="report-kpi-icon" style="background:rgba(201,168,76,0.12);color:#C9A84C;">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17l6-6 4 4 8-8"/></svg>
-          </div>
-          <div class="report-kpi-body">
-            <p class="report-kpi-label" x-text="'CA ' + periodLabel"></p>
-            <p class="report-kpi-value" x-text="formatPrice(revenue)"></p>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon kpi-icon-gold"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17l6-6 4 4 8-8"/></svg></div></div>
+          <div class="kpi-body">
+            <div class="kpi-value" x-text="formatPrice(revenue)"></div>
+            <div class="kpi-label" x-text="'CA ' + periodLabel"></div>
             <p x-show="revenueChangePct !== null" style="margin:2px 0 0;font-size:11px;font-weight:600;" :style="{ color: revenueChangePct >= 0 ? '#16a34a' : '#DC2626' }">
               <span x-text="(revenueChangePct >= 0 ? '▲ +' : '▼ ') + revenueChangePct + '%'"></span>
               <span style="color:#9CA3AF;font-weight:400;" x-text="prevPeriodLabel"></span>
@@ -94,13 +92,11 @@
           </div>
         </div>
 
-        <div class="saas-card report-kpi">
-          <div class="report-kpi-icon" style="background:rgba(220,38,38,0.1);color:#DC2626;">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M23 18l-9.5-9.5-5 5L1 6M17 18h6v-6"/></svg>
-          </div>
-          <div class="report-kpi-body">
-            <p class="report-kpi-label">Dépenses</p>
-            <p class="report-kpi-value" x-text="formatPrice(expTotal)"></p>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon kpi-icon-red"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M23 18l-9.5-9.5-5 5L1 6M17 18h6v-6"/></svg></div></div>
+          <div class="kpi-body">
+            <div class="kpi-value" x-text="formatPrice(expTotal)"></div>
+            <div class="kpi-label">Dépenses</div>
             <p x-show="expensesChangePct !== null" style="margin:2px 0 0;font-size:11px;font-weight:600;" :style="{ color: expensesChangePct <= 0 ? '#16a34a' : '#DC2626' }">
               <span x-text="(expensesChangePct >= 0 ? '▲ +' : '▼ ') + expensesChangePct + '%'"></span>
               <span style="color:#9CA3AF;font-weight:400;" x-text="prevPeriodLabel"></span>
@@ -108,13 +104,11 @@
           </div>
         </div>
 
-        <div class="saas-card report-kpi">
-          <div class="report-kpi-icon" :style="{ background: netProfit>=0?'rgba(22,163,74,0.1)':'rgba(220,38,38,0.1)', color: netProfit>=0?'#16a34a':'#DC2626' }">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          </div>
-          <div class="report-kpi-body">
-            <p class="report-kpi-label">Bénéfice net</p>
-            <p class="report-kpi-value" :style="{ color: netProfit>=0?'#16a34a':'#DC2626' }" x-text="formatPrice(netProfit)"></p>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon" :class="netProfit>=0?'kpi-icon-green':'kpi-icon-red'"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div></div>
+          <div class="kpi-body">
+            <div class="kpi-value" :style="{ color: netProfit>=0?'#16a34a':'#DC2626' }" x-text="formatPrice(netProfit)"></div>
+            <div class="kpi-label">Bénéfice net</div>
             <p x-show="netProfitChangePct !== null" style="margin:2px 0 0;font-size:11px;font-weight:600;" :style="{ color: netProfitChangePct >= 0 ? '#16a34a' : '#DC2626' }">
               <span x-text="(netProfitChangePct >= 0 ? '▲ +' : '▼ ') + netProfitChangePct + '%'"></span>
               <span style="color:#9CA3AF;font-weight:400;" x-text="prevPeriodLabel"></span>
@@ -122,31 +116,25 @@
           </div>
         </div>
 
-        <div class="saas-card report-kpi">
-          <div class="report-kpi-icon" style="background:rgba(22,163,74,0.1);color:#16a34a;">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
-          </div>
-          <div class="report-kpi-body">
-            <p class="report-kpi-label">Encaissé</p>
-            <p class="report-kpi-value" x-text="formatPrice(paidInv)"></p>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon kpi-icon-green"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div></div>
+          <div class="kpi-body">
+            <div class="kpi-value" x-text="formatPrice(paidInv)"></div>
+            <div class="kpi-label">Encaissé</div>
           </div>
         </div>
 
-        <div class="saas-card">
-          <div class="report-kpi" style="margin-bottom:10px;">
-            <div class="report-kpi-icon" style="background:rgba(37,99,235,0.1);color:#2563EB;">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><line x1="19" y1="5" x2="5" y2="19" stroke-width="2" stroke-linecap="round"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
-            </div>
-            <div class="report-kpi-body">
-              <p class="report-kpi-label">Taux d'occupation</p>
-              <p class="report-kpi-value" x-text="occupancy + '%'"></p>
-              <p x-show="occupancyChangePct !== null" style="margin:2px 0 0;font-size:11px;font-weight:600;" :style="{ color: occupancyChangePct >= 0 ? '#16a34a' : '#DC2626' }">
-                <span x-text="(occupancyChangePct >= 0 ? '▲ +' : '▼ ') + occupancyChangePct + '%'"></span>
-                <span style="color:#9CA3AF;font-weight:400;" x-text="prevPeriodLabel"></span>
-              </p>
-            </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon kpi-icon-blue"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><line x1="19" y1="5" x2="5" y2="19" stroke-width="2" stroke-linecap="round"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></div></div>
+          <div class="kpi-body">
+            <div class="kpi-value" x-text="occupancy + '%'"></div>
+            <div class="kpi-label">Taux d'occupation</div>
+            <p x-show="occupancyChangePct !== null" style="margin:2px 0 0;font-size:11px;font-weight:600;" :style="{ color: occupancyChangePct >= 0 ? '#16a34a' : '#DC2626' }">
+              <span x-text="(occupancyChangePct >= 0 ? '▲ +' : '▼ ') + occupancyChangePct + '%'"></span>
+              <span style="color:#9CA3AF;font-weight:400;" x-text="prevPeriodLabel"></span>
+            </p>
+            <div class="kpi-progress" style="margin-top:4px;"><div class="kpi-progress-bar" :style="'width:'+occupancy+'%;background:#2563EB;'"></div></div>
           </div>
-          <div style="height:6px;background:#F3F4F6;border-radius:6px;overflow:hidden;"><div :style="'height:100%;width:'+occupancy+'%;background:#2563EB;'"></div></div>
         </div>
       </div>
 
@@ -157,7 +145,7 @@
           <div style="display:flex;flex-direction:column;gap:7px;">
             <template x-for="item in expByCategory" :key="item.cat">
               <div style="display:flex;align-items:center;gap:10px;">
-                <div style="min-width:110px;display:flex;align-items:center;gap:8px;"><div style="width:9px;height:9px;border-radius:3px;" :style="{ background: catColor(item.cat) }"></div><div style="font-size:12px;color:#111827;" x-text="catLabel(item.cat)"></div></div>
+                <div style="min-width:110px;display:flex;align-items:center;gap:8px;"><div style="width:9px;height:9px;border-radius:3px;" :style="{ background: catColor(item.cat) }"></div><div style="font-size:12px;color:#111827;" x-text="item.cat"></div></div>
                 <div style="flex:1;background:#F3F4F6;border-radius:6px;height:6px;overflow:hidden;margin-right:8px;"><div :style="'height:100%;width:'+item.pct+'%;background:'+catColor(item.cat)+';'"></div></div>
                 <div style="font-weight:700;color:#111827;font-size:13px;min-width:100px;text-align:right;" x-text="formatPrice(item.amt)"></div>
                 <div style="width:40px;text-align:right;color:#9CA3AF;font-size:10.5px;" x-text="item.pct+'%' "></div>
@@ -175,7 +163,7 @@
             <div><div style="font-size:11px;color:#9CA3AF;">En attente encaissement</div><div style="font-weight:700;color:#D97706;font-size:13px;" x-text="formatPrice(pendingPay)"></div></div>
             <div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:8px;"><div style="font-size:11px;color:#9CA3AF;">Total dépenses</div><div style="font-weight:800;color:#DC2626;font-size:13px;" x-text="formatPrice(expTotal)"></div>
               <div style="margin-top:6px;">
-                <template x-for="(c,idx) in expByCategory.slice(0,3)" :key="c.cat"><div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px;"><div><span style="font-weight:700;color:#111827;" x-text="catLabel(c.cat)"></span></div><div style="font-weight:700;color:#111827;" x-text="formatPrice(c.amt)"></div></div></template>
+                <template x-for="(c,idx) in expByCategory.slice(0,3)" :key="c.cat"><div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px;"><div><span style="font-weight:700;color:#111827;" x-text="c.cat"></span></div><div style="font-weight:700;color:#111827;" x-text="formatPrice(c.amt)"></div></div></template>
               </div>
             </div>
 

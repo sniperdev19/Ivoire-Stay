@@ -190,6 +190,23 @@ HTML;
     }
 
     // =========================================================================
+    // 1d. INVITATION ÉQUIPE — nouveau réceptionniste
+    // =========================================================================
+    public static function teamInvitation(string $to, string $estabName, string $inviteUrl): void
+    {
+        $estab = htmlspecialchars($estabName);
+        $content = "<h1 style='margin:0 0 4px;font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1B4332;line-height:1.2;'>"
+            . "Rejoignez <em style='color:#C9A84C;font-style:italic;'>" . $estab . "</em></h1>"
+            . "<div style='width:40px;height:2px;background:#C9A84C;margin:20px 0;'></div>"
+            . "<p style='margin:0 0 8px;font-size:15px;color:#374151;line-height:1.7;'>Vous avez été invité(e) à rejoindre l'espace hôtelier de <strong>" . $estab . "</strong> sur Afristay, en tant que réceptionniste.</p>"
+            . "<p style='margin:0 0 8px;font-size:14px;color:#6B7280;line-height:1.7;'>Cliquez sur le bouton ci-dessous pour choisir votre nom et votre mot de passe. Ce lien expire dans <strong>24 heures</strong>.</p>"
+            . self::btn($inviteUrl, "Accepter l'invitation →")
+            . "<p style='margin:16px 0 0;font-size:13px;color:#9CA3AF;line-height:1.6;'>Si vous ne vous attendiez pas à cette invitation, ignorez simplement cet email.</p>";
+
+        self::send($to, $estabName, "Invitation à rejoindre $estabName sur Afristay", self::layout($content, "Invitation à rejoindre $estabName sur Afristay"));
+    }
+
+    // =========================================================================
     // 2. CONFIRMATION RÉSERVATION — paiement sur place
     // =========================================================================
     public static function bookingConfirmation(array $booking): void

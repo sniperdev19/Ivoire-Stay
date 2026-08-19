@@ -10,20 +10,79 @@ function expensesPage(baseUrl) {
   showModal: false, editing: null, submitting: false, formError: null,
   categoryFilter: '', deleteConfirm: null,
 
-  form: { description: '', amount: '', category: 'maintenance', expense_date: '', notes: '' },
+  form: { description: '', amount: '', category: '', expense_date: '', notes: '' },
 
-  categories: [
-    { value: 'maintenance', label: 'Maintenance' },
-    { value: 'salaries',    label: 'Salaires' },
-    { value: 'supplies',    label: 'Fournitures' },
-    { value: 'utilities',   label: 'Énergie / Eau' },
-    { value: 'marketing',   label: 'Marketing' },
-    { value: 'other',       label: 'Autre' },
-  ],
+  // ── Catégories de dépenses (personnalisées par établissement) ────────────
+  categories: [],
+  catPalette: ['#D97706', '#2563EB', '#059669', '#7C3AED', '#EC4899', '#0D9488', '#DC2626', '#6B7280'],
+  showCatModal: false,
+  editingCat: null,
+  catForm: { name: '', color: '#D97706' },
+  catFormError: null,
+  catSubmitting: false,
+  deleteCatConfirm: null,
 
   async init() {
     if (planUpgradeRequired('expenses')) { this.upgradeRequired = true; this.loading = false; return; }
+    await this.loadCategories();
     await this.loadExpenses();
+  },
+
+  async loadCategories() {
+    this.categories = await this.loadExpenseCategoryColors(baseUrl);
+  },
+
+  openManageCategories() {
+    this.showCatModal = true;
+    this.cancelEditCategory();
+  },
+
+  openEditCategory(cat) {
+    this.editingCat   = cat;
+    this.catForm      = { name: cat.name, color: cat.color };
+    this.catFormError = null;
+  },
+
+  cancelEditCategory() {
+    this.editingCat   = null;
+    this.catForm      = { name: '', color: this.catPalette[0] };
+    this.catFormError = null;
+  },
+
+  async saveCategory() {
+    if (!this.catForm.name?.trim()) { this.catFormError = 'Nom requis.'; return; }
+    this.catSubmitting = true; this.catFormError = null;
+    try {
+      const url    = this.editingCat ? baseUrl + '/api/expense-categories/' + this.editingCat.id : baseUrl + '/api/expense-categories';
+      const method = this.editingCat ? 'PUT' : 'POST';
+      const res  = await fetch(url, { method, headers: this.apiHeaders(), body: JSON.stringify(this.catForm) });
+      const data = await res.json();
+      if (data.success) {
+        await this.loadCategories();
+        this.cancelEditCategory();
+      } else {
+        this.catFormError = data.message ?? 'Erreur.';
+      }
+    } catch(e) {
+      this.catFormError = 'Erreur réseau.';
+    } finally {
+      this.catSubmitting = false;
+    }
+  },
+
+  async deleteCategory(cat) {
+    try {
+      const res  = await fetch(baseUrl + '/api/expense-categories/' + cat.id, { method: 'DELETE', headers: this.apiHeaders() });
+      const data = await res.json();
+      if (data.success) {
+        this.categories = this.categories.filter(c => c.id !== cat.id);
+        this.deleteCatConfirm = null;
+      } else {
+        this.catFormError = data.message ?? 'Erreur de suppression.';
+      }
+    } catch(e) {
+      this.catFormError = 'Erreur réseau.';
+    }
   },
 
   async loadExpenses() {
@@ -49,8 +108,13 @@ function expensesPage(baseUrl) {
   },
 
   openCreate() {
+    if (this.categories.length === 0) {
+      this.showToast('Créez d\'abord une catégorie de dépense.', 'error');
+      this.openManageCategories();
+      return;
+    }
     this.editing = null;
-    this.form = { description: '', amount: '', category: 'maintenance', expense_date: '', notes: '' };
+    this.form = { description: '', amount: '', category: this.categories[0]?.name ?? '', expense_date: '', notes: '' };
     this.formError = null;
     this.showModal = true;
   },

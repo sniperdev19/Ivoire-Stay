@@ -11,6 +11,7 @@ $router->get('/forgot-password', 'PageController@forgotPassword');
 $router->get('/reset-password',  'PageController@resetPassword');
 $router->get('/install',        'PageController@install');
 $router->get('/verify-email',   'PageController@verifyEmail');
+$router->get('/team-invite',    'PageController@teamInviteAccept');
 $router->get('/saas',           'PageController@saas');
 $router->get('/saas/planning',  'PageController@planning');
 $router->get('/saas/rooms',     'PageController@rooms');
@@ -139,10 +140,15 @@ $router->put('/api/clients/{id}',  'ClientController@update',  ['auth']);
 $router->delete('/api/clients/{id}', 'ClientController@destroy', ['auth', 'role:owner|superadmin']);
 
 // ─── API Équipe (membres — rôle receptionist) ───────────────────────────────────
-$router->get('/api/team',         'TeamController@index',   ['auth', 'role:owner|superadmin']);
-$router->post('/api/team',        'TeamController@store',   ['auth', 'role:owner|superadmin']);
-$router->put('/api/team/{id}',    'TeamController@update',  ['auth', 'role:owner|superadmin']);
-$router->delete('/api/team/{id}', 'TeamController@destroy', ['auth', 'role:owner|superadmin']);
+// Inscription par invitation : l'owner envoie un lien, le réceptionniste
+// choisit lui-même son nom et son mot de passe en l'acceptant (public, sans auth).
+$router->get('/api/team',                'TeamController@index',       ['auth', 'role:owner|superadmin']);
+$router->post('/api/team/invite',        'TeamController@invite',      ['auth', 'role:owner|superadmin']);
+$router->delete('/api/team/invite/{id}', 'TeamController@cancelInvite', ['auth', 'role:owner|superadmin']);
+$router->get('/api/team/invite',         'TeamController@inviteInfo');
+$router->post('/api/team/invite/accept', 'TeamController@acceptInvite');
+$router->put('/api/team/{id}',           'TeamController@update',      ['auth', 'role:owner|superadmin']);
+$router->delete('/api/team/{id}',        'TeamController@destroy',     ['auth', 'role:owner|superadmin']);
 
 // ─── API Invoices ─────────────────────────────────────────────────────────────
 // Gestion de la Comptabilité (Factures) — réservée owner/superadmin, cf. ACCES_PROFILS_ABONNEMENT.md.
@@ -165,6 +171,12 @@ $router->get('/api/expenses',         'ExpenseController@index',    ['auth', 'ro
 $router->post('/api/expenses',        'ExpenseController@store',    ['auth', 'role:owner|superadmin']);
 $router->put('/api/expenses/{id}',    'ExpenseController@update',   ['auth', 'role:owner|superadmin']);
 $router->delete('/api/expenses/{id}', 'ExpenseController@destroy',  ['auth', 'role:owner|superadmin']);
+
+// ─── Catégories de dépenses (personnalisées par établissement) ─────────────────
+$router->get('/api/expense-categories',         'ExpenseController@indexCategories',  ['auth', 'role:owner|superadmin']);
+$router->post('/api/expense-categories',        'ExpenseController@storeCategory',    ['auth', 'role:owner|superadmin']);
+$router->put('/api/expense-categories/{id}',    'ExpenseController@updateCategory',   ['auth', 'role:owner|superadmin']);
+$router->delete('/api/expense-categories/{id}', 'ExpenseController@destroyCategory',  ['auth', 'role:owner|superadmin']);
 
 // ─── API Retraits (paiements en ligne) ─────────────────────────────────────────
 $router->get('/api/payouts/balance',      'PayoutController@balance',  ['auth', 'role:owner|superadmin']);

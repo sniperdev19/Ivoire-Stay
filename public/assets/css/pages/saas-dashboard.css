@@ -12,48 +12,67 @@
   animation: shimmer 1.4s linear infinite;
   border-radius: 12px;
 }
-.kpi-grid   { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
-.kpi-grid .kpi-card { padding:10px 12px; }
 .main-grid  { display:grid; grid-template-columns:3fr 2fr; gap:16px; margin-bottom:20px; }
 
 /* Cartes "Occupation par type" / "Résumé financier" : plus compactes que
    le .saas-card générique (padding:24px). */
 .db-section-card { padding: 16px; }
-@media(max-width:1200px){ .kpi-grid  { grid-template-columns:repeat(2,1fr)!important; } }
 @media(max-width:900px) { .main-grid { grid-template-columns:1fr!important; } }
 
-/* KPI card — variantes de couleur (bandeau supérieur via ::before) */
-.kpi-gold:before   { background: linear-gradient(90deg, #C9A84C, #E8D5A3); }
-.kpi-blue:before   { background: linear-gradient(90deg, #2563EB, #93C5FD); }
-.kpi-green:before  { background: linear-gradient(90deg, #16A34A, #86EFAC); }
-.kpi-purple:before { background: linear-gradient(90deg, #7C3AED, #C4B5FD); }
+/* KPI cards — icône en pastille ronde + grande valeur, sans bandeau de
+   couleur ni ligne de stat secondaire (refonte visuelle 2026-08-17). Classes
+   propres au dashboard (db-kpi-*), sans lien avec .kpi-card/.saas-kpi-grid
+   utilisés par Dépenses/Facturation/Chambres — ce nouveau visuel ne
+   concerne que cette page. */
+.db-kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
+@media(max-width:1200px){ .db-kpi-grid { grid-template-columns:repeat(2,1fr); } }
 
-/* Réservations récentes mobile : évite le défilement horizontal du
-   tableau (5 colonnes) sous ~600px. Le tableau reste la vue
-   desktop/tablette ; en dessous de 768px (palier de la tabbar mobile,
-   cf. saas.css) on bascule sur des cartes empilées — même logique que
-   .booking-mobile-card sur la page Réservations (saas-bookings.css),
-   dupliquée ici car les deux fichiers CSS ne se chargent jamais
-   ensemble (pages différentes). */
-.db-recent-mobile-list { display:none; }
-@media (max-width:768px) {
-  .db-recent-table-wrap { display:none; }
-  .db-recent-mobile-list { display:flex; flex-direction:column; gap:8px; padding:12px 16px 16px; }
+.db-kpi-card {
+  background:#fff;
+  border-radius:16px;
+  padding:14px;
+  box-shadow:0 1px 3px rgba(15,23,42,0.05);
+  display:flex;
+  flex-direction:column;
+  gap:9px;
 }
-.db-recent-mobile-card {
-  display:flex; flex-direction:column; gap:6px;
-  padding:10px 12px; border-radius:12px;
-  background:#fff; border:1px solid rgba(0,0,0,0.06);
-  border-left:3px solid #94A3B8;
-  box-shadow:0 1px 6px rgba(0,0,0,0.03);
-}
-.db-recent-mobile-top { display:flex; align-items:center; gap:10px; }
-.db-recent-mobile-avatar {
-  width:30px; height:30px; border-radius:8px; flex-shrink:0;
-  display:grid; place-items:center; font-size:12px; font-weight:700;
-  background:rgba(201,168,76,0.12); color:#C9A84C;
-}
-.db-recent-mobile-info { flex:1; min-width:0; font-size:14px; font-weight:600; color:#111827; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.db-recent-mobile-bottom { display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:8px; border-top:1px dashed rgba(0,0,0,0.08); }
-.db-recent-mobile-meta { font-size:12px; color:#9CA3AF; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.db-recent-mobile-amount { font-size:13px; font-weight:700; color:#111827; white-space:nowrap; flex-shrink:0; }
+.db-kpi-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.db-kpi-icon { width:32px; height:32px; border-radius:50%; display:grid; place-items:center; flex-shrink:0; }
+.db-kpi-icon svg { width:14px; height:14px; }
+.db-kpi-pct   { font-size:15px; font-weight:800; color:#111827; }
+.db-kpi-badge { background:#DCFCE7; color:#16A34A; font-size:10px; font-weight:700; padding:3px 9px; border-radius:9999px; white-space:nowrap; }
+.db-kpi-body  { display:flex; flex-direction:column; gap:2px; }
+.db-kpi-value { font-size:16px; font-weight:800; color:#111827; line-height:1.15; }
+.db-kpi-value small { font-size:11px; font-weight:600; color:#9CA3AF; margin-left:2px; }
+.db-kpi-label { font-size:11px; color:#6B7280; }
+.db-kpi-progress { height:5px; background:#F1F0F6; border-radius:5px; overflow:hidden; }
+.db-kpi-progress-bar { height:100%; border-radius:5px; background:linear-gradient(90deg,#111827,#6B7280); transition:width 1s ease; }
+
+.db-kpi-icon-green  { background:rgba(22,163,74,0.12); }
+.db-kpi-icon-green svg  { color:#16A34A; }
+.db-kpi-icon-gray   { background:#F1F0F6; }
+.db-kpi-icon-gray svg   { color:#4B5563; }
+.db-kpi-icon-purple { background:rgba(124,58,237,0.12); }
+.db-kpi-icon-purple svg { color:#7C3AED; }
+
+/* Réservations récentes — une seule liste de lignes (avatar + nom/méta à
+   gauche, montant/statut empilés à droite), la même à toutes les largeurs :
+   remplace l'ancien tableau desktop + cartes mobiles dupliquées
+   (refonte visuelle 2026-08-17). */
+.db-recent-list { display:flex; flex-direction:column; padding:2px 18px 16px; }
+.db-recent-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-top:1px solid rgba(0,0,0,0.05); }
+.db-recent-row:first-child { border-top:none; padding-top:2px; }
+.db-recent-info { flex:1; min-width:0; }
+.db-recent-name { font-size:14px; font-weight:600; color:#111827; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.db-recent-meta { font-size:12px; color:#9CA3AF; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.db-recent-right { flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
+.db-recent-amount { font-size:14px; font-weight:700; color:#111827; white-space:nowrap; }
+
+/* Résumé financier — lignes "vedette" en puce arrondie teintée (Revenus,
+   Paiements reçus, Solde en attente) ; Annulé/Dépenses restent des lignes
+   simples (secondaires), Bénéfice net reste la ligne de total soulignée. */
+.db-fin-row { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:12px; background:#F7F6FA; }
+.db-fin-row.db-fin-green { background:rgba(22,163,74,0.08); }
+.db-fin-row.db-fin-amber { background:rgba(217,119,6,0.08); }
+.db-fin-label { font-size:12px; color:#6B7280; }
+.db-fin-value { font-size:13px; font-weight:700; color:#111827; }

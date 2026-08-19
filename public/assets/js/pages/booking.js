@@ -99,13 +99,13 @@ function bookingPage(apiBase, roomId) {
       return Math.max(0, Math.round((d2 - d1) / 86400000));
     },
 
-    /* Nombre de forfaits week-end (bloc vendredi+samedi+dimanche complet) inclus
-       dans le séjour choisi — sert à prévenir le client que le tarif week-end
-       s'applique avant qu'il ne s'étonne du total (bk-weekend-notice). Le tarif
-       week-end est un FORFAIT pour les 3 nuits ensemble, pas un prix par nuit :
-       un week-end incomplet (ex. arrivée un samedi) reste au tarif de base. */
-    get weekendPackageCount() {
-      return this._weekendBreakdown().packages;
+    /* Nombre de nuits facturées au tarif week-end (vendredi/samedi/dimanche)
+       dans le séjour choisi — sert à prévenir le client que ce tarif
+       s'applique avant qu'il ne s'étonne du total (bk-weekend-notice). Prix
+       week-end par nuit (réforme 2026-08-18) : chaque nuit tombant un de ces
+       3 jours compte, isolée ou non (plus de notion de bloc complet). */
+    get weekendNightsCount() {
+      return this._weekendBreakdown().weekendNights;
     },
 
     get totalPrice() {
@@ -116,30 +116,26 @@ function bookingPage(apiBase, roomId) {
     },
 
     _weekendBreakdown() {
-      if (!this.form.check_in || !this.nights || !this.room) return { total: 0, packages: 0 };
+      if (!this.form.check_in || !this.nights || !this.room) return { total: 0, weekendNights: 0 };
       const weekendPrice = parseFloat(this.room.weekend_price ?? 0);
       const basePrice    = parseFloat(this.room.base_price    ?? 0);
       if (!weekendPrice || weekendPrice === basePrice) {
-        return { total: basePrice * this.nights, packages: 0 };
+        return { total: basePrice * this.nights, weekendNights: 0 };
       }
       const start = new Date(this.form.check_in + 'T00:00:00');
-      const dows  = [];
+      let total = 0, weekendNights = 0;
       for (let i = 0; i < this.nights; i++) {
         const day = new Date(start);
         day.setDate(start.getDate() + i);
-        dows.push(day.getDay());
-      }
-      let total = 0, packages = 0;
-      for (let i = 0; i < dows.length; i++) {
-        if (dows[i] === 5 && dows[i + 1] === 6 && dows[i + 2] === 0) {
+        const dow = day.getDay(); // 0 = dimanche … 6 = samedi
+        if (dow === 5 || dow === 6 || dow === 0) {
           total += weekendPrice;
-          packages++;
-          i += 2; // bloc vendredi-samedi-dimanche déjà compté
+          weekendNights++;
         } else {
           total += basePrice;
         }
       }
-      return { total, packages };
+      return { total, weekendNights };
     },
 
     async init() {

@@ -449,6 +449,7 @@ function bookingsPage(baseUrl) {
         guests_count:     Number(this.form.guests_count) || 1,
         source:           this.form.source,
         notes:            this.form.notes || null,
+        discount_amount:  Number(this.form.discount_amount) || 0,
         establishment_id: this.estId(),
       };
 
@@ -496,6 +497,7 @@ function bookingsPage(baseUrl) {
       public_client_id: '', first_name: '', last_name: '', client_email: '', client_phone: '',
     id_doc_type: '', id_doc_number: '',
       booking_type: 'nuit', hours: 3, guests_count: 2, source: 'manual', notes: '',
+      discount_amount: '',
       record_payment: false, payment_type: 'full', payment_method: 'cash', payment_amount: '',
     };
     this.clientSearch = '';

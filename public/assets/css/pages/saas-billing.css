@@ -14,10 +14,6 @@
   .bill-mobile-list { display:flex; flex-direction:column; gap:9px; }
 }
 
-/* Cartes KPI plus compactes que le .kpi-card générique (padding:20px 24px) —
-   scopé à ce fichier (chargé uniquement sur billing.php). */
-.saas-kpi-grid .kpi-card { padding: 10px 12px; }
-
 .bill-mobile-card {
   display:flex; flex-direction:column; gap:7px;
   padding:12px; border-radius:14px;

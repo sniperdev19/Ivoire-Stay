@@ -45,20 +45,20 @@
   <!-- Statistiques rapides -->
   <div class="room-stats">
     <div class="kpi-card">
-      <div style="font-size:13px;color:#6B7280;margin-bottom:8px;">Total</div>
-      <div style="font-size:20px;font-weight:800;color:#111827;" x-text="rooms.length"></div>
+      <div class="kpi-top"><div class="kpi-icon kpi-icon-gray"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 18v-11a2 2 0 012-2h4a2 2 0 012 2v11M4 13h16M20 18v-5a2 2 0 00-2-2h-6M4 18h16M4 21v-3M20 21v-3"/></svg></div></div>
+      <div class="kpi-body"><div class="kpi-value" x-text="rooms.length"></div><div class="kpi-label">Total</div></div>
     </div>
     <div class="kpi-card">
-      <div style="font-size:13px;color:#6B7280;margin-bottom:8px;">Disponibles</div>
-      <div style="font-size:20px;font-weight:800;color:#2563EB;" x-text="countStatus('available')"></div>
+      <div class="kpi-top"><div class="kpi-icon kpi-icon-blue"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div></div>
+      <div class="kpi-body"><div class="kpi-value" x-text="countStatus('available')"></div><div class="kpi-label">Disponibles</div></div>
     </div>
     <div class="kpi-card">
-      <div style="font-size:13px;color:#6B7280;margin-bottom:8px;">Occupées</div>
-      <div style="font-size:20px;font-weight:800;color:#16A34A;" x-text="countStatus('occupied')"></div>
+      <div class="kpi-top"><div class="kpi-icon kpi-icon-green"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></div></div>
+      <div class="kpi-body"><div class="kpi-value" x-text="countStatus('occupied')"></div><div class="kpi-label">Occupées</div></div>
     </div>
     <div class="kpi-card">
-      <div style="font-size:13px;color:#6B7280;margin-bottom:8px;">Maint. / Ménage</div>
-      <div style="font-size:20px;font-weight:800;color:#D97706;" x-text="countStatus('maintenance') + countStatus('cleaning')"></div>
+      <div class="kpi-top"><div class="kpi-icon kpi-icon-amber"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4.5v6.586a1 1 0 00.293.707l5.414 5.414a2 2 0 002.828-2.828l-5.414-5.414A1 1 0 0014 8.172V4.5m-3 0a1.5 1.5 0 013 0m-3 0h3M5.5 19.5l3-3m0 0a1.5 1.5 0 10-2.121-2.121 1.5 1.5 0 002.121 2.121z"/></svg></div></div>
+      <div class="kpi-body"><div class="kpi-value" x-text="countStatus('maintenance') + countStatus('cleaning')"></div><div class="kpi-label">Maint. / Ménage</div></div>
     </div>
   </div>
 

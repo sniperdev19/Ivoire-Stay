@@ -196,6 +196,16 @@ class Guard
         return $row;
     }
 
+    public static function requireExpenseCategory(int $id): array
+    {
+        $row = Database::query(
+            "SELECT * FROM expense_categories WHERE id = ?", [$id]
+        )->fetch();
+        if (!$row) Response::notFound('Catégorie introuvable');
+        self::requireEstablishment((int) $row['establishment_id']);
+        return $row;
+    }
+
     public static function requirePayoutRequest(int $id): array
     {
         $row = Database::query(

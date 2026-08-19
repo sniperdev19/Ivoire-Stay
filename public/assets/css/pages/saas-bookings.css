@@ -6,6 +6,25 @@
     display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;
   }
 
+  /* Filtre statut : select desktop, onglets pilules défilants en mobile
+     (refonte visuelle 2026-08-17) — même palier que le reste des vues
+     mobiles de cette page (768px). */
+  .status-tabs-pills { display:none; }
+  @media (max-width:768px) {
+    .status-tabs-select { display:none; }
+    .status-tabs-pills {
+      display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; width:100%;
+      -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    }
+    .status-tabs-pills::-webkit-scrollbar { display:none; }
+  }
+  .status-pill {
+    flex-shrink:0; white-space:nowrap; cursor:pointer;
+    padding:10px 16px; border-radius:9999px; font-size:13px; font-weight:600;
+    background:#EEF0FA; color:#4B5563; border:none; transition:all 0.15s;
+  }
+  .status-pill.active { background:#0f2b20; color:#fff; }
+
   /* Modale création réservation : champs par paire, toujours 2 colonnes
      (y compris mobile) — classe dédiée pour échapper à la règle générique
      de saas-responsive.css (@media 560px) qui écrase les grilles inline
@@ -195,29 +214,29 @@
     .booking-mobile-list { display:flex; flex-direction:column; gap:9px; padding:12px; }
     .saas-card:has(> .booking-mobile-list) { background:transparent; border:none; box-shadow:none; }
     .booking-pagination { margin:0 12px 12px; background:#fff; border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:12px 16px; }
-    .booking-mobile-mid .booking-room-chip { padding:2px 7px; font-size:10.5px; }
-    .booking-mobile-mid .booking-type-label { font-size:10.5px; }
+    .bkm-chips .booking-room-chip { padding:3px 9px; font-size:11px; }
   }
   .booking-mobile-card {
-    display:flex; flex-direction:column; gap:7px;
-    padding:12px; border-radius:14px;
+    display:flex; flex-direction:column; gap:9px;
+    padding:14px; border-radius:16px;
     background:#fff; border:1px solid rgba(0,0,0,0.06);
-    border-left:3px solid #C9A84C;
     box-shadow:0 1px 8px rgba(0,0,0,0.04);
     cursor:pointer; transition:box-shadow 0.15s, transform 0.15s;
   }
   .booking-mobile-card:active { box-shadow:0 1px 4px rgba(0,0,0,0.05); transform:scale(0.99); }
-  .booking-mobile-top { display:flex; align-items:center; gap:8px; }
-  .booking-mobile-avatar {
-    width:30px; height:30px; border-radius:9px; flex-shrink:0;
-    display:grid; place-items:center; color:#fff; font-size:11px; font-weight:700;
-  }
-  .booking-mobile-info { flex:1; min-width:0; }
-  .booking-mobile-name { font-size:13px; font-weight:600; color:#111827; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .booking-mobile-contact { font-size:11px; color:#9CA3AF; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .booking-mobile-mid { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-  .booking-mobile-dates { display:flex; align-items:center; gap:5px; font-size:12px; color:#374151; }
-  .booking-mobile-dates svg { width:12px; height:12px; color:#C4C9D4; flex-shrink:0; }
-  .booking-mobile-bottom { display:flex; align-items:center; justify-content:space-between; padding-top:7px; border-top:1px dashed rgba(0,0,0,0.08); }
-  .booking-mobile-amount { font-size:14px; font-weight:800; color:var(--saas-gold); }
-  .booking-mobile-chevron { width:14px; height:14px; color:#D1D5DB; flex-shrink:0; }
+  .booking-mobile-name { font-size:14px; font-weight:700; color:#111827; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* En-tête (nom + badge statut) / contact / chips chambre / lignes label-valeur
+     — carte mobile refondue 2026-08-17 pour afficher directement les mêmes
+     informations que le tableau desktop, plus deux actions rapides. */
+  .bkm-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .bkm-contact { display:flex; align-items:center; gap:6px; font-size:12px; color:#9CA3AF; overflow:hidden; }
+  .bkm-contact svg { width:13px; height:13px; color:#C4C9D4; flex-shrink:0; }
+  .bkm-contact span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bkm-chips { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .bkm-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:7px; border-top:1px dashed rgba(0,0,0,0.08); }
+  .bkm-row-label { font-size:12px; color:#9CA3AF; }
+  .bkm-row-value { font-size:13px; font-weight:700; color:#111827; text-align:right; }
+  .bkm-amount { font-size:15px; color:var(--saas-gold); }
+  .bkm-actions { display:flex; justify-content:flex-end; gap:8px; padding-top:2px; }
+  .bkm-action-round { width:34px; height:34px; border-radius:50%; }

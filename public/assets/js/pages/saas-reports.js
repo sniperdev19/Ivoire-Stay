@@ -20,6 +20,7 @@ function reportsPage(baseUrl) {
 
   async init() {
     if (planUpgradeRequired('reports')) { this.upgradeRequired = true; this.loading = false; return; }
+    await this.loadExpenseCategoryColors(baseUrl);
     await this.loadData();
   },
 

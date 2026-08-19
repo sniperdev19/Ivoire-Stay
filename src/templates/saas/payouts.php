@@ -20,21 +20,21 @@
 
       <!-- KPIs -->
       <div class="payout-kpi-grid">
-        <div class="saas-card" style="padding:10px 12px;border-top:3px solid #6B7280;">
-          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Encaissé en ligne</div>
-          <div style="font-size:15px;font-weight:800;color:#111827;" x-text="formatPrice(balance?.gross_online_collected ?? 0)"></div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon kpi-icon-gray"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a4 4 0 00-4-4H7a4 4 0 00-4 4v10a4 4 0 004 4h10a4 4 0 004-4v-2M13 12h8m0 0l-3-3m3 3l-3 3"/></svg></div></div>
+          <div class="kpi-body"><div class="kpi-value" x-text="formatPrice(balance?.gross_online_collected ?? 0)"></div><div class="kpi-label">Encaissé en ligne</div></div>
         </div>
-        <div class="saas-card" style="padding:10px 12px;border-top:3px solid #DC2626;">
-          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Commission plateforme</div>
-          <div style="font-size:15px;font-weight:800;color:#DC2626;" x-text="formatPrice(balance?.total_commission ?? 0)"></div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon kpi-icon-red"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div></div>
+          <div class="kpi-body"><div class="kpi-value" style="color:#DC2626;" x-text="formatPrice(balance?.total_commission ?? 0)"></div><div class="kpi-label">Commission plateforme</div></div>
         </div>
-        <div class="saas-card" style="padding:10px 12px;border-top:3px solid #D97706;">
-          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">En attente / déjà retiré</div>
-          <div style="font-size:15px;font-weight:800;color:#D97706;" x-text="formatPrice(balance?.reserved_or_paid ?? 0)"></div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon kpi-icon-amber"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div></div>
+          <div class="kpi-body"><div class="kpi-value" style="color:#D97706;" x-text="formatPrice(balance?.reserved_or_paid ?? 0)"></div><div class="kpi-label">En attente / déjà retiré</div></div>
         </div>
-        <div class="saas-card" style="padding:10px 12px;border-top:3px solid #16a34a;">
-          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Solde disponible</div>
-          <div style="font-size:15px;font-weight:800;color:#16a34a;" x-text="formatPrice(balance?.available_balance ?? 0)"></div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon kpi-icon-green"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a4 4 0 00-4-4H7a4 4 0 00-4 4v10a4 4 0 004 4h10a4 4 0 004-4v-2M13 12h8m0 0l-3-3m3 3l-3 3"/></svg></div></div>
+          <div class="kpi-body"><div class="kpi-value" style="color:#16a34a;" x-text="formatPrice(balance?.available_balance ?? 0)"></div><div class="kpi-label">Solde disponible</div></div>
         </div>
       </div>
 

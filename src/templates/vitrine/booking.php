@@ -217,14 +217,14 @@
           <p class="bk-avail-hint" x-show="!availabilityLoading">Cliquez sur une date d'arrivée puis de départ pour les reporter dans le formulaire.</p>
         </div>
 
-        <!-- Forfait(s) week-end (vendredi+samedi+dimanche) inclus dans le séjour -->
-        <div x-show="weekendPackageCount > 0" x-transition class="bk-weekend-notice">
+        <!-- Nuit(s) au tarif week-end (vendredi/samedi/dimanche) incluses dans le séjour -->
+        <div x-show="weekendNightsCount > 0" x-transition class="bk-weekend-notice">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m0 16v1m8.485-8.485h-1M4.515 12h-1m14.142 5.657l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 8a4 4 0 00-4 4c0 1.5.8 2.8 2 3.5V17h4v-1.5c1.2-.7 2-2 2-3.5a4 4 0 00-4-4z"/></svg>
           <span>
-            Votre séjour inclut <strong x-text="weekendPackageCount + ' forfait' + (weekendPackageCount > 1 ? 's' : '') + ' week-end'"></strong>
-            (vendredi-samedi-dimanche), facturé<span x-text="weekendPackageCount > 1 ? 's' : ''"></span>
-            <strong x-text="formatPrice(room?.weekend_price || 0)"></strong> les 3 nuits au lieu de
-            <span x-text="formatPrice((room?.base_price || 0) * 3)"></span>.
+            Votre séjour inclut <strong x-text="weekendNightsCount + ' nuit' + (weekendNightsCount > 1 ? 's' : '') + ' week-end'"></strong>
+            (vendredi, samedi ou dimanche), facturée<span x-text="weekendNightsCount > 1 ? 's' : ''"></span>
+            <strong x-text="formatPrice(room?.weekend_price || 0)"></strong> la nuit au lieu de
+            <span x-text="formatPrice(room?.base_price || 0)"></span>.
           </span>
         </div>
 

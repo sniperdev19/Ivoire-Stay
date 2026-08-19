@@ -27,25 +27,25 @@ $defaultTab = $defaultTab ?? 'invoices';
 
       <!-- KPI BAR -->
       <div class="saas-kpi-grid">
-        <div class="kpi-card saas-card">
-          <div style="font-size:10px;color:#9CA3AF;margin-bottom:3px;">Total factures</div>
-          <div style="font-size:16px;font-weight:800;color:#111827;" x-text="invoices.length"></div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon kpi-icon-gold"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div></div>
+          <div class="kpi-body"><div class="kpi-value" x-text="invoices.length"></div><div class="kpi-label">Total factures</div></div>
         </div>
-        <div class="kpi-card saas-card">
-          <div style="font-size:10px;color:#9CA3AF;margin-bottom:3px;">Montant total TTC</div>
-          <div style="font-size:13px;font-weight:800;color:#1B4332;" x-text="formatPrice(kpi.totalTtc)"></div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon kpi-icon-green"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m0-12a9 9 0 100 18 9 9 0 000-18z"/></svg></div></div>
+          <div class="kpi-body"><div class="kpi-value" x-text="formatPrice(kpi.totalTtc)"></div><div class="kpi-label">Montant total TTC</div></div>
         </div>
-        <div class="kpi-card saas-card">
-          <div style="font-size:10px;color:#9CA3AF;margin-bottom:3px;">Factures payées</div>
-          <div style="font-size:16px;font-weight:800;color:#16a34a;" x-text="kpi.paidInv"></div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon kpi-icon-green"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div></div>
+          <div class="kpi-body"><div class="kpi-value" x-text="kpi.paidInv"></div><div class="kpi-label">Factures payées</div></div>
         </div>
-        <div class="kpi-card saas-card">
-          <div style="font-size:10px;color:#9CA3AF;margin-bottom:3px;">Encaissé (net)</div>
-          <div style="font-size:13px;font-weight:800;color:#1B4332;" x-text="formatPrice(kpi.encaisse)"></div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon kpi-icon-green"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a4 4 0 00-4-4H7a4 4 0 00-4 4v10a4 4 0 004 4h10a4 4 0 004-4v-2M13 12h8m0 0l-3-3m3 3l-3 3"/></svg></div></div>
+          <div class="kpi-body"><div class="kpi-value" x-text="formatPrice(kpi.encaisse)"></div><div class="kpi-label">Encaissé (net)</div></div>
         </div>
-        <div class="kpi-card saas-card">
-          <div style="font-size:10px;color:#9CA3AF;margin-bottom:3px;">En attente</div>
-          <div style="font-size:13px;font-weight:800;color:#D97706;" x-text="formatPrice(kpi.enAttente)"></div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon kpi-icon-amber"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div></div>
+          <div class="kpi-body"><div class="kpi-value" x-text="formatPrice(kpi.enAttente)"></div><div class="kpi-label">En attente</div></div>
         </div>
       </div>
 

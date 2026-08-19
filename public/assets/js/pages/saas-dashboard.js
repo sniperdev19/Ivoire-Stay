@@ -83,13 +83,17 @@ function dashboardPage(baseUrl) {
       }[s]) ?? base + 'background:rgba(148,163,184,0.12);color:#334155;';
     },
 
-    /* Couleur pleine (liseré de carte mobile) — même palette que statusStyle */
-    statusAccent(s) {
+    /* Avatar de la liste "Réservations récentes" — même palette que statusStyle,
+       juste plus saturée pour rester lisible sur une pastille pleine. */
+    avatarStyle(s) {
+      const base = 'width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:14px;font-weight:700;flex-shrink:0;';
       return ({
-        confirmed: '#10B981', pending: '#FBBF24', cancelled: '#EF4444',
-        checked_in: '#38BDF8', checked_out: '#F97316',
-        checkin: '#38BDF8', checkout: '#F97316',
-      }[s]) ?? '#94A3B8';
+        confirmed:  base + 'background:rgba(16,185,129,0.16);color:#047857;',
+        pending:    base + 'background:rgba(251,191,36,0.2);color:#92400E;',
+        cancelled:  base + 'background:rgba(239,68,68,0.16);color:#B91C1C;',
+        checked_in: base + 'background:rgba(56,189,248,0.18);color:#0369A1;',
+        checked_out:base + 'background:rgba(249,115,22,0.16);color:#B45309;',
+      }[s]) ?? base + 'background:rgba(148,163,184,0.18);color:#334155;';
     },
 
     get recentBookings() {

@@ -21,13 +21,13 @@
 
   <!-- KPI compactes -->
   <div class="client-kpi-grid">
-    <div class="saas-card" style="padding:10px 12px;border-top:3px solid #C9A84C;">
-      <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Total clients</div>
-      <div style="font-size:18px;font-weight:800;color:#111827;" x-text="clients.length"></div>
+    <div class="kpi-card">
+      <div class="kpi-top"><div class="kpi-icon kpi-icon-gold"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/></svg></div></div>
+      <div class="kpi-body"><div class="kpi-value" x-text="clients.length"></div><div class="kpi-label">Total clients</div></div>
     </div>
-    <div class="saas-card" style="padding:10px 12px;border-top:3px solid #16a34a;">
-      <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Avec réservations</div>
-      <div style="font-size:18px;font-weight:800;color:#16a34a;" x-text="clients.filter(c => (c.total_bookings ?? 0) > 0).length"></div>
+    <div class="kpi-card">
+      <div class="kpi-top"><div class="kpi-icon kpi-icon-green"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div></div>
+      <div class="kpi-body"><div class="kpi-value" x-text="clients.filter(c => (c.total_bookings ?? 0) > 0).length"></div><div class="kpi-label">Avec réservations</div></div>
     </div>
   </div>
 
