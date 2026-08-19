@@ -29,11 +29,11 @@
   <!-- Skeleton de chargement -->
   <div x-show="loading">
     <div style="height:36px;width:260px;margin-bottom:24px;" class="db-shimmer"></div>
-    <div class="kpi-grid" style="margin-bottom:20px;">
-      <div class="db-shimmer" style="height:100px;"></div>
-      <div class="db-shimmer" style="height:100px;"></div>
-      <div class="db-shimmer" style="height:100px;"></div>
-      <div class="db-shimmer" style="height:100px;"></div>
+    <div class="db-kpi-grid" style="margin-bottom:20px;">
+      <div class="db-shimmer" style="height:120px;"></div>
+      <div class="db-shimmer" style="height:120px;"></div>
+      <div class="db-shimmer" style="height:120px;"></div>
+      <div class="db-shimmer" style="height:120px;"></div>
     </div>
     <div class="main-grid">
       <div class="db-shimmer" style="height:280px;"></div>
@@ -55,61 +55,55 @@
   <div x-show="!loading">
 
     <!-- KPI cards -->
-    <div class="kpi-grid">
+    <div class="db-kpi-grid">
 
-      <div class="kpi-card kpi-gold">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;">
-          <div style="width:24px;height:24px;border-radius:6px;background:rgba(201,168,76,0.12);display:grid;place-items:center;">
-            <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+      <div class="db-kpi-card">
+        <div class="db-kpi-top">
+          <div class="db-kpi-icon db-kpi-icon-green">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
           </div>
         </div>
-        <div style="font-size:15px;font-weight:800;color:#111827;line-height:1;margin-bottom:2px;" x-text="formatPrice(stats?.revenue ?? 0)"></div>
-        <div style="font-size:10px;color:#6B7280;">Revenus ce mois</div>
-        <div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(0,0,0,0.05);font-size:10px;color:#9CA3AF;">
-          Reçus : <span style="color:#16A34A;font-weight:600;" x-text="formatPrice(stats?.payments_received ?? 0)"></span>
+        <div class="db-kpi-body">
+          <div class="db-kpi-value" x-text="formatPrice(stats?.revenue ?? 0)"></div>
+          <div class="db-kpi-label">Revenus ce mois</div>
         </div>
       </div>
 
-      <div class="kpi-card kpi-blue">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">
-          <div style="width:24px;height:24px;border-radius:6px;background:rgba(37,99,235,0.1);display:grid;place-items:center;">
-            <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;color:#2563EB;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V9a2 2 0 012-2h2a2 2 0 012 2v10"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19h14"/></svg>
+      <div class="db-kpi-card">
+        <div class="db-kpi-top">
+          <div class="db-kpi-icon db-kpi-icon-gray">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 18v-11a2 2 0 012-2h4a2 2 0 012 2v11M4 13h16M20 18v-5a2 2 0 00-2-2h-6M4 18h16M4 21v-3M20 21v-3"/></svg>
           </div>
-          <div style="font-size:15px;font-weight:800;color:#111827;" x-text="occupancyPct + '%' "></div>
+          <div class="db-kpi-pct" x-text="occupancyPct + '%' "></div>
         </div>
-        <div style="height:4px;background:rgba(0,0,0,0.06);border-radius:6px;overflow:hidden;margin-bottom:4px;">
-          <div :style="'width:' + occupancyPct + '%;height:100%;background:linear-gradient(90deg,#2563EB,#60A5FA);transition:width 1s ease;' "></div>
-        </div>
-        <div style="font-size:10px;color:#6B7280;">Taux d'occupation</div>
-        <div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(0,0,0,0.05);font-size:10px;color:#9CA3AF;">
-          <span style="color:#2563EB;font-weight:600;" x-text="stats?.total_rooms ?? 0"></span> chambres au total
+        <div class="db-kpi-body">
+          <div class="db-kpi-label">Taux d'occupation</div>
+          <div class="db-kpi-progress"><div class="db-kpi-progress-bar" :style="'width:' + occupancyPct + '%'"></div></div>
         </div>
       </div>
 
-      <div class="kpi-card kpi-green">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;">
-          <div style="width:24px;height:24px;border-radius:6px;background:rgba(22,163,74,0.1);display:grid;place-items:center;">
-            <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;color:#16A34A;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/></svg>
+      <div class="db-kpi-card">
+        <div class="db-kpi-top">
+          <div class="db-kpi-icon db-kpi-icon-green">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/></svg>
           </div>
-          <div style="background:#DCFCE7;color:#16A34A;padding:2px 6px;border-radius:9999px;font-size:9px;font-weight:600;">Actives</div>
+          <div class="db-kpi-badge">Actives</div>
         </div>
-        <div style="font-size:16px;font-weight:800;color:#111827;line-height:1;margin-bottom:2px;" x-text="stats?.active_bookings ?? 0"></div>
-        <div style="font-size:10px;color:#6B7280;">Réservations actives</div>
-        <div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(0,0,0,0.05);font-size:10px;color:#9CA3AF;">
-          En attente : <span style="color:#D97706;font-weight:600;" x-text="(planning||[]).filter(p=>p.status==='pending').length"></span>
+        <div class="db-kpi-body">
+          <div class="db-kpi-value" x-text="stats?.active_bookings ?? 0"></div>
+          <div class="db-kpi-label">Réservations actives</div>
         </div>
       </div>
 
-      <div class="kpi-card kpi-purple">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;">
-          <div style="width:24px;height:24px;border-radius:6px;background:rgba(124,58,237,0.1);display:grid;place-items:center;">
-            <svg xmlns="http://www.w3.org/2000/svg" style="width:13px;height:13px;color:#7C3AED;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h1m4-4h1m-1 4h1"/></svg>
+      <div class="db-kpi-card">
+        <div class="db-kpi-top">
+          <div class="db-kpi-icon db-kpi-icon-purple">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h1m4-4h1m-1 4h1"/></svg>
           </div>
-          <div style="font-size:15px;font-weight:800;color:#111827;"><span x-text="stats?.available_rooms ?? 0"></span><span style="font-size:11px;color:#9CA3AF;font-weight:400;"> / <span x-text="stats?.total_rooms ?? 0"></span></span></div>
         </div>
-        <div style="font-size:10px;color:#6B7280;margin-bottom:4px;">Chambres disponibles</div>
-        <div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(0,0,0,0.05);font-size:10px;color:#9CA3AF;">
-          Bénéfice net : <span :style="{ color: (stats?.net_profit ?? 0) >= 0 ? '#16A34A' : '#DC2626' }" style="font-weight:600;" x-text="formatPrice(stats?.net_profit ?? 0)"></span>
+        <div class="db-kpi-body">
+          <div class="db-kpi-value"><span x-text="stats?.available_rooms ?? 0"></span><small> / <span x-text="stats?.total_rooms ?? 0"></span></small></div>
+          <div class="db-kpi-label">Chambres disponibles</div>
         </div>
       </div>
 
@@ -130,43 +124,17 @@
             Aucune réservation récente
         </div>
 
-        <div x-show="recentBookings.length > 0" class="db-recent-table-wrap" style="overflow-x:auto;">
-          <table style="width:100%;border-collapse:collapse;">
-            <thead style="text-align:left;color:rgba(0,0,0,0.65);font-size:13px;">
-              <tr>
-                <th style="padding:10px 20px;border-bottom:1px solid rgba(0,0,0,0.05);">Client</th>
-                <th style="padding:10px 16px;border-bottom:1px solid rgba(0,0,0,0.05);">Chambre</th>
-                <th style="padding:10px 16px;border-bottom:1px solid rgba(0,0,0,0.05);">Check-in</th>
-                <th style="padding:10px 20px;text-align:right;border-bottom:1px solid rgba(0,0,0,0.05);">Montant</th>
-                <th style="padding:10px 16px;border-bottom:1px solid rgba(0,0,0,0.05);">Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="b in recentBookings" :key="b.id">
-                <tr style="border-top:1px solid rgba(0,0,0,0.06);">
-                  <td style="padding:13px 20px;"><div style="display:flex;align-items:center;gap:10px;"><div style="width:30px;height:30px;border-radius:8px;background:rgba(201,168,76,0.12);display:grid;place-items:center;font-size:12px;font-weight:700;color:#C9A84C;" x-text="(b.client_name||'?').charAt(0).toUpperCase()"></div><span style="font-size:14px;font-weight:500;color:#111827;" x-text="b.client_name ?? '-'"></span></div></td>
-                  <td style="padding:13px 16px;font-size:13px;color:#4B5563;" x-text="b.room_number ?? '-'"></td>
-                  <td style="padding:13px 16px;font-size:13px;color:#4B5563;" x-text="formatDate(b.check_in)"></td>
-                  <td style="padding:13px 20px;font-size:13px;font-weight:600;color:#111827;text-align:right;" x-text="formatPrice(b.total_amount)"></td>
-                  <td style="padding:13px 16px;"><span :style="statusStyle(b.status)" x-text="statusLabel(b.status)"></span></td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Vue mobile : cartes empilées, aucun défilement horizontal -->
-        <div x-show="recentBookings.length > 0" class="db-recent-mobile-list">
+        <div x-show="recentBookings.length > 0" class="db-recent-list">
           <template x-for="b in recentBookings" :key="b.id">
-            <div class="db-recent-mobile-card" :style="'border-left-color:' + statusAccent(b.status)">
-              <div class="db-recent-mobile-top">
-                <div class="db-recent-mobile-avatar" x-text="(b.client_name||'?').charAt(0).toUpperCase()"></div>
-                <div class="db-recent-mobile-info" x-text="b.client_name ?? '-'"></div>
-                <span :style="statusStyle(b.status)" x-text="statusLabel(b.status)"></span>
+            <div class="db-recent-row">
+              <div :style="avatarStyle(b.status)" x-text="(b.client_name||'?').charAt(0).toUpperCase()"></div>
+              <div class="db-recent-info">
+                <div class="db-recent-name" x-text="b.client_name ?? '-'"></div>
+                <div class="db-recent-meta" x-text="'Ch. ' + (b.room_number ?? '-') + ' · ' + formatDate(b.check_in)"></div>
               </div>
-              <div class="db-recent-mobile-bottom">
-                <span class="db-recent-mobile-meta" x-text="'Ch. ' + (b.room_number ?? '-') + ' · ' + formatDate(b.check_in)"></span>
-                <span class="db-recent-mobile-amount" x-text="formatPrice(b.total_amount)"></span>
+              <div class="db-recent-right">
+                <div class="db-recent-amount" x-text="formatPrice(b.total_amount)"></div>
+                <span :style="statusStyle(b.status)" x-text="statusLabel(b.status)"></span>
               </div>
             </div>
           </template>
@@ -218,13 +186,13 @@
         <a href="<?= $base_url ?>/saas/invoices" style="font-size:12px;color:#C9A84C;font-weight:500;text-decoration:none;">Facturation →</a>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#6B7280;">Revenus</span><span style="font-size:13px;font-weight:600;color:#111827;" x-text="formatPrice(stats?.revenue ?? 0)"></span></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#6B7280;">Paiements reçus</span><span style="font-size:13px;font-weight:600;color:#16A34A;" x-text="formatPrice(stats?.payments_received ?? 0)"></span></div>
+        <div class="db-fin-row"><span class="db-fin-label">Revenus</span><span class="db-fin-value" x-text="formatPrice(stats?.revenue ?? 0)"></span></div>
+        <div class="db-fin-row db-fin-green"><span class="db-fin-label">Paiements reçus</span><span class="db-fin-value" style="color:#16A34A;" x-text="formatPrice(stats?.payments_received ?? 0)"></span></div>
         <template x-if="(stats?.payments_cancelled ?? 0) > 0">
-          <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#6B7280;">Annulé</span><span style="font-size:13px;font-weight:600;color:#9CA3AF;text-decoration:line-through;" x-text="formatPrice(stats?.payments_cancelled ?? 0)"></span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;"><span style="font-size:12px;color:#6B7280;">Annulé</span><span style="font-size:13px;font-weight:600;color:#9CA3AF;text-decoration:line-through;" x-text="formatPrice(stats?.payments_cancelled ?? 0)"></span></div>
         </template>
-        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#6B7280;">En attente</span><span style="font-size:13px;font-weight:600;color:#D97706;" x-text="formatPrice(stats?.payments_pending ?? 0)"></span></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#6B7280;">Dépenses</span><span style="font-size:13px;font-weight:600;color:#DC2626;" x-text="formatPrice(stats?.expenses ?? 0)"></span></div>
+        <div class="db-fin-row db-fin-amber"><span class="db-fin-label">Solde en attente</span><span class="db-fin-value" style="color:#D97706;" x-text="formatPrice(stats?.payments_pending ?? 0)"></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;"><span style="font-size:12px;color:#6B7280;">Dépenses</span><span style="font-size:13px;font-weight:600;color:#DC2626;" x-text="formatPrice(stats?.expenses ?? 0)"></span></div>
         <div style="border-top:1px solid rgba(0,0,0,0.06);padding-top:8px;display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:13px;font-weight:700;color:#111827;">Bénéfice net</span>
           <span :style="(stats?.net_profit ?? 0) >=0 ? 'color:#16A34A;font-size:14px;font-weight:800;' : 'color:#DC2626;font-size:14px;font-weight:800;'" x-text="formatPrice(stats?.net_profit ?? 0)"></span>

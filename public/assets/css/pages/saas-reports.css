@@ -2,26 +2,6 @@
    Afristay — Page SaaS : rapports (saas/reports.php)
    ============================================================ */
 
-/* Carte KPI : icône dans une puce colorée + libellé/valeur, au lieu
-   d'une icône simple flottant à côté du texte. */
-.report-kpi { display: flex; align-items: center; gap: 10px; }
-.report-kpi-icon {
-  width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-}
-.report-kpi-icon svg { width: 15px; height: 15px; }
-.report-kpi-body { min-width: 0; }
-.report-kpi-label {
-  margin: 0 0 2px; font-size: 10px; font-weight: 700; letter-spacing: .02em;
-  text-transform: uppercase; color: #9CA3AF;
-}
-.report-kpi-value { margin: 0; font-size: 15px; font-weight: 800; color: #111827; }
-
-/* Cartes KPI plus compactes que le .saas-card générique (padding:24px) —
-   scopé à ce fichier (chargé uniquement sur reports.php) donc sans impact
-   sur .saas-kpi-grid des autres pages (billing.php, invoices.php…). */
-.saas-kpi-grid .saas-card { padding: 12px 14px; }
-
 .report-section-title {
   display: flex; align-items: center; gap: 8px;
   margin: 0 0 12px; font-size: 16px; font-weight: 700; color: #111827;

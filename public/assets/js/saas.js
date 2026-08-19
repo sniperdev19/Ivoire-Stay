@@ -245,12 +245,13 @@ const INVOICE_STATUS = {
   cancelled: { label: 'Annulée',   badge: 'badge badge-danger' },
 };
 
-/* ─── Catégories de dépenses — source de vérité unique ─────────────────────
-   Utilisé par expenses et reports.                                           */
-const EXPENSE_CAT = {
-  labels: { maintenance: 'Maintenance', salaries: 'Salaires', supplies: 'Fournitures', utilities: 'Énergie / Eau', marketing: 'Marketing', other: 'Autre' },
-  colors: { maintenance: '#D97706',     salaries: '#2563EB',  supplies: '#059669',      utilities: '#7C3AED',       marketing: '#EC4899',   other: '#6B7280' },
-};
+/* ─── Catégories de dépenses ─────────────────────────────────────────────────
+   Personnalisées par établissement (table expense_categories) depuis le
+   2026-08-17 — la catégorie d'une dépense EST déjà son libellé (texte libre
+   choisi par l'owner), seule sa couleur doit être résolue dynamiquement.
+   Peuplé par loadExpenseCategoryColors() (pages Dépenses et Rapports),
+   lu par catColor(). */
+let EXPENSE_CATEGORY_COLORS = {};
 
 /* ─── Mixin partagé par tous les composants Alpine de page SaaS ─────────────
    Usage : return { ...saasHelpers, /* état et méthodes spécifiques *\/ };   */
@@ -274,9 +275,22 @@ const saasHelpers = {
   /* Statut de facture */
   invoiceStatus(s) { return INVOICE_STATUS[s] ?? { label: s ?? '—', badge: 'badge' }; },
 
-  /* Catégories de dépenses */
-  catLabel(c) { return EXPENSE_CAT.labels[c] ?? c; },
-  catColor(c) { return EXPENSE_CAT.colors[c] ?? '#9CA3AF'; },
+  /* Catégories de dépenses — charge la carte des couleurs de l'établissement
+     courant dans le cache partagé EXPENSE_CATEGORY_COLORS et renvoie la liste
+     complète des catégories (utilisée par la page Dépenses pour son propre
+     select/CRUD ; la page Rapports n'a besoin que de l'effet de bord). */
+  async loadExpenseCategoryColors(baseUrl) {
+    try {
+      const res  = await fetch(baseUrl + '/api/expense-categories?establishment_id=' + this.estId(), { headers: this.apiHeaders() });
+      const data = await res.json();
+      if (!data.success) return [];
+      EXPENSE_CATEGORY_COLORS = Object.fromEntries(data.data.map(c => [c.name, c.color]));
+      return data.data;
+    } catch(e) {
+      return [];
+    }
+  },
+  catColor(c) { return EXPENSE_CATEGORY_COLORS[c] ?? '#9CA3AF'; },
 
   /* Toast notification */
   toast: null,

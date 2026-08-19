@@ -83,6 +83,15 @@ class BookingController
 
         $amount = Booking::calculateAmount($room['room_type_id'], $checkIn, $checkOut, $bookingType, $hours);
 
+        // Remise manuelle à la discrétion de l'établissement (ex. longs séjours),
+        // saisie à la création uniquement — déjà déduite de $amount ci-dessous,
+        // total_amount stocke donc directement le montant final.
+        $discountAmount = max(0.0, (float) ($data['discount_amount'] ?? 0));
+        if ($discountAmount > $amount) {
+            Response::error('La remise ne peut pas dépasser le montant calculé (' . $amount . ' FCFA)');
+        }
+        $amount = round($amount - $discountAmount, 2);
+
         // Handle client: internal user_id or public_client
         $clientId = null;
         $userId   = null;
@@ -115,14 +124,15 @@ class BookingController
             'booking_type'     => $bookingType,
             'hours'            => $bookingType === 'passage' ? $hours : null,
             'guests_count'     => (int) ($data['guests_count'] ?? 1),
-            'total_amount'     => $data['total_amount'] ?? $amount,
+            'total_amount'     => $amount,
+            'discount_amount'  => $discountAmount,
             'status'           => $data['status'] ?? 'confirmed',
             'source'           => $data['source'] ?? 'manual',
             'notes'            => $data['notes'] ?? null,
         ]);
 
         // Auto-generate invoice
-        $invoiceAmount = (float) ($data['total_amount'] ?? $amount);
+        $invoiceAmount = $amount;
         $invoiceId = Invoice::createForBooking($id, $invoiceAmount);
 
         // Encaissement optionnel saisi directement dans le formulaire de création

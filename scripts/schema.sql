@@ -29,6 +29,7 @@ CREATE TABLE `bookings` (
   `hours` tinyint unsigned DEFAULT NULL,
   `guests_count` int DEFAULT '1',
   `total_amount` decimal(10,2) DEFAULT NULL,
+  `discount_amount` decimal(10,2) NOT NULL DEFAULT '0' COMMENT 'Remise manuelle appliquée par l’établissement (FCFA), déjà déduite de total_amount',
   `status` enum('pending','confirmed','checked_in','checked_out','cancelled') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
   `source` enum('manual','online','phone') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'manual',
   `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -116,6 +117,23 @@ CREATE TABLE `expenses` (
   CONSTRAINT `expenses_ibfk_1` FOREIGN KEY (`establishment_id`) REFERENCES `establishments` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+-- Catégories de dépenses personnalisées par établissement (voir
+-- migration_expense_categories.sql) : `expenses.category` reste un texte
+-- libre, cette table ne fournit qu'un menu de noms/couleurs par
+-- établissement pour l'UI, sans contrainte FK depuis `expenses`.
+DROP TABLE IF EXISTS `expense_categories`;
+CREATE TABLE `expense_categories` (
+  `id`               int NOT NULL AUTO_INCREMENT,
+  `establishment_id` int NOT NULL,
+  `name`             varchar(60) NOT NULL,
+  `color`            varchar(7) NOT NULL DEFAULT '#6B7280',
+  `created_at`       datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `establishment_name` (`establishment_id`, `name`),
+  CONSTRAINT `expense_categories_establishment_fk` FOREIGN KEY (`establishment_id`) REFERENCES `establishments` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `invoices`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -440,6 +458,27 @@ CREATE TABLE `email_verifications` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `token_hash` (`token_hash`),
   KEY `user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Inscription des réceptionnistes par invitation (voir migration_team_invitations.sql)
+-- : l'owner saisit uniquement l'email, le réceptionniste choisit lui-même son nom
+-- et son mot de passe en acceptant le lien reçu par email.
+DROP TABLE IF EXISTS `team_invitations`;
+CREATE TABLE `team_invitations` (
+  `id`               int NOT NULL AUTO_INCREMENT,
+  `establishment_id` int NOT NULL,
+  `email`            varchar(190) NOT NULL,
+  `invited_by`       int NOT NULL COMMENT 'owner (ou superadmin) à l’origine de l’invitation',
+  `token_hash`       char(64) NOT NULL COMMENT 'sha256 du jeton envoyé par email',
+  `expires_at`       datetime NOT NULL,
+  `accepted_at`      datetime DEFAULT NULL,
+  `created_at`       datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `token_hash` (`token_hash`),
+  KEY `establishment_id` (`establishment_id`),
+  KEY `invited_by` (`invited_by`),
+  CONSTRAINT `team_invitations_establishment_fk` FOREIGN KEY (`establishment_id`) REFERENCES `establishments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `team_invitations_invited_by_fk` FOREIGN KEY (`invited_by`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Appareils connectés / historique de connexion (voir migration_account_settings.sql)

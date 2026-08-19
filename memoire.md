@@ -51,8 +51,11 @@ fichiers (les deux étapes sont désormais distinctes).
   établissements, propriétaires, retraits.
 - **`owner`** — s'inscrit via `/register` (auto-inscription), gère un ou
   plusieurs établissements (`/saas/*` selon plan).
-- **`receptionist`** — créé PAR un owner via `TeamController` (pas
-  d'auto-inscription), accès `/saas/*` restreint (pas de Finance/Paramètres).
+- **`receptionist`** — jamais d'auto-inscription libre : un owner envoie une
+  invitation par email depuis `/saas/settings` (`TeamController::invite()`,
+  table `team_invitations`), le réceptionniste choisit lui-même son nom et
+  son mot de passe en l'acceptant sur `/team-invite?token=...` (lien 24h,
+  page publique). Accès `/saas/*` restreint (pas de Finance/Paramètres).
 - **`client`** — voyageur, pas de compte requis pour réserver (public_clients
   + guest_token opaque pour s'abonner aux notifications push de sa résa).
 - **`agent`** — agent commercial démarchant des établissements
@@ -65,6 +68,8 @@ fichiers (les deux étapes sont désormais distinctes).
 
 Tables cœur métier : `users`, `establishments`, `room_types`, `rooms`,
 `bookings`, `public_clients`, `invoices`, `payments`, `expenses`,
+`expense_categories` (catégories personnalisées par établissement, ajoutée
+2026-08-17 — `expenses.category` reste un texte libre, pas de FK),
 `subscriptions`, `payout_requests`.
 
 Tables médias : `room_photos`, `establishment_photos`.
@@ -76,7 +81,8 @@ Tables notifications/push : `notifications`, `push_subscriptions`,
 Tables sécurité/auth : `rate_limits`, `token_blacklist` (révocation JWT),
 `device_attestations`, `webauthn_challenges`, `webauthn_credentials`
 (passkeys — gate résiduel, voir plus bas), `password_resets`,
-`email_verifications` (ajoutée 2026-07-20).
+`email_verifications` (ajoutée 2026-07-20), `team_invitations` (ajoutée
+2026-08-17, invitations réceptionniste — voir Journal).
 
 Autre : `scheduled_job_runs` (jobs "cron" déclenchés par requête HTTP, pas de
 vrai cron — voir `Services\SchedulerService`).
@@ -176,6 +182,465 @@ comme canal (décision produit). `NotificationService::broadcastToOwners()`
 (`/admin/notifications`) à tous les owners, type `platform_announcement`.
 
 ## Journal des évolutions récentes
+
+- **2026-08-18** — Réforme du calcul du prix week-end
+  (`Booking::calculateAmount()`) : le tarif week-end n'est plus un **forfait
+  fixe pour un bloc complet vendredi+samedi+dimanche** mais un **vrai prix
+  par nuit**, appliqué à chaque nuit tombant individuellement un vendredi,
+  samedi ou dimanche — décision produit explicite de l'utilisateur après
+  question de clarification (deux options proposées, la plus simple/large
+  retenue : « n'importe quelle nuit ven/sam/dim », pas seulement un bloc
+  complet des 3).
+  - **Avant** : Ven+Sam+Dim consécutifs = `weekend_price` une seule fois
+    (forfait pour les 3 nuits) ; un week-end incomplet (ex. arrivée samedi,
+    départ lundi = Sam+Dim sans vendredi) restait entièrement au tarif de
+    base, ce qui ne correspondait pas à l'attente de l'utilisateur.
+  - **Après** : chaque nuit vaut individuellement `weekend_price` si son
+    jour est vendredi/samedi/dimanche, sinon `base_price` — Ven+Sam+Dim
+    devient donc `weekend_price × 3` au lieu d'un forfait unique ; Sam+Dim
+    seul (sans vendredi) devient `weekend_price × 2` au lieu de `base_price
+    × 2`.
+  - **`booking_type === 'weekend'` (choix manuel explicite) fusionné avec la
+    détection automatique** : réponse explicite de l'utilisateur à la
+    question de clarification sur ce point (« détection automatique du type
+    de séjour », plutôt que garder un forfait fixe séparé indépendant du
+    nombre de nuits comme avant) — les deux types passent maintenant par
+    exactement la même boucle jour-par-jour, aucun calcul dédié ne subsiste
+    pour `'weekend'`. Le champ `booking_type` reste sélectionnable dans l'UI
+    (catégorisation/affichage) mais n'a plus d'incidence sur le prix.
+  - **Estimation client synchronisée** : `public/assets/js/pages/booking.js`
+    (tunnel de réservation public, `vitrine/booking.php`) dupliquait la même
+    logique de bloc complet côté JS pour l'aperçu de prix avant paiement —
+    mise à jour en miroir exact de la nouvelle formule PHP (sinon le prix
+    affiché au client avant réservation aurait divergé du montant réellement
+    facturé, incohérence explicitement signalée par un commentaire déjà
+    présent dans le code avant cette réforme). `weekendPackageCount`
+    (nombre de forfaits) renommé `weekendNightsCount` (nombre de nuits),
+    bandeau d'info (`bk-weekend-notice`) reformulé en conséquence ("2 nuits
+    week-end... facturées X FCFA **la nuit**" au lieu de "1 forfait
+    week-end... facturé X FCFA **les 3 nuits**").
+  - Libellés UI de `rooms.php` (formulaire type de chambre) déjà cohérents
+    avec la réforme sans modification nécessaire : "Tarif week-end / **nuit**"
+    et "S'applique automatiquement les Vendredis, Samedis et Dimanches"
+    décrivaient déjà ce comportement alors que le code ne le faisait pas
+    encore — la réforme aligne enfin le calcul réel sur ce que l'UI
+    annonçait déjà.
+  - **Validé en CLI PHP direct** (`Booking::calculateAmount()` appelé
+    directement, `weekend_price` temporairement fixé à 20000 sur le type de
+    chambre de test puis restauré à `NULL` après coup) : bloc complet
+    Ven→Lun (3×20000), week-end incomplet Sam→Lun (2×20000, le cas central
+    de la réforme), nuit isolée jeudi (1×15000, inchangé), séjour mixte
+    Jeu→Lun (15000 + 3×20000), et confirmation que `booking_type='weekend'`
+    produit désormais un résultat strictement identique à `'nuit'` sur les
+    mêmes dates. **Validé par capture d'écran réelle** du tunnel public
+    (Playwright + Chrome, séjour samedi→lundi) : bandeau affiche "2 nuits
+    week-end (vendredi, samedi ou dimanche), facturées 20 200 FCFA la nuit
+    au lieu de 15 150 FCFA" (montants majorés de 1%, cohérent avec le markup
+    client Starter déjà en place) — confirme aussi qu'un week-end sans
+    vendredi déclenche bien le tarif, contrairement à l'ancien comportement.
+    `php -l`/`node --check` OK.
+  - Pas de migration DB (changement de logique de calcul pur, aucune colonne
+    touchée). Resynchronisé dans `copy/` — **non commité/poussé**.
+
+- **2026-08-18** — Remise manuelle sur réservation (montant fixe FCFA), à
+  la discrétion de l'établissement (ex. longs séjours, fidélité) — décision
+  produit explicite de l'utilisateur : **manuelle uniquement** (pas de règle
+  automatique par seuil de nuits) et **montant fixe** (pas de %), les deux
+  choisis parmi plusieurs options proposées.
+  - Nouvelle colonne `bookings.discount_amount` (`scripts/
+    migration_booking_discount.sql`, répercutée dans `schema.sql`) —
+    `total_amount` continue de stocker le montant **final** (après remise),
+    `discount_amount` est purement informatif/traçable. Conséquence
+    importante déjà vérifiée par exploration avant codage : la commission
+    plateforme (paiement en ligne, plan Starter) se recalcule automatiquement
+    au prorata du montant réduit sans aucun changement dans
+    `Invoice::registerPayment()`, puisqu'elle est déjà calculée sur
+    `amount_ttc`/`total_amount` au moment du paiement.
+  - `BookingController::store()` : remise déduite du montant auto-calculé
+    (`Booking::calculateAmount()`) avant insertion, avec validation (remise
+    négative → clampée à 0, remise > montant calculé → erreur explicite avec
+    le montant maximum dans le message). **Remplace l'ancien mécanisme
+    `$data['total_amount'] ?? $amount`** (override brut, jamais exploité par
+    aucune UI existante d'après l'exploration préalable) par ce calcul
+    structuré — plus de traçabilité, même endroit du code.
+    Volontairement **absent du tunnel de réservation public**
+    (`PublicController`) : un client ne doit pas pouvoir s'auto-accorder une
+    remise, seul le staff via `BookingController` le peut.
+  - UI : nouveau champ "Remise (FCFA)" à l'étape 3 ("Détails") du formulaire
+    de création (`bookings.php`), juste avant Notes — pas de prévisualisation
+    du prix en temps réel (aucune n'existait déjà pour le prix lui-même avant
+    cet ajout, cohérent de ne pas en introduire une seulement pour la
+    remise). Modale de détail : nouvelle ligne "Prix initial : ~~X~~ · Remise
+    : -Y" sous le montant total, visible seulement si `discount_amount > 0`.
+    Non exposé en édition après création (scope volontairement limité à la
+    création, cohérent avec "manuelle uniquement").
+  - **Bug réel trouvé et corrigé en testant visuellement** : "Prix initial"
+    affichait `NaN FCFA` — `total_amount`/`discount_amount` reviennent de
+    l'API comme des **chaînes** (colonnes `decimal` MySQL sérialisées en
+    JSON, ex. `"25000.00"`), et l'opérateur `+` de JS concatène deux chaînes
+    au lieu de les additionner (`"25000.00" + "5000.00"` →
+    `"25000.005000.00"`, non numérique). Corrigé avec `Number(...)` explicite
+    des deux côtés avant l'addition.
+  - **Validé en CLI PHP direct** (process séparé par appel, `Response::json()`
+    fait `exit()`) : remise valide déduite correctement (30 000 − 5 000 =
+    25 000, facture générée avec le bon montant), remise supérieure au
+    montant calculé rejetée avec message explicite, remise négative clampée
+    à 0, création sans remise inchangée (non-régression). **Validé par
+    capture d'écran réelle** (Playwright + Chrome, état Alpine forcé à
+    l'étape 3 via `Alpine.$data()` pour éviter de remplir tout le formulaire)
+    pour le champ de saisie et l'affichage dans la modale détail — bug NaN
+    détecté à cette étape, corrigé, re-vérifié visuellement après coup.
+    `php -l`/`node --check` OK. Données de test nettoyées.
+  - Resynchronisé dans `copy/`, ajouté à `scripts/migre.sql` (section 6) —
+    **non commité/poussé**, migration à appliquer manuellement en ligne
+    comme d'habitude.
+
+- **2026-08-18** — Suite immédiate de l'entrée précédente (unification du
+  style KPI), sur retour utilisateur : (1) taille des cartes KPI réduite
+  partout, (2) deux pages oubliées (Clients, Retraits) alignées sur le même
+  style.
+  - **Taille réduite** — `.kpi-card`/`.kpi-icon`/`.kpi-value`/`.kpi-label`
+    (`src/saas.input.css`) ET `.db-kpi-*` (dashboard, `saas-dashboard.css`,
+    réduits en miroir pour ne pas rompre la cohérence tout juste établie) :
+    padding 20px→14px, icône 42px→32px (svg 19px→14px), valeur 22-24px→16px,
+    libellé 12-13px→11px, gap 14px→9px, `border-radius` 20px→16px, barre de
+    progression 6px→5px.
+  - **Clients** (`clients.php`, 2 cartes "Total clients"/"Avec réservations")
+    et **Retraits** (`payouts.php`, 4 cartes "Encaissé en ligne"/"Commission
+    plateforme"/"En attente / déjà retiré"/"Solde disponible") utilisaient
+    un troisième pattern non repéré lors du premier passage (`.saas-card`
+    + `border-top:3px solid COLOR` inline, ni `.kpi-card` ni `.report-kpi`)
+    — d'où l'oubli. Converties vers `.kpi-card` + icônes (users/check pour
+    Clients ; wallet/percent/clock/wallet-check pour Retraits, couleurs
+    gray/red/amber/green reprenant celles déjà utilisées par l'ancien
+    bandeau `border-top`).
+  - **Validé par capture d'écran réelle** (Playwright + Chrome système) sur
+    les 7 emplacements concernés (dashboard + Dépenses/Comptabilité/
+    Chambres/Rapports/Clients/Retraits) en desktop 1400px + dashboard en
+    mobile 390px — aucune erreur console, tailles cohérentes partout.
+  - Resynchronisé dans `copy/` (`src/saas.input.css` + son compilé
+    `saas.css`, `saas-dashboard.css`, `clients.php`, `payouts.php`) —
+    **non commité/poussé**.
+
+- **2026-08-18** — Style des cartes KPI du dashboard (entrée 2026-08-17
+  ci-dessous) **unifié sur toutes les pages SaaS qui en ont** (Dépenses,
+  Comptabilité, Chambres & Tarifs, Rapports) — icône en pastille ronde
+  colorée + grande valeur + libellé, sans bandeau de couleur.
+  - Contrairement au dashboard (classes `db-kpi-*` isolées car son visuel
+    lui était propre à l'origine), ces 4 pages partageaient déjà une classe
+    commune `.kpi-card` (définie dans `src/saas.input.css`, compilée vers
+    `public/assets/css/saas.css` par `tailwindcss.exe` — **pas un fichier à
+    éditer à la main**, cf. `README.md`). Refondue une seule fois à la
+    source : `.kpi-card` gagne `border-radius:20px`, perd son bandeau
+    `::before` doré, devient un flex-column avec `.kpi-top`/`.kpi-icon`
+    (+ variantes `.kpi-icon-{gold,green,blue,amber,red,purple,gray}`)/
+    `.kpi-body`/`.kpi-value`/`.kpi-label`, plus `.kpi-progress`/
+    `.kpi-progress-bar` pour la barre de la carte "Taux d'occupation" —
+    tout profite automatiquement aux 4 pages sans dupliquer la règle.
+  - **Piège rencontré** : Tailwind (JIT, `@layer components`) purge les
+    classes non détectées dans les fichiers scannés (`tailwind.config.js` :
+    `src/templates/**/*.php` + `public/assets/js/**/*.js`) — un premier
+    `./tailwindcss.exe -i src/saas.input.css -o public/assets/css/saas.css
+    --minify` lancé avant d'avoir mis à jour les templates a fait
+    disparaître silencieusement les nouvelles classes du CSS compilé (`.kpi-
+    card` seul survivait, déjà utilisé ailleurs). Recompilé une seconde fois
+    après avoir mis à jour les 4 templates — confirmé présent par grep sur
+    le fichier compilé avant la vérification visuelle.
+  - Icônes ajoutées à la volée sur les 3 pages qui n'en avaient pas
+    (Dépenses/Comptabilité/Chambres, jusqu'ici texte brut label+valeur) —
+    Rapports avait déjà des icônes (`.report-kpi-icon`, disposition
+    horizontale) réutilisées telles quelles mais restructurées en
+    disposition verticale + classes partagées ; anciennes classes
+    `.report-kpi*` supprimées de `saas-reports.css`, remplacées par les
+    classes partagées. Lignes de variation en % (▲/▼ vs période précédente)
+    et barre de progression occupation conservées à l'identique dans
+    `.kpi-body`.
+  - Anciennes règles CSS de compacité par page (`.saas-kpi-grid .kpi-card {
+    padding:10px 12px }` dans `saas-expenses.css`/`saas-billing.css`,
+    `.room-stats .kpi-card { padding:12px 14px; ... }` dans
+    `saas-rooms.css`) **supprimées** — les 4 pages utilisent maintenant
+    exactement le même padding/taille que le dashboard, cohérence totale
+    plutôt que des variantes "compactes" par page.
+  - **Validé par capture d'écran réelle** (Playwright + Chrome système,
+    même dispositif que les 2 entrées précédentes) sur les 4 pages en
+    desktop 1400px (Comptabilité : 5 cartes tiennent sur une ligne) et
+    mobile 390px (Comptabilité : dégradé propre en 2 colonnes via le
+    `auto-fit, minmax(150px,1fr)` déjà existant de `.saas-kpi-grid`) —
+    aucune erreur console sur aucune des 4 pages.
+  - Resynchronisé dans `copy/` (`src/saas.input.css` **et** son compilé
+    `public/assets/css/saas.css`, les 4 templates, `saas-rooms.css`/
+    `saas-expenses.css`/`saas-billing.css`/`saas-reports.css`) — **non
+    commité/poussé**. Pas de migration DB, pas de changement JS (aucune
+    des 4 pages n'a eu besoin de nouvelle logique, seulement de nouvelles
+    classes/icônes sur des valeurs déjà calculées).
+
+- **2026-08-17** — Refonte visuelle de `/saas/bookings` (Réservations),
+  sur référence visuelle fournie par l'utilisateur (desktop + mobile) —
+  purement esthétique, même données/actions qu'avant.
+  - **Vue desktop quasi inchangée** : le tableau existant (colonnes Client/
+    Chambre/Type/Arrivée/Départ-Durée/Montant/Statut/Actions) correspondait
+    déjà à la référence — aucune modification structurelle nécessaire côté
+    desktop.
+  - **Filtre statut** : nouveaux onglets pilules défilants horizontalement
+    en mobile (`.status-tabs-pills`/`.status-pill`, actif = fond vert forêt
+    `#0f2b20`), le `<select>` existant reste la vue desktop
+    (`.status-tabs-select`, masqué <768px) — même palier que le reste des
+    vues mobiles de cette page.
+  - **Carte mobile** entièrement restructurée : l'ancien format (avatar +
+    une seule ligne de dates condensée + montant/chevron, tap pour tout
+    voir dans la modale) devient une liste de lignes label/valeur
+    reprenant exactement les colonnes du tableau desktop (Type de séjour,
+    Arrivée, Durée ou Départ/Durée, Montant), plus deux boutons d'action
+    ronds (modifier/supprimer) directement sur la carte — le tap sur la
+    carte elle-même ouvre toujours la modale détail (`openDetail`), les
+    boutons agissent en `@click.stop` par-dessus, même pattern que les
+    boutons d'action du tableau desktop. `avatarBg()`/`initials()`
+    conservées (encore utilisées par l'en-tête de la modale détail) ;
+    seul `.booking-mobile-avatar`/`-info`/`-mid`/`-dates`/`-bottom`/
+    `-amount`/`-chevron` (CSS) supprimés, remplacés par `.bkm-*`.
+  - **Validé par capture d'écran réelle** (Playwright + Chrome système,
+    même dispositif JWT que l'entrée dashboard ci-dessous) en desktop
+    1400px et mobile 390px — correspond fidèlement aux deux références,
+    aucune erreur console, pagination/filtres/8 réservations de test
+    affichés correctement.
+  - Resynchronisé dans `copy/` (`bookings.php`, `saas-bookings.css`) —
+    **non commité/poussé**. Pas de migration DB, pas de changement JS
+    (toute la logique — `statusConfig`, `typeColor`, `typeLabel`,
+    `countByStatus` — existait déjà et a été réutilisée telle quelle).
+
+- **2026-08-17** — Refonte visuelle des KPI et des deux sections principales
+  du dashboard SaaS (`/saas`), sur référence visuelle fournie par
+  l'utilisateur (2 captures) — purement esthétique, aucune donnée retirée
+  (juste réorganisée/simplifiée dans "Résumé financier", cf. ci-dessous).
+  - **Cartes KPI** (Revenus/Occupation/Réservations actives/Chambres
+    disponibles) : nouveau style icône en pastille ronde colorée + grande
+    valeur + libellé, sans bandeau de couleur ni ligne de stat secondaire
+    (l'ancien footer "Reçus"/"chambres au total"/"En attente"/"Bénéfice net"
+    est supprimé de ces cartes mais reste visible ailleurs — Résumé
+    financier juste en dessous). Nouvelles classes `db-kpi-*`
+    (`saas-dashboard.css`), **distinctes** de `.kpi-card`/`.kpi-grid`
+    partagés par Dépenses/Facturation/Chambres — ces pages ne sont pas
+    affectées. Icône occupation changée d'un pictogramme "barres" pour un
+    vrai lit ; icônes revenus/réservations/chambres réutilisées telles
+    quelles (déjà pertinentes), juste recolorées (vert/gris/vert/violet au
+    lieu de or/bleu/vert/violet).
+  - **Réservations récentes** : l'ancien tableau desktop (5 colonnes) +
+    cartes mobiles dupliquées (deux implémentations à maintenir en
+    parallèle) **remplacés par une seule liste de lignes** responsive
+    (avatar + nom/chambre-date à gauche, montant/statut empilés à droite),
+    identique à toutes les largeurs — simplification nette, plus de logique
+    `@media` à dupliquer entre cette page et `saas-bookings.css`. Nouvelle
+    fonction `avatarStyle(status)` (`saas-dashboard.js`) : couleur de
+    l'avatar dérivée du statut de la réservation (même palette que
+    `statusStyle()` déjà existante), remplace `statusAccent()` (supprimée,
+    devenue inutile) qui ne servait qu'au liseré de l'ancienne carte mobile.
+  - **Résumé financier** : les 3 montants "vedette" (Revenus, Paiements
+    reçus, Solde en attente — **renommé** depuis "En attente", même donnée
+    `stats.payments_pending`) passent en puces arrondies teintées (gris/vert/
+    ambre). Annulé et Dépenses restent des lignes simples secondaires,
+    Bénéfice net reste la ligne de total soulignée en bas — **aucun champ
+    supprimé**, malgré que la référence visuelle n'en montrait que 3
+    (interprété comme un style à appliquer, pas une réduction de contenu à
+    reproduire à l'identique, pour ne pas faire disparaître des chiffres que
+    l'owner consulte).
+  - **Validé par capture d'écran réelle** (Playwright + Chrome système,
+    `npx playwright` déjà en cache local, pas de téléchargement de
+    navigateur nécessaire) plutôt que seulement `php -l`/`node --check` :
+    JWT généré directement en CLI PHP (`AuthService::encode()`, compte
+    owner id=1) pour éviter de toucher au mot de passe réel, injecté dans
+    `localStorage` avant navigation. **Piège rencontré** : `/saas`
+    redirigeait vers `/login` malgré un token valide — cause
+    `saasLayout.init()` qui exige `matchMedia('(display-mode: standalone)')`
+    (accès réservé à l'app installée, cf. `pwa-app-only-login`), jamais vrai
+    dans un navigateur classique piloté par Playwright ; contourné avec
+    `page.addInitScript()` qui surcharge `window.matchMedia` avant le
+    chargement des scripts de page. Capturé en desktop (1400px, 4 colonnes
+    KPI) et mobile (390px, 2 colonnes) — les deux correspondent fidèlement
+    aux références, aucune erreur console, aucun débordement de texte.
+  - Resynchronisé dans `copy/` (`dashboard.php`, `saas-dashboard.js`,
+    `saas-dashboard.css`) — **non commité/poussé depuis `copy/`**. Pas de
+    migration DB (changement front-end pur).
+
+- **2026-08-17** — Catégories de dépenses **personnalisées par
+  établissement**, remplaçant la liste fixe maintenance/salaries/supplies/
+  utilities/marketing/other codée en dur à 3 endroits (`saas.js::EXPENSE_CAT`,
+  `saas-expenses.js::categories`, `PdfService::EXPENSE_CAT_LABELS`) — décision
+  produit explicite de l'utilisateur. `expenses.category` était déjà un
+  `VARCHAR(60)` texte libre (pas d'ENUM), donc aucune contrainte SQL ne
+  bloquait le changement ; l'essentiel du travail était de remplacer les 3
+  listes figées par une vraie table.
+  - Nouvelle table `expense_categories` (`id`, `establishment_id` FK CASCADE,
+    `name`, `color`, UNIQUE `(establishment_id, name)`) — modèle direct sur
+    `room_types` (même convention : `Models\ExpenseCategory::findByEstablishment()`,
+    CRUD regroupé dans `ExpenseController` sous une section dédiée plutôt
+    qu'un contrôleur séparé, `Guard::requireExpenseCategory()` calqué sur
+    `requireRoomType()`, routes `/api/expense-categories` calquées sur
+    `/api/room-types`). Restreint à `role:owner|superadmin` comme le reste de
+    `/api/expenses/*` (receptionist n'a de toute façon pas accès à Dépenses).
+  - **La catégorie d'une dépense EST désormais son libellé** (texte choisi
+    par l'owner), plus une clé technique à résoudre via une table de labels :
+    `catLabel()` supprimé de `saasHelpers` (public/assets/js/saas.js),
+    templates (`expenses.php`, `reports.php`) mis à jour pour afficher
+    `exp.category`/`item.cat` directement. Seule la **couleur** reste à
+    résoudre dynamiquement (pas déductible du nom) : `EXPENSE_CATEGORY_COLORS`
+    (cache partagé, remplace l'ancien `EXPENSE_CAT.colors` figé) peuplé par
+    `saasHelpers.loadExpenseCategoryColors(baseUrl)`, appelé par les pages
+    Dépenses (`loadCategories()`) ET Rapports (`init()`) — sans ça, Rapports
+    aurait affiché tous les badges en gris faute de couleur résolue.
+  - **Renommer une catégorie fait suivre les dépenses existantes** :
+    `ExpenseController::updateCategory()` réécrit `expenses.category` (même
+    établissement, ancien nom → nouveau nom) avant de renommer la catégorie
+    elle-même — sans ça les dépenses déjà enregistrées se seraient
+    retrouvées orphelines (texte brut affiché en gris faute de couleur
+    résolue). Suppression bloquée (409) si des dépenses utilisent encore la
+    catégorie, même garde que `room_types`/`hasRooms`.
+  - Migration (`scripts/migration_expense_categories.sql`) : **pré-remplit
+    chaque établissement existant** avec les 6 catégories historiques (mêmes
+    libellés français + couleurs que l'ancien `EXPENSE_CAT`) pour continuité
+    immédiate, puis **normalise les dépenses déjà en base** (réécrit les
+    anciennes clés anglaises `'maintenance'` etc. vers le libellé français
+    correspondant) — décision explicite de l'utilisateur (pré-remplissage
+    plutôt que redémarrage à zéro). Un établissement **nouvellement créé**
+    (après cette migration) démarre en revanche avec zéro catégorie —
+    `schema.sql` ne contient que la structure, aucun seed (cohérent avec le
+    reste du fichier, "structure uniquement, aucune donnée") — l'UI
+    Dépenses gère ce cas (`openCreate()` redirige vers la gestion des
+    catégories si `categories.length === 0`, avec toast explicatif).
+  - UI : nouveau bouton "Catégories" à côté de "+ Nouvelle dépense" sur
+    `/saas/expenses`, ouvre une modale de gestion (liste avec modifier/
+    supprimer + formulaire nom + palette de 8 couleurs fixes cliquables,
+    pas de color-picker libre — décision explicite de l'utilisateur,
+    cohérent avec l'esthétique badges existante).
+  - **Piège rencontré en testant** : les premiers appels `mysql` en CLI pour
+    appliquer la migration/vérifier les données ont corrompu les caractères
+    accentués (`'Énergie / Eau'` stocké comme `'├ënergie / Eau'`) — cause :
+    `character_set_client`/`character_set_connection` du client mysql CLI
+    Windows par défaut sur `cp850`, alors que la table est en `utf8mb4`. Le
+    fichier `.sql` est bien en UTF-8 et l'appli PHP (PDO,
+    `Core\Database.php`, `charset=utf8mb4` explicite dans le DSN) n'est PAS
+    affectée — uniquement les invocations `mysql -u root ...` sans
+    `--default-character-set=utf8mb4`. Corrigé en réécrivant les 2 lignes
+    touchées avec le bon flag. **Réflexe à garder pour toute future
+    manipulation SQL contenant des caractères accentués via ce client CLI en
+    local** : toujours passer `--default-character-set=utf8mb4`.
+  - **Validé en CLI PHP direct** : CRUD complet (liste, création, doublon
+    rejeté 409, couleur invalide rejetée), renommage vérifié répercuté sur
+    une dépense existante, suppression bloquée tant qu'une dépense l'utilise,
+    frontière IDOR vérifiée sur `updateCategory()`/`destroyCategory()` (owner
+    sans accès à l'établissement → 403 — premier essai faussé par un bug du
+    script de test lui-même qui ne passait pas le bon `_user`, détecté et
+    corrigé avant de conclure). `php -l`/`node --check` OK. Endpoint
+    `/api/expense-categories` vérifié en HTTP réel (401 sans auth). Données
+    de test nettoyées.
+  - `PdfService::EXPENSE_CAT_LABELS` (table de correspondance) supprimée,
+    export PDF utilise désormais directement `$cat['category']` — non
+    re-testé en génération PDF réelle (changement mécanique, même repli `??
+    '—'` qu'avant).
+  - Resynchronisé dans `copy/`, ajouté à `scripts/migre.sql` (section 5,
+    avec le même avertissement charset) — **non commité/poussé depuis
+    `copy/`**, migration à appliquer manuellement en ligne comme d'habitude.
+
+- **2026-08-17** — Inscription des réceptionnistes passée de « création
+  directe par l'owner avec mot de passe imposé » à un flux d'**invitation par
+  email** : l'owner ne saisit plus que l'adresse email, un lien à usage
+  unique (24h) est envoyé, le réceptionniste choisit lui-même son nom et son
+  mot de passe en l'acceptant sur `/team-invite?token=...`. Décision produit
+  explicite de l'utilisateur (friction/contrôle déplacés vers le membre
+  invité plutôt que gérés par l'owner).
+  - Nouvelle table `team_invitations` (`scripts/migration_team_invitations.sql`,
+    répercutée dans `schema.sql`) : `token_hash` sha256 + `expires_at` +
+    `accepted_at`, même pattern que `email_verifications`/`password_resets`
+    plutôt qu'un nouveau modèle dédié (pas de `Models\TeamInvitation`,
+    requêtes directes dans `TeamController` comme pour ces deux autres
+    tables).
+  - `TeamController::store()` (création directe) **remplacé** par
+    `invite()` (owner, envoie l'email), `inviteInfo()`/`acceptInvite()`
+    (publics, sans auth — même esprit que `verify-email`/`reset-password`) et
+    `cancelInvite()` (owner, annule un lien en attente). `index()` renvoie
+    désormais `{ members, invitations }` au lieu d'un tableau plat de
+    membres — seul point d'appel (`saas-settings.js::loadTeam()`) mis à jour
+    en conséquence.
+  - **Renvoyer une invitation réutilise `invite()` tel quel** : un nouvel
+    appel sur le même email+établissement supprime d'abord l'ancien lien en
+    attente (`DELETE ... WHERE email = ? AND establishment_id = ? AND
+    accepted_at IS NULL`) avant d'en créer un nouveau — un seul lien actif à
+    la fois, pas de endpoint "resend" séparé.
+  - Nouvelle page publique `/team-invite` (`saas/team-invite.php`, ajoutée à
+    la liste blanche des pages autonomes sans layout dans `Response.php`,
+    même famille que login/register/reset-password/verify-email) : affiche
+    l'établissement cible (`GET /api/team/invite?token=`), formulaire
+    nom+mot de passe, message de succès invitant à se connecter depuis
+    l'app installée (pas d'auto-login/JWT auto-généré à l'acceptation —
+    inutile puisque la connexion SaaS est de toute façon réservée à l'app
+    installée, cf. `pwa-app-only-login`).
+  - `MailService::teamInvitation()` (nouveau), même layout HTML commun que
+    `verifyEmail`/`passwordReset`.
+  - UI `/saas/settings` (onglet Équipe) : bouton "+ Ajouter un membre" →
+    "+ Inviter un membre" ; la modale ne demande plus que l'email en mode
+    création (nom/téléphone/mot de passe restent visibles en mode édition
+    d'un membre existant, inchangé) ; nouvelle liste "Invitations en
+    attente" sous le tableau des membres avec actions Renvoyer/Annuler.
+  - **Validé en CLI PHP direct** (appels isolés aux méthodes du contrôleur,
+    process séparé par étape car `Response::json()` fait `exit()`) : cycle
+    complet invite→info→accept, rejeu du même token rejeté (déjà accepté),
+    renvoi remplace bien l'ancien lien (une seule ligne active en base après
+    2 appels), email déjà utilisé rejeté (409), frontière IDOR vérifiée sur
+    `cancelInvite()` (owner sans accès à l'établissement → 403), `index()`
+    confirmé cohérent (membre créé listé, invitation acceptée disparaît des
+    invitations en attente). Données de test nettoyées après coup. `php -l`/
+    `node --check` OK sur tous les fichiers touchés. **Cérémonie email
+    réelle non vérifiée** (adresses `@example.com` de test, tentative
+    d'envoi non bloquante comme le reste de `MailService`) — non testé en
+    navigateur réel.
+  - Resynchronisé dans `copy/` (fichiers + nouvelle page/JS + migration +
+    `schema.sql`), **non commité/poussé depuis `copy/`** — à valider
+    explicitement avant déploiement, migration à appliquer manuellement en
+    ligne comme d'habitude (cf. `scripts/migre.sql`, pas encore mis à jour
+    pour cette table).
+
+- **2026-08-13** — Formule des frais réels GeniusPay à l'encaissement
+  **corrigée** : retour à **100 XOF fixe + 2.5% du montant BRUT total**
+  (`fee = 100 + montant × 2.5%`), après avoir constaté que la variante "2.5%
+  sur le montant restant après les 100 XOF" adoptée le 2026-08-10 ne collait
+  pas au "Solde collecté" réel affiché sur le dashboard GeniusPay pour la
+  transaction sandbox de 303 FCFA testée juste avant (entrée précédente) :
+  195 FCFA net → 108 FCFA de frais réels observés, contre 105,08 prédits par
+  la formule "sur le reste" et 107,58 (108 à l'arrondi) prédits par cette
+  formule "sur le total" — écart net, pas de l'arrondi. La correction du
+  2026-08-10 avait été validée par un calcul cohérent avec elle-même (CLI
+  PHP), pas revérifiée contre une valeur affichée par GeniusPay lui-même —
+  un seul point de données (303 FCFA) suffit ici vu l'écart franc, mais à
+  garder à l'œil si un futur test sur un montant différent contredit encore.
+  - `Services\GeniusPayService::paymentFee()` : `100 + max(0, $amount - 100)
+    * 0.025` → `100 + $amount * 0.025`.
+  - Purement informatif (comme avant) — ne change ni le prix client ni le
+    net établissement, seulement la précision de "Marge nette plateforme"
+    (`/admin`) et `payments.geniuspay_fee_amount`/
+    `payout_requests.geniuspay_fee_amount`. Les 3 lignes de test déjà en
+    base avec un `geniuspay_fee_amount` calculé à l'ancienne formule
+    corrigées manuellement pour cohérence immédiate du dashboard :
+    `payments.id=1` (754,00 → 756,50), `id=3` (223,75 → 226,25), `id=5`
+    (105,08 → 107,58, déjà fait juste avant). `payout_requests.id=1`
+    (249,60, `withdrawalFee` au retrait) non touchée — formule différente,
+    pas concernée par ce fix.
+  - `php -l` OK, `withdrawalFee()` (1% au retrait) non touchée — seule la
+    formule d'encaissement était en cause. Resynchronisé dans `copy/`.
+
+- **2026-08-13** — Paiement en ligne validé en conditions réelles en
+  navigateur (sandbox GeniusPay) pour la première fois — jusqu'ici seulement
+  testé en CLI/API isolée (cf. entrées 2026-08-09 à 11). Réservation Starter
+  test payée (303 FCFA), confirmée reçue côté établissement. Chiffres
+  vérifiés cohérents avec la **commission fixe de 200 FCFA** ajoutée la
+  veille (2026-08-12, commit `9af20dc`, non détaillée dans ce journal —
+  résumé dans le message de commit lui-même) en plus des 5%/1%/4% habituels :
+  base 300 (303 / 1.01) → commission = 300×5% + 200 fixe = 215 → net
+  établissement = 88. Le montant fixe domine largement sur un si petit test
+  (impact proportionnellement bien plus faible sur une vraie réservation de
+  plusieurs milliers de FCFA) — pas un bug, comportement voulu
+  (`Invoice::registerPayment()`, paramètre `commissionFixed`).
+  - `ONLINE_PAYMENTS_ENABLED=true` encore uniquement en local (`.env`, jamais
+    répliqué dans `copy/`) — l'activation en prod reste une décision de
+    déploiement séparée, non prise à ce stade.
 
 - **2026-08-11** — `scripts/migre.sql` créé : fichier unique consolidant les
   migrations DB pas encore appliquées à la base **en ligne** (prod), à

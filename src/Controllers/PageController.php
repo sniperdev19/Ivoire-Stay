@@ -61,6 +61,11 @@ class PageController
         Response::render('saas/verify-email', ['title' => 'Vérification email – Afristay']);
     }
 
+    public function teamInviteAccept(Request $req, array $params = []): void
+    {
+        Response::render('saas/team-invite', ['title' => 'Invitation d\'équipe – Afristay']);
+    }
+
     public function saas(Request $req, array $params = []): void
     {
         Response::render('saas/dashboard', ['title' => 'Tableau de bord', 'page' => 'dashboard']);

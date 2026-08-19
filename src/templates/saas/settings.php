@@ -382,10 +382,10 @@
           </div>
           <div>
             <h3 class="stg-section-title">Équipe</h3>
-            <p class="stg-section-sub">Créez des accès pour votre personnel de réception. Ils pourront gérer les réservations et encaisser les paiements, sans accéder à la Comptabilité, aux Dépenses ni aux Paramètres.</p>
+            <p class="stg-section-sub">Invitez votre personnel de réception par email. Ils pourront gérer les réservations et encaisser les paiements, sans accéder à la Comptabilité, aux Dépenses ni aux Paramètres.</p>
           </div>
         </div>
-        <button type="button" class="btn-saas-primary" style="flex-shrink:0;" @click="openAddMember()">+ Ajouter un membre</button>
+        <button type="button" class="btn-saas-primary" style="flex-shrink:0;" @click="openInviteMember()">+ Inviter un membre</button>
       </div>
 
       <div class="stg-divider"></div>
@@ -394,8 +394,8 @@
         <svg class="spinner" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:24px;height:24px;stroke:#C9A84C;" fill="none"><circle cx="12" cy="12" r="10" stroke-width="4" stroke-opacity="0.25"></circle><path d="M22 12a10 10 0 00-10-10" stroke-width="4" stroke-linecap="round"></path></svg>
       </div>
 
-      <div x-show="!teamLoading && teamMembers.length === 0" style="text-align:center;padding:30px 0;color:#9CA3AF;font-size:13px;">
-        Aucun membre pour l'instant. Ajoutez votre premier réceptionniste.
+      <div x-show="!teamLoading && teamMembers.length === 0 && pendingInvitations.length === 0" style="text-align:center;padding:30px 0;color:#9CA3AF;font-size:13px;">
+        Aucun membre pour l'instant. Invitez votre premier réceptionniste.
       </div>
 
       <div x-show="!teamLoading && teamMembers.length > 0" style="overflow-x:auto;">
@@ -424,6 +424,35 @@
             </template>
           </tbody>
         </table>
+      </div>
+
+      <div x-show="!teamLoading && pendingInvitations.length > 0" style="margin-top:20px;">
+        <p style="font-size:12px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.03em;margin:0 0 10px;">Invitations en attente</p>
+        <div style="overflow-x:auto;">
+          <table class="saas-table" style="width:100%;">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Envoyée le</th>
+                <th>Expire le</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="inv in pendingInvitations" :key="inv.id">
+                <tr>
+                  <td x-text="inv.email"></td>
+                  <td x-text="formatDate(inv.created_at)"></td>
+                  <td x-text="formatDate(inv.expires_at)"></td>
+                  <td style="text-align:right;white-space:nowrap;">
+                    <button type="button" class="btn-saas-secondary" style="padding:6px 12px;font-size:12px;" @click="resendInvitation(inv)">Renvoyer</button>
+                    <button type="button" class="btn-saas-danger" style="padding:6px 12px;font-size:12px;margin-left:6px;" @click="cancelInvitation(inv)">Annuler</button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <p x-show="teamError" x-text="teamError" class="stg-locate-error" style="margin-top:10px;"></p>
@@ -793,16 +822,16 @@
     </div>
   </div>
 
-  <!-- ═══ MODAL : Ajouter / modifier un membre ═══ -->
+  <!-- ═══ MODAL : Inviter / modifier un membre ═══ -->
   <div x-cloak x-show="showTeamModal" class="saas-modal-bg" @click.self="showTeamModal=false" @keydown.escape.window="showTeamModal=false">
     <div class="saas-modal" style="max-width:440px;" role="dialog" aria-modal="true">
       <div class="saas-modal-header">
-        <h2 style="font-size:16px;font-weight:700;margin:0;" x-text="teamEditing ? 'Modifier le membre' : 'Ajouter un membre'"></h2>
+        <h2 style="font-size:16px;font-weight:700;margin:0;" x-text="teamEditing ? 'Modifier le membre' : 'Inviter un membre'"></h2>
         <button type="button" class="saas-modal-close" @click="showTeamModal=false"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
       </div>
       <div class="saas-modal-body">
         <div style="display:grid;gap:14px;">
-          <div>
+          <div x-show="teamEditing">
             <label class="saas-label">Nom complet</label>
             <input class="saas-input" x-model="teamForm.name" placeholder="Ex : Awa Koné">
           </div>
@@ -818,15 +847,18 @@
             <label class="saas-label">Email <span x-show="teamEditing" class="stg-label-optional">(non modifiable)</span></label>
             <input class="saas-input" type="email" x-model="teamForm.email" :disabled="!!teamEditing" placeholder="reception@hotel.ci">
           </div>
-          <div>
+          <div x-show="teamEditing">
             <label class="saas-label">Téléphone <span class="stg-label-optional">(optionnel)</span></label>
             <input class="saas-input" x-model="teamForm.phone" placeholder="+225 07 00 00 00 00">
           </div>
-          <div>
-            <label class="saas-label" x-text="teamEditing ? 'Nouveau mot de passe' : 'Mot de passe'"></label>
+          <div x-show="teamEditing">
+            <label class="saas-label">Nouveau mot de passe</label>
             <input class="saas-input" type="password" x-model="teamForm.password" placeholder="Min. 8 caractères">
-            <p x-show="teamEditing" style="font-size:11px;color:#9CA3AF;margin:6px 2px 0;">Laissez vide pour ne pas changer le mot de passe.</p>
+            <p style="font-size:11px;color:#9CA3AF;margin:6px 2px 0;">Laissez vide pour ne pas changer le mot de passe.</p>
           </div>
+          <p x-show="!teamEditing" style="font-size:12px;color:#6B7280;line-height:1.6;margin:0;">
+            Un email d'invitation sera envoyé à cette adresse. Le membre choisira lui-même son nom et son mot de passe en l'acceptant. Le lien expire après 24h.
+          </p>
           <div x-show="teamFormError" class="stg-alert stg-alert-error">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <span x-text="teamFormError"></span>
@@ -836,8 +868,8 @@
       <div class="saas-modal-footer">
         <button type="button" class="btn-saas-secondary" @click="showTeamModal=false" :disabled="teamSubmitting">Annuler</button>
         <button type="button" class="btn-saas-primary" @click="saveMember()" :disabled="teamSubmitting">
-          <span x-show="!teamSubmitting" x-text="teamEditing ? 'Enregistrer' : 'Créer le membre'"></span>
-          <span x-show="teamSubmitting">Enregistrement…</span>
+          <span x-show="!teamSubmitting" x-text="teamEditing ? 'Enregistrer' : 'Envoyer l\'invitation'"></span>
+          <span x-show="teamSubmitting" x-text="teamEditing ? 'Enregistrement…' : 'Envoi…'"></span>
         </button>
       </div>
     </div>

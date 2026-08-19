@@ -35,9 +35,9 @@
     </div>
   </div>
 
-  <!-- Filtre statut -->
+  <!-- Filtre statut : select desktop, onglets pilules défilants en mobile -->
   <div class="status-tabs-row">
-    <label class="saas-label" style="max-width:280px;">
+    <label class="saas-label status-tabs-select" style="max-width:280px;">
       Statut
       <select class="saas-input" x-model="filterStatus" @change="applyFilters()">
         <template x-for="s in ['all','pending','confirmed','checked_in','checked_out','cancelled']" :key="s">
@@ -45,6 +45,13 @@
         </template>
       </select>
     </label>
+    <div class="status-tabs-pills">
+      <template x-for="s in ['all','pending','confirmed','checked_in','checked_out','cancelled']" :key="s">
+        <button type="button" class="status-pill" :class="{ active: filterStatus === s }" @click="filterStatus = s; applyFilters()">
+          <span x-text="(s === 'all' ? 'Toutes' : statusConfig(s).label) + ' (' + countByStatus(s) + ')'"></span>
+        </button>
+      </template>
+    </div>
   </div>
 
   <!-- Filtres -->
@@ -148,33 +155,50 @@
       <!-- Vue mobile : cartes empilées, aucun défilement horizontal -->
       <div class="booking-mobile-list">
         <template x-for="b in filteredBookings" :key="b.id">
-          <div class="booking-mobile-card" @click="openDetail(b)" :style="'border-left-color:' + statusConfig(b.status).color">
-            <div class="booking-mobile-top">
-              <div class="booking-mobile-avatar" :style="'background:' + avatarBg(b.id)" x-text="initials(b.client_name)"></div>
-              <div class="booking-mobile-info">
-                <div class="booking-mobile-name" x-text="b.client_name"></div>
-                <div class="booking-mobile-contact" x-text="[b.client_phone, b.client_email].filter(Boolean).join(' · ')"></div>
-              </div>
+          <div class="booking-mobile-card" @click="openDetail(b)">
+            <div class="bkm-head">
+              <div class="booking-mobile-name" x-text="b.client_name"></div>
               <span :class="statusConfig(b.status).badge" x-text="statusConfig(b.status).label"></span>
             </div>
-            <div class="booking-mobile-mid">
+            <div class="bkm-contact">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+              <span x-text="[b.client_phone, b.client_email].filter(Boolean).join('  ·  ')"></span>
+            </div>
+            <div class="bkm-chips">
               <span class="booking-room-chip" x-text="'Ch. ' + b.room_number"></span>
-              <span style="font-size:12px;color:#9CA3AF;" x-text="b.room_type"></span>
-              <span class="booking-type-label" :style="{ color: typeColor(b.booking_type) }" x-text="typeLabel(b.booking_type).toUpperCase()"></span>
+              <span class="booking-room-chip" x-text="b.room_type"></span>
             </div>
-            <div class="booking-mobile-dates">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              <span x-text="formatDate(b.check_in)"></span>
-              <template x-if="b.booking_type === 'passage'">
-                <span x-text="' · ' + b.hours + ' heure' + (b.hours > 1 ? 's' : '')"></span>
-              </template>
-              <template x-if="b.booking_type !== 'passage'">
-                <span x-text="' → ' + formatDate(b.check_out) + ' · ' + b.nights + ' nuit' + (b.nights > 1 ? 's' : '')"></span>
-              </template>
+            <div class="bkm-row">
+              <span class="bkm-row-label">Type de séjour</span>
+              <span class="bkm-row-value" :style="{ color: typeColor(b.booking_type) }" x-text="typeLabel(b.booking_type).toUpperCase()"></span>
             </div>
-            <div class="booking-mobile-bottom">
-              <span class="booking-mobile-amount" x-text="formatPrice(b.total_price)"></span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="booking-mobile-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <div class="bkm-row">
+              <span class="bkm-row-label">Arrivée</span>
+              <span class="bkm-row-value" x-text="formatDate(b.check_in)"></span>
+            </div>
+            <template x-if="b.booking_type === 'passage'">
+              <div class="bkm-row">
+                <span class="bkm-row-label">Durée</span>
+                <span class="bkm-row-value" x-text="b.hours + ' heure' + (b.hours > 1 ? 's' : '')"></span>
+              </div>
+            </template>
+            <template x-if="b.booking_type !== 'passage'">
+              <div class="bkm-row">
+                <span class="bkm-row-label">Départ / Durée</span>
+                <span class="bkm-row-value" x-text="formatDate(b.check_out) + ' · ' + b.nights + ' nuit' + (b.nights > 1 ? 's' : '')"></span>
+              </div>
+            </template>
+            <div class="bkm-row">
+              <span class="bkm-row-label">Montant</span>
+              <span class="bkm-row-value bkm-amount" x-text="formatPrice(b.total_price)"></span>
+            </div>
+            <div class="bkm-actions">
+              <button type="button" class="booking-action-btn bkm-action-round" @click.stop="openDetail(b)" title="Modifier">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+              <button type="button" class="booking-action-btn danger bkm-action-round" @click.stop="deleteBooking(b.id)" title="Supprimer">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
             </div>
           </div>
         </template>
@@ -272,6 +296,10 @@
               <div>
                 <p class="booking-detail-label">Montant total</p>
                 <p class="booking-detail-amount" x-text="formatPrice(selectedBooking?.total_amount ?? selectedBooking?.total_price)"></p>
+                <p x-show="Number(selectedBooking?.discount_amount ?? 0) > 0" style="margin:4px 0 0;font-size:12px;color:#9CA3AF;">
+                  Prix initial : <span style="text-decoration:line-through;" x-text="formatPrice(Number(selectedBooking?.total_amount ?? 0) + Number(selectedBooking?.discount_amount ?? 0))"></span>
+                  &nbsp;·&nbsp; Remise : <span style="color:#16A34A;font-weight:600;" x-text="'-' + formatPrice(Number(selectedBooking?.discount_amount ?? 0))"></span>
+                </p>
               </div>
               <div x-show="selectedBooking?.invoice_number" style="text-align:right;">
                 <p class="booking-detail-label">Facture</p>
@@ -621,6 +649,14 @@
                   <option value="online">En ligne</option>
                 </select>
               </div>
+            </div>
+
+            <div>
+              <label class="room-field-label">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12a8 8 0 11-16 0 8 8 0 0116 0zM9.5 9.5l5 5m0-5l-5 5"/></svg>
+                Remise (FCFA) <span style="font-weight:400;color:#6B7280;">(optionnel — longs séjours, fidélité…)</span>
+              </label>
+              <input type="number" min="0" step="1" class="saas-input" x-model.number="form.discount_amount" placeholder="Ex : 5000" />
             </div>
 
             <div>

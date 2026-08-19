@@ -791,6 +791,7 @@ function settingsPage(baseUrl, onlinePaymentsEnabled, commissionPct, estabShareP
 
   // ── Membres d'équipe (rôle receptionist) ──────────────────────────────
   teamMembers: [],
+  pendingInvitations: [],
   teamLoading: true,
   teamError: null,
   showTeamModal: false,
@@ -811,20 +812,23 @@ function settingsPage(baseUrl, onlinePaymentsEnabled, commissionPct, estabShareP
       const res  = await fetch(baseUrl + '/api/team?establishment_id=' + this.estId(), { headers: this.apiHeaders() });
       const data = await res.json();
       if (data.success) {
-        this.teamMembers = data.data ?? [];
+        this.teamMembers       = data.data?.members ?? [];
+        this.pendingInvitations = data.data?.invitations ?? [];
       } else {
         this.teamMembers = [];
+        this.pendingInvitations = [];
         this.teamError = data.message ?? 'Impossible de charger les membres.';
       }
     } catch(e) {
       this.teamMembers = [];
+      this.pendingInvitations = [];
       this.teamError = 'Erreur réseau.';
     } finally {
       this.teamLoading = false;
     }
   },
 
-  openAddMember() {
+  openInviteMember() {
     this.teamEditing   = null;
     this.teamForm      = { name: '', email: '', phone: '', password: '', establishment_id: this.estId() };
     this.teamFormError = null;
@@ -839,30 +843,32 @@ function settingsPage(baseUrl, onlinePaymentsEnabled, commissionPct, estabShareP
   },
 
   async saveMember() {
-    if (!this.teamForm.name?.trim()) { this.teamFormError = 'Le nom est requis.'; return; }
-    if (!this.teamEditing) {
-      if (!this.teamForm.email?.trim()) { this.teamFormError = "L'email est requis."; return; }
-      if (!this.teamForm.password || this.teamForm.password.length < 8) {
-        this.teamFormError = 'Mot de passe requis (min. 8 caractères).'; return;
+    if (this.teamEditing) {
+      if (!this.teamForm.name?.trim()) { this.teamFormError = 'Le nom est requis.'; return; }
+      if (this.teamForm.password && this.teamForm.password.length < 8) {
+        this.teamFormError = 'Mot de passe trop court (min. 8 caractères).'; return;
       }
-    } else if (this.teamForm.password && this.teamForm.password.length < 8) {
-      this.teamFormError = 'Mot de passe trop court (min. 8 caractères).'; return;
+    } else if (!this.teamForm.email?.trim()) {
+      this.teamFormError = "L'email est requis."; return;
     }
 
     this.teamSubmitting = true; this.teamFormError = null;
     try {
-      const url    = this.teamEditing ? baseUrl + '/api/team/' + this.teamEditing.id : baseUrl + '/api/team';
-      const method = this.teamEditing ? 'PUT' : 'POST';
+      const url     = this.teamEditing ? baseUrl + '/api/team/' + this.teamEditing.id : baseUrl + '/api/team/invite';
       const payload = this.teamEditing
         ? { name: this.teamForm.name, phone: this.teamForm.phone || null, ...(this.teamForm.password ? { password: this.teamForm.password } : {}) }
-        : { name: this.teamForm.name, email: this.teamForm.email, phone: this.teamForm.phone || null, password: this.teamForm.password, establishment_id: this.teamForm.establishment_id || this.estId() };
+        : { email: this.teamForm.email, establishment_id: this.teamForm.establishment_id || this.estId() };
 
-      const res  = await fetch(url, { method, headers: this.apiHeaders(), body: JSON.stringify(payload) });
+      const res  = await fetch(url, {
+        method: this.teamEditing ? 'PUT' : 'POST',
+        headers: this.apiHeaders(),
+        body: JSON.stringify(payload),
+      });
       const data = await res.json();
       if (data.success) {
         this.showTeamModal = false;
         await this.loadTeam();
-        this.showToast(this.teamEditing ? 'Membre mis à jour.' : 'Membre créé.', 'success');
+        this.showToast(this.teamEditing ? 'Membre mis à jour.' : 'Invitation envoyée.', 'success');
       } else {
         this.teamFormError = data.message ?? 'Erreur.';
       }
@@ -870,6 +876,41 @@ function settingsPage(baseUrl, onlinePaymentsEnabled, commissionPct, estabShareP
       this.teamFormError = 'Erreur réseau.';
     } finally {
       this.teamSubmitting = false;
+    }
+  },
+
+  async resendInvitation(inv) {
+    try {
+      const res  = await fetch(baseUrl + '/api/team/invite', {
+        method: 'POST',
+        headers: this.apiHeaders(),
+        body: JSON.stringify({ email: inv.email, establishment_id: inv.establishment_id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await this.loadTeam();
+        this.showToast('Invitation renvoyée.', 'success');
+      } else {
+        this.showToast(data.message ?? "Erreur lors de l'envoi.", 'error');
+      }
+    } catch(e) {
+      this.showToast('Erreur réseau.', 'error');
+    }
+  },
+
+  async cancelInvitation(inv) {
+    if (!confirm(`Annuler l'invitation envoyée à ${inv.email} ?`)) return;
+    try {
+      const res  = await fetch(baseUrl + '/api/team/invite/' + inv.id, { method: 'DELETE', headers: this.apiHeaders() });
+      const data = await res.json();
+      if (data.success) {
+        this.pendingInvitations = this.pendingInvitations.filter(x => x.id !== inv.id);
+        this.showToast('Invitation annulée.', 'success');
+      } else {
+        this.showToast(data.message ?? "Erreur lors de l'annulation.", 'error');
+      }
+    } catch(e) {
+      this.showToast('Erreur réseau.', 'error');
     }
   },
 

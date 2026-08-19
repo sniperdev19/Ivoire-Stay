@@ -181,17 +181,21 @@ class GeniusPayService
     }
 
     /**
-     * Frais réels prélevés par GeniusPay sur un encaissement — 100 XOF fixe prélevé
-     * D'ABORD, puis 2.5% calculés sur le montant RESTANT (pas sur le montant brut) :
-     * fee = 100 + (montant − 100) × 2.5%. Coût de la passerelle, distinct de la
-     * commission plateforme (Services\PlanPricingService::commissionPct). Purement
-     * informatif pour l'instant : ne modifie aucun montant facturé au client ni versé
-     * à l'établissement, sert uniquement à calculer la marge nette réelle de la
-     * plateforme (voir AdminController::overview()).
+     * Frais réels prélevés par GeniusPay sur un encaissement — 100 XOF fixe + 2.5% du
+     * montant BRUT total (pas du montant restant après les 100 XOF) : fee = 100 +
+     * montant × 2.5%. Reconfirmé le 2026-08-13 sur le "Solde collecté" réel du dashboard
+     * GeniusPay pour une transaction sandbox de 303 FCFA (195 FCFA net, donc 108 FCFA de
+     * frais réels — colle avec cette formule à l'arrondi près, PAS avec la variante
+     * "2.5% sur le reste" adoptée le 2026-08-10 sur la base d'un calcul non revérifié
+     * contre le dashboard réel, qui aurait donné 105,08). Coût de la passerelle, distinct
+     * de la commission plateforme (Services\PlanPricingService::commissionPct). Purement
+     * informatif pour l'instant : ne modifie aucun montant facturé au client ni versé à
+     * l'établissement, sert uniquement à calculer la marge nette réelle de la plateforme
+     * (voir AdminController::overview()).
      */
     public static function paymentFee(float $amount): float
     {
-        return round(100 + max(0, $amount - 100) * 0.025, 2);
+        return round(100 + $amount * 0.025, 2);
     }
 
     /** Frais réels prélevés par GeniusPay sur un retrait (1% du montant) — même logique informative. */

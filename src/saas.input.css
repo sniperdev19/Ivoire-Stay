@@ -202,8 +202,7 @@ a { color: inherit; }
   background: var(--saas-content);
 }
 
-.saas-card,
-.kpi-card {
+.saas-card {
   background: var(--saas-card);
   border-radius: 16px;
   border: 1px solid rgba(0, 0, 0, 0.05);
@@ -218,20 +217,45 @@ a { color: inherit; }
   transform: translateY(-2px);
 }
 
+/* Carte KPI — icône en pastille ronde + grande valeur + libellé, sans
+   bandeau de couleur (même style que les cartes du dashboard, cf.
+   saas-dashboard.css::db-kpi-*, unifié ici pour être réutilisé par
+   Dépenses/Facturation/Chambres/Rapports). */
 .kpi-card {
-  position: relative;
+  background: var(--saas-card);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  padding: 14px;
   overflow: hidden;
-  padding: 20px 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
 }
-.kpi-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--saas-gold), #E8D5A3);
-}
+.kpi-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.kpi-icon { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
+.kpi-icon svg { width: 14px; height: 14px; }
+.kpi-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kpi-value { font-size: 16px; font-weight: 800; color: #111827; line-height: 1.15; }
+.kpi-label { font-size: 11px; color: #6B7280; }
+
+.kpi-icon-gold   { background: rgba(201, 168, 76, 0.14); }
+.kpi-icon-gold svg   { color: var(--saas-gold); }
+.kpi-icon-green  { background: rgba(22, 163, 74, 0.12); }
+.kpi-icon-green svg  { color: #16A34A; }
+.kpi-icon-blue   { background: rgba(37, 99, 235, 0.1); }
+.kpi-icon-blue svg   { color: #2563EB; }
+.kpi-icon-amber  { background: rgba(217, 119, 6, 0.12); }
+.kpi-icon-amber svg  { color: #D97706; }
+.kpi-icon-red    { background: rgba(220, 38, 38, 0.1); }
+.kpi-icon-red svg    { color: #DC2626; }
+.kpi-icon-purple { background: rgba(124, 58, 237, 0.1); }
+.kpi-icon-purple svg { color: #7C3AED; }
+.kpi-icon-gray   { background: #F1F0F6; }
+.kpi-icon-gray svg   { color: #4B5563; }
+
+.kpi-progress { height: 5px; background: #F1F0F6; border-radius: 5px; overflow: hidden; }
+.kpi-progress-bar { height: 100%; border-radius: 5px; transition: width 1s ease; }
 
 .btn-saas-primary,
 .btn-saas-secondary,

@@ -150,35 +150,24 @@ class Booking extends BaseModel
         $basePrice    = (float) $rt['base_price'];
         $weekendPrice = (float) ($rt['weekend_price'] ?? 0);
 
-        // Réservation manuelle "weekend" : le forfait week-end (override staff),
-        // au même tarif forfaitaire que la détection automatique ci-dessous.
-        if ($bookingType === 'weekend') {
-            return $weekendPrice ?: ($nights * $basePrice);
-        }
-
-        // Nuit standard : le tarif week-end est un FORFAIT pour un bloc complet
-        // vendredi+samedi+dimanche (pas un prix par nuit) — un week-end incomplet
-        // (arrivée un samedi par ex.) reste au tarif de base. Cohérent avec
-        // l'estimation client (booking.js / saas-bookings.js).
+        // Pas de tarif week-end distinct configuré : prix de base pour toutes les nuits.
         if (!$weekendPrice || $weekendPrice === $basePrice) {
             return $nights * $basePrice;
         }
 
-        $dows = [];
-        $day  = new \DateTime($checkIn);
-        for ($i = 0; $i < $nights; $i++) {
-            $dows[] = (int) $day->format('w'); // 0 = dimanche … 6 = samedi
-            $day->modify('+1 day');
-        }
-
+        // Prix week-end par nuit (réforme 2026-08-18) : chaque nuit tombant un
+        // vendredi, samedi ou dimanche est facturée au tarif week-end, les
+        // autres au tarif de base — nuit isolée comprise (ex. arrivée samedi,
+        // départ lundi = 2 nuits au tarif week-end), plus besoin d'un bloc
+        // complet des 3 jours. Même formule pour "nuit" et "weekend" (le type
+        // "weekend" n'a plus de calcul dédié, la détection par jour suffit).
+        // Cohérent avec l'estimation client (booking.js, tunnel public).
         $total = 0.0;
-        for ($i = 0; $i < count($dows); $i++) {
-            if (($dows[$i] ?? null) === 5 && ($dows[$i + 1] ?? null) === 6 && ($dows[$i + 2] ?? null) === 0) {
-                $total += $weekendPrice;
-                $i += 2; // bloc vendredi-samedi-dimanche déjà compté
-            } else {
-                $total += $basePrice;
-            }
+        $day   = new \DateTime($checkIn);
+        for ($i = 0; $i < $nights; $i++) {
+            $dow = (int) $day->format('w'); // 0 = dimanche … 6 = samedi
+            $total += in_array($dow, [5, 6, 0], true) ? $weekendPrice : $basePrice;
+            $day->modify('+1 day');
         }
         return $total;
     }
