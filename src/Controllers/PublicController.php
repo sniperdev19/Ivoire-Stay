@@ -12,12 +12,18 @@ class PublicController
        (protège contre un flag resté à 1 après un downgrade de plan) */
     private const BOOST_SQL = "(e.is_boosted = 1 AND e.plan = 'business' AND (e.plan_expires_at IS NULL OR e.plan_expires_at >= NOW()))";
 
+    /* Ordre secondaire parmi les établissements boostés : rotation pseudo-aléatoire
+       stable sur une journée (rejouée pareil à chaque requête du même jour, pour ne
+       pas faire bouger l'ordre à chaque rafraîchissement), qui change le lendemain.
+       0 pour les non-boostés, pour ne pas modifier leur tri existant. */
+    private const BOOST_ROTATION_SQL = "IF(" . self::BOOST_SQL . ", MOD(e.id + TO_DAYS(CURDATE()), 997), 0)";
+
     public function establishments(Request $req, array $params = []): void
     {
         $type = $req->get('type');
         $city = $req->get('city');
 
-        $where  = ['e.is_active = 1', 'e.frozen_at IS NULL'];
+        $where  = ['e.is_active = 1', 'e.frozen_at IS NULL', 'e.banned_at IS NULL'];
         $params = [];
 
         if ($type) { $where[] = 'e.type = ?'; $params[] = $type; }
@@ -38,7 +44,7 @@ class PublicController
              LEFT JOIN room_types rt ON rt.establishment_id = e.id
              WHERE " . implode(' AND ', $where) . "
              GROUP BY e.id
-             ORDER BY is_boosted_effective DESC, e.name",
+             ORDER BY is_boosted_effective DESC, " . self::BOOST_ROTATION_SQL . ", e.name",
             $params
         )->fetchAll();
 
@@ -61,7 +67,7 @@ class PublicController
         $guests   = (int) $req->get('guests', 1);
         $type     = $req->get('type');
 
-        $where  = ['e.is_active = 1', 'e.frozen_at IS NULL'];
+        $where  = ['e.is_active = 1', 'e.frozen_at IS NULL', 'e.banned_at IS NULL'];
         $qParams = [];
 
         if ($city) { $where[] = '(e.city LIKE ? OR e.address LIKE ?)'; $qParams[] = "%$city%"; $qParams[] = "%$city%"; }
@@ -83,7 +89,7 @@ class PublicController
              WHERE " . implode(' AND ', $where) . "
                AND (rt.capacity IS NULL OR rt.capacity >= ?)
              GROUP BY e.id
-             ORDER BY is_boosted_effective DESC, min_price ASC",
+             ORDER BY is_boosted_effective DESC, " . self::BOOST_ROTATION_SQL . ", min_price ASC",
             array_merge($qParams, [$guests])
         )->fetchAll();
 
@@ -111,7 +117,7 @@ class PublicController
     {
         $id    = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
         $estab = Establishment::withStats($id);
-        if (!$estab || !$estab['is_active'] || $estab['frozen_at']) Response::notFound('Établissement introuvable');
+        if (!$estab || !$estab['is_active'] || $estab['frozen_at'] || $estab['banned_at']) Response::notFound('Établissement introuvable');
         $estab['photos'] = Establishment::photos($id);
 
         $rooms = Room::allWithDetails($id);
@@ -195,7 +201,7 @@ class PublicController
              FROM rooms r
              JOIN room_types rt ON rt.id = r.room_type_id
              JOIN establishments e ON e.id = r.establishment_id
-             WHERE r.id = ? AND e.is_active = 1 AND e.frozen_at IS NULL",
+             WHERE r.id = ? AND e.is_active = 1 AND e.frozen_at IS NULL AND e.banned_at IS NULL",
             [$roomId]
         )->fetch();
         if (!$room) Response::notFound('Chambre introuvable');
@@ -315,7 +321,7 @@ class PublicController
              FROM rooms r
              JOIN room_types rt ON rt.id = r.room_type_id
              JOIN establishments e ON e.id = r.establishment_id
-             WHERE r.id = ? AND e.is_active = 1 AND e.frozen_at IS NULL",
+             WHERE r.id = ? AND e.is_active = 1 AND e.frozen_at IS NULL AND e.banned_at IS NULL",
             [$id]
         )->fetch();
 
@@ -356,7 +362,7 @@ class PublicController
     {
         $results = Database::query(
             "SELECT TRIM(SUBSTRING_INDEX(city, ',', -1)) AS city, COUNT(*) as count
-             FROM establishments WHERE is_active = 1 AND frozen_at IS NULL
+             FROM establishments WHERE is_active = 1 AND frozen_at IS NULL AND banned_at IS NULL
              GROUP BY TRIM(SUBSTRING_INDEX(city, ',', -1))
              ORDER BY count DESC"
         )->fetchAll();
@@ -407,6 +413,48 @@ class PublicController
             exit;
         }
         Response::error('Impossible de générer le document', 500);
+    }
+
+    /**
+     * Annulation par le voyageur lui-même, depuis "Mes réservations" (vitrine) —
+     * même preuve de propriété (guest_token) que bookingShow/bookingPdf. Restreinte
+     * aux réservations pas encore en cours/terminées : passé le check-in, seule
+     * l'équipe de l'établissement peut agir (cf. BookingController::checkOut).
+     */
+    public function bookingCancel(Request $req, array $params = []): void
+    {
+        $ip  = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $key = 'public-booking-cancel:' . $ip;
+        if (RateLimiter::tooManyAttempts($key, 10, 3600)) {
+            Response::error('Trop de tentatives. Réessayez plus tard.', 429);
+        }
+        RateLimiter::hit($key, 3600);
+
+        $id    = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+        $data  = $req->all();
+        $token = (string) ($data['token'] ?? $req->get('token', ''));
+        if (!$token) Response::error('Jeton requis', 403);
+
+        $booking = $this->verifyGuestBooking($id, $token);
+
+        if (in_array($booking['status'], ['cancelled', 'checked_in', 'checked_out'], true)) {
+            Response::error('Cette réservation ne peut plus être annulée (statut actuel : ' . $booking['status'] . ').', 409);
+        }
+
+        Booking::update($id, ['status' => 'cancelled']);
+        \Models\Invoice::cancelForBooking($id);
+
+        $estabId = (int) Database::query(
+            "SELECT establishment_id FROM rooms WHERE id = ?",
+            [$booking['room_id']]
+        )->fetchColumn();
+
+        $details = Booking::findWithDetails($id);
+        NotificationService::bookingCancelled($estabId, $details['client_name'] ?? 'Client', $details['room_number'] ?? '?', $id);
+        if (!empty($details['client_email'])) MailService::bookingCancelledGuest($details);
+
+        unset($details['guest_token']);
+        Response::success($details, 'Réservation annulée');
     }
 
     /**

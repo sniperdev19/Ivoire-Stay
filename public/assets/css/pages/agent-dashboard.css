@@ -83,6 +83,7 @@ body {
 }
 
 .ag-container { max-width: 960px; margin: 0 auto; padding: 24px 20px 40px; }
+.ag-container--with-navbar { padding-bottom: 130px; }
 
 /* ── Formulaires (profil) ── */
 .ag-card {
@@ -115,80 +116,6 @@ body {
 .ag-form-msg.ok  { background: rgba(45,106,79,0.12); color: var(--mid); }
 .ag-form-msg.err { background: rgba(200,60,60,0.1); color: #a33; }
 
-/* ── Hero (carte QR) ── */
-.ag-hero {
-  position: relative;
-  overflow: hidden;
-  text-align: center;
-  border-radius: 22px;
-  padding: 30px 20px 24px;
-  margin-bottom: 20px;
-  background:
-    radial-gradient(circle at 18% 20%, rgba(255,255,255,0.10), transparent 42%),
-    radial-gradient(circle at 88% 78%, rgba(201,168,76,0.22), transparent 46%),
-    linear-gradient(160deg, var(--forest) 0%, var(--mid) 100%);
-}
-.ag-hero::before {
-  content: '';
-  position: absolute; inset: 0;
-  background-image: radial-gradient(rgba(255,255,255,0.14) 1px, transparent 1px);
-  background-size: 16px 16px;
-  mask-image: radial-gradient(circle at 50% 30%, black, transparent 75%);
-  pointer-events: none;
-}
-.ag-hero::after {
-  content: '';
-  position: absolute; inset: 0; pointer-events: none;
-  background-image:
-    radial-gradient(3px 3px at 16% 62%, rgba(154,230,180,0.9), transparent 60%),
-    radial-gradient(3px 3px at 82% 24%, rgba(255,255,255,0.75), transparent 60%),
-    radial-gradient(4px 4px at 90% 60%, rgba(201,168,76,0.85), transparent 60%);
-}
-.ag-hero-qr {
-  position: relative; z-index: 1;
-  display: inline-flex; flex-direction: column; align-items: center;
-  background: white;
-  color: var(--forest);
-  border: none;
-  border-radius: 20px;
-  padding: 26px 46px 20px;
-  margin-bottom: 28px;
-  cursor: pointer;
-  box-shadow: 0 14px 30px rgba(0,0,0,0.22);
-}
-.ag-hero-qr-icon {
-  width: 60px; height: 60px; border-radius: 16px;
-  background: linear-gradient(155deg, rgba(201,168,76,0.20), rgba(201,168,76,0.08));
-  border: 1px solid rgba(201,168,76,0.28);
-  color: var(--gold-dark);
-  display: flex; align-items: center; justify-content: center;
-}
-.ag-hero-qr-icon svg { width: 30px; height: 30px; }
-.ag-hero-qr-pill {
-  position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 50%);
-  display: inline-flex; align-items: center; gap: 6px;
-  background: var(--forest); color: white;
-  border-radius: 999px; padding: 9px 20px;
-  font-size: 11px; font-weight: 800; letter-spacing: 0.06em;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
-  white-space: nowrap;
-}
-.ag-hero-qr-pill svg { width: 14px; height: 14px; }
-.ag-hero-qr-hint {
-  position: absolute; bottom: 0; right: -6px; transform: translateY(50%);
-  width: 30px; height: 30px; border-radius: 50%;
-  background: var(--gold); color: var(--forest);
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-.ag-hero-qr-hint svg { width: 14px; height: 14px; }
-.ag-hero-caption {
-  position: relative; z-index: 1;
-  font-size: 12.5px; font-weight: 500; line-height: 1.5;
-  color: rgba(255,255,255,0.88);
-  max-width: 270px; margin: 0 auto;
-}
-
 /* ── Grille d'accès rapide (façon Wave) ── */
 .ag-quick-grid { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 28px; }
 .ag-quick-item {
@@ -206,6 +133,7 @@ body {
 .ag-quick-icon-c { background: rgba(37,99,235,0.12); color: var(--biz); }
 .ag-quick-icon-d { background: rgba(180,83,9,0.12); color: var(--warn); }
 .ag-quick-icon-e { background: rgba(219,39,119,0.12); color: #DB2777; }
+.ag-quick-icon-f { background: rgba(37,99,235,0.12); color: var(--biz); }
 .ag-quick-label { font-size: 11px; font-weight: 600; color: var(--forest); text-align: center; }
 
 .ag-progress-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
@@ -357,3 +285,105 @@ body {
 .ag-scan-feedback { font-size: 13px; margin-top: 10px; padding: 10px; border-radius: 8px; }
 .ag-scan-feedback.ok { background: rgba(45,106,79,0.12); color: var(--mid); }
 .ag-scan-feedback.err { background: rgba(200,60,60,0.1); color: #a33; }
+
+/* ── Prospects (agent/prospects.php) ── */
+.ag-tabs { display: flex; gap: 6px; background: rgba(27,67,50,0.06); border-radius: 12px; padding: 4px; margin-bottom: 16px; }
+.ag-tab {
+  flex: 1; border: none; background: none; cursor: pointer; font-family: inherit;
+  font-size: 13px; font-weight: 600; color: rgba(27,67,50,0.55);
+  padding: 9px 10px; border-radius: 9px;
+}
+.ag-tab.is-active { background: white; color: var(--forest); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+
+.ag-filter-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 14px; }
+.ag-filter-chip {
+  flex-shrink: 0; border: 1px solid rgba(27,67,50,0.15); background: white; cursor: pointer;
+  font-family: inherit; font-size: 12px; font-weight: 600; color: rgba(27,67,50,0.6);
+  padding: 7px 13px; border-radius: 99px; white-space: nowrap;
+}
+.ag-filter-chip.is-active { background: var(--forest); border-color: var(--forest); color: white; }
+
+.ag-prospect-list { display: flex; flex-direction: column; gap: 10px; }
+.ag-prospect-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: white; border-radius: 14px; border: 1px solid rgba(27,67,50,0.08);
+  padding: 14px 16px;
+}
+.ag-prospect-main { flex: 1; min-width: 0; cursor: pointer; }
+.ag-prospect-name { font-size: 13.5px; font-weight: 700; }
+.ag-prospect-phone { font-size: 12px; color: rgba(27,67,50,0.6); margin-top: 2px; }
+.ag-prospect-date { font-size: 10.5px; color: rgba(27,67,50,0.4); margin-top: 4px; }
+.ag-prospect-side { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.ag-status-select {
+  font-family: inherit; font-size: 11px; font-weight: 700; border: none; border-radius: 99px;
+  padding: 6px 10px; cursor: pointer; appearance: none; -webkit-appearance: none;
+}
+.ag-badge-a-contacter, .ag-status-select.ag-badge-a-contacter { background: rgba(138,138,120,0.15); color: #6B6B58; }
+.ag-badge-contacte, .ag-status-select.ag-badge-contacte { background: rgba(37,99,235,0.12); color: var(--biz); }
+.ag-badge-interesse, .ag-status-select.ag-badge-interesse { background: rgba(180,83,9,0.12); color: var(--warn); }
+.ag-badge-inscrit, .ag-status-select.ag-badge-inscrit { background: rgba(45,106,79,0.15); color: var(--mid); }
+.ag-badge-perdu, .ag-status-select.ag-badge-perdu { background: rgba(200,60,60,0.1); color: #a33; }
+
+.ag-icon-danger {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+  background: rgba(200,60,60,0.08); color: #a33; border: none; cursor: pointer;
+}
+.ag-icon-danger svg { width: 15px; height: 15px; }
+
+.ag-map-wrap { height: 360px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(27,67,50,0.08); }
+.ag-map-legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 12px; }
+.ag-map-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: rgba(27,67,50,0.65); }
+.ag-map-legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+.ag-geo-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ag-geo-status { font-size: 12px; font-weight: 600; color: rgba(27,67,50,0.5); }
+.ag-geo-status.ok { color: var(--mid); }
+.ag-geo-status.err { color: #a33; }
+
+.ag-btn-danger { background: #C0392B; color: white; }
+
+.ag-fab {
+  position: fixed; bottom: 108px; right: 24px; z-index: 40;
+  width: 54px; height: 54px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--gold); color: var(--forest);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.3);
+}
+.ag-fab svg { width: 24px; height: 24px; }
+@media (min-width: 560px) { .ag-fab { right: calc(50% - 240px + 24px); } }
+
+/* ── Barre de navigation basse (toutes les pages agent) — 8 destinations +
+   bouton Scanner surélevé au centre : icônes/libellés resserrés pour tenir
+   sur la largeur du shell mobile (480px). ── */
+.ag-bottomnav {
+  position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
+  width: calc(100% - 20px); max-width: 468px; z-index: 45;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  background: var(--forest); border-radius: 24px;
+  padding: 8px 4px 9px;
+  box-shadow: 0 16px 32px rgba(0,0,0,0.3);
+}
+.ag-bn-item {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  text-decoration: none; background: none; border: none; font-family: inherit; cursor: pointer;
+  color: rgba(255,255,255,0.5); padding: 3px 1px;
+}
+.ag-bn-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+.ag-bn-item span { font-size: 8px; font-weight: 600; line-height: 1.1; text-align: center; }
+.ag-bn-item.is-active { color: var(--gold); }
+
+.ag-bn-scan-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.ag-bn-scan {
+  width: 46px; height: 46px; border-radius: 50%; border: 4px solid var(--cream);
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: var(--forest);
+  display: flex; align-items: center; justify-content: center;
+  margin-top: -26px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+  cursor: pointer; text-decoration: none;
+}
+.ag-bn-scan svg { width: 20px; height: 20px; }
+.ag-bn-scan-label { font-size: 8px; font-weight: 700; color: white; margin-top: 3px; }
+@media (min-width: 560px) { .ag-bottomnav { left: auto; transform: none; right: calc(50% - 240px + 10px); } }

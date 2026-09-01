@@ -35,7 +35,10 @@
                 <div style="display:flex;align-items:center;gap:10px;">
                   <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#6366F1,#4338CA);display:grid;place-items:center;color:white;font-size:12px;font-weight:700;flex-shrink:0;" x-text="initials(o.name)"></div>
                   <div>
-                    <div style="font-weight:600;color:#111827;" x-text="o.name"></div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                      <span style="font-weight:600;color:#111827;" x-text="o.name"></span>
+                      <span x-show="o.suspended_at" class="admin-status-pill admin-status-inactive">Suspendu</span>
+                    </div>
                     <div x-show="!o.email_verified_at" style="font-size:11px;color:#D97706;font-weight:600;">Email non vérifié</div>
                   </div>
                 </div>
@@ -76,11 +79,22 @@
           </div>
           <div class="modal-list-item" x-show="selected?.phone"><span>Téléphone</span><strong x-text="selected?.phone"></strong></div>
           <div class="modal-list-item"><span>Inscrit le</span><strong x-text="formatDate(selected?.created_at)"></strong></div>
+          <div class="modal-list-item"><span>Statut du compte</span>
+            <strong :style="selected?.suspended_at ? 'color:#DC2626;' : 'color:#16A34A;'" x-text="selected?.suspended_at ? 'Suspendu' : 'Actif'"></strong>
+          </div>
         </div>
 
         <div style="display:flex;gap:8px;margin-bottom:16px;">
           <a class="btn-saas-secondary" style="flex:1;text-align:center;text-decoration:none;" :href="'mailto:' + selected?.email">Envoyer un email</a>
           <a x-show="selected?.phone" class="btn-saas-secondary" style="flex:1;text-align:center;text-decoration:none;" :href="'tel:' + selected?.phone">Appeler</a>
+        </div>
+
+        <div style="display:flex;margin-bottom:16px;">
+          <button type="button" class="btn-saas-danger" style="flex:1;font-size:13px;"
+                  :class="selected?.suspended_at ? 'action-btn-success' : ''"
+                  @click="toggleSuspend(selected)" :disabled="suspendingId === selected?.id">
+            <span x-text="selected?.suspended_at ? 'Réactiver ce compte' : 'Suspendre ce compte'"></span>
+          </button>
         </div>
 
         <h3 style="font-size:13px;font-weight:700;color:#111827;margin:0 0 10px;">

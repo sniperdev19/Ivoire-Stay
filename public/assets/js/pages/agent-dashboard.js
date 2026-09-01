@@ -13,9 +13,7 @@ function agentDashboardPage(baseUrl) {
     progress: { pro: { count: 0, target: 5, reward: 0 }, business: { count: 0, target: 5, reward: 0 } },
     bonuses: {},
 
-    activeView: 'home', // home | establishments | history | ranking (barre de navigation basse)
-    ranking: [],
-    rankingLoaded: false,
+    activeView: 'home', // home | establishments | history | bonuses (barre de navigation basse)
 
     showScanner:  false,
     cameraError:  false,
@@ -35,6 +33,21 @@ function agentDashboardPage(baseUrl) {
       const cached = localStorage.getItem('agent');
       if (cached) { try { this.agent = JSON.parse(cached); } catch (_) {} }
       this.load();
+
+      // Arrivée depuis la nav basse d'une autre page (profil/prospects) : ouvre
+      // directement la bonne vue ou le scanner, puis nettoie l'URL pour qu'un
+      // rechargement ne redéclenche pas la caméra.
+      const params = new URLSearchParams(window.location.search);
+      const view = params.get('view');
+      if (view && ['home', 'establishments', 'history', 'bonuses'].includes(view)) {
+        this.setView(view);
+      }
+      if (params.get('scan') === '1') {
+        this.openScanner();
+      }
+      if (view || params.has('scan')) {
+        window.history.replaceState({}, '', baseUrl + '/agent/dashboard');
+      }
     },
 
     get initials() {
@@ -56,7 +69,6 @@ function agentDashboardPage(baseUrl) {
 
     setView(view) {
       this.activeView = view;
-      if (view === 'ranking' && !this.rankingLoaded) this.loadRanking();
     },
 
     // Historique = fusion des 3 flux (rattachements, versements, primes gagnées),
@@ -98,17 +110,6 @@ function agentDashboardPage(baseUrl) {
       ];
 
       return items.sort((a, b) => new Date(String(b.date).replace(' ', 'T')) - new Date(String(a.date).replace(' ', 'T')));
-    },
-
-    async loadRanking() {
-      try {
-        const res = await fetch(baseUrl + '/api/agent/ranking', { headers: this.authHeaders() });
-        const data = await res.json();
-        if (data.success) {
-          this.ranking = data.data.ranking;
-          this.rankingLoaded = true;
-        }
-      } catch (_) { /* réseau indisponible — on retentera à la prochaine ouverture de l'onglet */ }
     },
 
     authHeaders() {

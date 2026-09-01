@@ -68,21 +68,6 @@ class AgentReferral extends BaseModel
         );
     }
 
-    /** Classement nominatif (top N) sur une période — utilisé par la vue "Classement" du dashboard agent. */
-    public static function rankingWithNames(string $from, string $to, int $limit): array
-    {
-        return Database::query(
-            "SELECT ar.agent_id, a.nom, COUNT(*) as cnt
-             FROM agent_referrals ar
-             JOIN agents a ON a.id = ar.agent_id
-             WHERE ar.created_at >= ? AND ar.created_at < ?
-             GROUP BY ar.agent_id, a.nom
-             ORDER BY cnt DESC
-             LIMIT " . (int) $limit,
-            [$from, $to]
-        )->fetchAll();
-    }
-
     public static function forAgent(int $agentId): array
     {
         return Database::query(

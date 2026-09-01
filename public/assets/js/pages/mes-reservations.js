@@ -16,6 +16,10 @@ function myBookingsPage(apiBase) {
     searching: false,
     searchError: null,
 
+    cancelConfirmId: null,
+    cancelling: false,
+    cancelError: null,
+
     async init() {
       await this.loadLocalHistory();
       this.showSearchForm = this.bookings.length === 0;
@@ -86,6 +90,42 @@ function myBookingsPage(apiBase) {
 
     pdfUrl(b) {
       return `${this.apiBase}/api/public/booking/${b.id}/pdf?token=${encodeURIComponent(b.guest_token)}`;
+    },
+
+    canCancel(b) {
+      return ['pending', 'confirmed'].includes(b.status);
+    },
+
+    askCancel(id) {
+      this.cancelConfirmId = id;
+      this.cancelError = null;
+    },
+
+    /* Le voyageur annule lui-même sa réservation (statut pending/confirmed
+       uniquement — au-delà, seule l'équipe de l'établissement peut agir).
+       Preuve d'identité : le guest_token déjà connu de cet appareil. */
+    async confirmCancel(b) {
+      this.cancelling = true;
+      this.cancelError = null;
+      try {
+        const res = await fetch(`${this.apiBase}/api/public/booking/${b.id}/cancel`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: b.guest_token }),
+        });
+        const data = await res.json();
+        if (!data.success) {
+          this.cancelError = data.message || "Impossible d'annuler cette réservation.";
+          return;
+        }
+        const idx = this.bookings.findIndex((x) => x.id === b.id);
+        if (idx >= 0) this.bookings[idx] = { ...this.bookings[idx], ...data.data, guest_token: b.guest_token };
+        this.cancelConfirmId = null;
+      } catch (e) {
+        this.cancelError = 'Erreur réseau. Vérifiez votre connexion et réessayez.';
+      } finally {
+        this.cancelling = false;
+      }
     },
 
     statusLabel(status) {

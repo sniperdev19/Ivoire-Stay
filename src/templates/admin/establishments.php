@@ -114,12 +114,17 @@
                 <span class="admin-status-pill" :class="e.is_active ? 'admin-status-active' : 'admin-status-inactive'">
                   <span x-text="e.is_active ? 'Actif' : 'Désactivé'"></span>
                 </span>
+                <span x-show="e.banned_at" class="admin-status-pill admin-status-inactive" style="margin-left:4px;">Banni</span>
               </td>
               <td style="color:#9CA3AF;font-size:13px;" x-text="formatDate(e.created_at)"></td>
               <td style="text-align:right;">
                 <button type="button" class="btn-saas-secondary" :class="e.is_active ? '' : 'action-btn-success'"
                   @click="toggleActive(e)" :disabled="savingId === e.id">
                   <span x-text="e.is_active ? 'Désactiver' : 'Réactiver'"></span>
+                </button>
+                <button type="button" class="btn-saas-secondary" :class="e.banned_at ? 'action-btn-success' : ''" style="margin-left:6px;"
+                  @click="toggleBan(e)" :disabled="savingId === e.id">
+                  <span x-text="e.banned_at ? 'Débannir' : 'Bannir'"></span>
                 </button>
               </td>
             </tr>

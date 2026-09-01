@@ -33,6 +33,10 @@
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         <span>Réglages plateforme</span>
       </button>
+      <button @click="activeTab='notifications'" :class="activeTab==='notifications' ? 'stg-side-item-active' : ''" class="stg-side-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span>Notifications</span>
+      </button>
       <button @click="activeTab='backups'" :class="activeTab==='backups' ? 'stg-side-item-active' : ''" class="stg-side-item">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
         <span>Sauvegarde</span>
@@ -89,7 +93,7 @@
         </div>
       </div>
 
-      <div class="stg-panels" style="grid-template-columns:1fr;">
+      <div class="stg-panels" style="grid-template-columns:1fr;margin-bottom:16px;">
         <div class="stg-panel stg-panel-security">
           <div class="stg-panel-icon">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -97,6 +101,83 @@
           <div class="stg-panel-title">Sécurité</div>
           <div class="stg-panel-desc">Modifiez votre mot de passe pour sécuriser l'accès à votre compte.</div>
           <button class="btn-saas-secondary" @click="openPasswordModal()">Changer le mot de passe</button>
+        </div>
+      </div>
+
+      <!-- Appareils connectés (sessions actives + historique de connexion) -->
+      <div class="saas-card" style="padding:18px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <div>
+            <div class="stg-panel-title" style="margin-bottom:2px;">Appareils connectés</div>
+            <p class="stg-payment-toggle-desc">Sessions actives et historique de connexion sur votre compte.</p>
+          </div>
+          <button type="button" class="btn-saas-secondary" style="font-size:12px;" x-show="activeSessionsCount > 1"
+                  @click="revokeOtherSessions()" :disabled="sessionsActionLoading">
+            Déconnecter les autres appareils
+          </button>
+        </div>
+
+        <div style="margin-top:14px;">
+          <template x-for="s in sessions" :key="s.id">
+            <div class="stg-session-row">
+              <div class="stg-session-info">
+                <div class="stg-session-device">
+                  <span x-text="s.device_label || 'Appareil inconnu'"></span>
+                  <span class="badge badge-gold"    x-show="s.is_current"              style="margin-left:6px;">Cet appareil</span>
+                  <span class="badge badge-success" x-show="s.is_active && !s.is_current" style="margin-left:6px;">Active</span>
+                  <span class="badge stg-badge-muted" x-show="!s.is_active"            style="margin-left:6px;">Expirée</span>
+                </div>
+                <div class="stg-session-meta">
+                  <span x-text="formatDate(s.created_at)"></span>
+                  <span x-show="s.ip_address">&nbsp;·&nbsp;<span x-text="s.ip_address"></span></span>
+                </div>
+              </div>
+              <button type="button" class="btn-saas-secondary" style="font-size:12px;" x-show="s.is_active && !s.is_current"
+                      @click="revokeSession(s.id)" :disabled="sessionsActionLoading">
+                Déconnecter
+              </button>
+            </div>
+          </template>
+          <p x-show="!sessionsLoading && sessions.length===0" style="font-size:13px;color:#9CA3AF;">Aucune connexion enregistrée.</p>
+        </div>
+      </div>
+
+      <!-- Connexion par empreinte digitale (WebAuthn/passkey) — facultatif, en plus du mot de passe -->
+      <div class="saas-card" style="padding:18px;margin-top:14px;" x-show="biometricSupported">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <div>
+            <div class="stg-panel-title" style="margin-bottom:2px;">Connexion par empreinte digitale</div>
+            <p class="stg-payment-toggle-desc">
+              Ajoutez un raccourci de connexion plus rapide (empreinte, Face ID, Windows Hello selon votre appareil) — le mot de passe reste toujours disponible, cette option ne le remplace jamais.
+            </p>
+            <p class="stg-payment-toggle-desc" x-show="biometricError" style="color:#DC2626;" x-text="biometricError"></p>
+          </div>
+          <button type="button" class="btn-saas-secondary" style="font-size:12px;flex-shrink:0;"
+                  @click="enrollBiometric()" :disabled="biometricEnrolling">
+            <span x-show="!biometricEnrolling">Activer sur cet appareil</span>
+            <span x-show="biometricEnrolling">Activation…</span>
+          </button>
+        </div>
+
+        <div style="margin-top:14px;">
+          <template x-for="c in biometricCredentials" :key="c.id">
+            <div class="stg-session-row">
+              <div class="stg-session-info">
+                <div class="stg-session-device">
+                  <span x-text="c.device_label || 'Appareil inconnu'"></span>
+                </div>
+                <div class="stg-session-meta">
+                  <span>Activée le </span><span x-text="formatDate(c.created_at)"></span>
+                  <span x-show="c.last_used_at">&nbsp;·&nbsp;dernière utilisation <span x-text="formatDate(c.last_used_at)"></span></span>
+                </div>
+              </div>
+              <button type="button" class="btn-saas-secondary" style="font-size:12px;"
+                      @click="revokeBiometric(c.id)" :disabled="biometricActionLoading">
+                Désactiver
+              </button>
+            </div>
+          </template>
+          <p x-show="!biometricLoading && biometricCredentials.length===0" style="font-size:13px;color:#9CA3AF;">Aucune empreinte activée sur vos appareils.</p>
         </div>
       </div>
     </div>
@@ -284,6 +365,57 @@
             <span x-show="!settingsSaving">Enregistrer les réglages</span>
             <span x-show="settingsSaving">Enregistrement…</span>
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         ONGLET : Notifications
+         ════════════════════════════════════════════════════════ -->
+    <div x-show="activeTab==='notifications'">
+      <div class="saas-card" style="padding:24px;">
+
+        <!-- Notifications push (hors application) -->
+        <div class="stg-payment-toggle" style="margin-bottom:20px;">
+          <div class="stg-payment-toggle-info">
+            <div class="stg-payment-toggle-title">Notifications hors application</div>
+            <p class="stg-payment-toggle-desc" x-show="!pushUnsupported">
+              Recevez une alerte sur cet appareil (nouvel établissement, demande de retrait…) même quand Afristay n'est pas ouvert.
+            </p>
+            <p class="stg-payment-toggle-desc" x-show="pushUnsupported" style="color:#DC2626;">
+              Votre navigateur ne supporte pas les notifications push.
+            </p>
+            <p class="stg-payment-toggle-desc" x-show="pushError" style="color:#DC2626;" x-text="pushError"></p>
+          </div>
+          <button type="button" class="stg-switch" :class="pushEnabled ? 'stg-switch-on' : ''"
+                  @click="togglePush()" :disabled="pushUnsupported || pushLoading"
+                  :aria-pressed="pushEnabled ? 'true' : 'false'" aria-label="Activer ou désactiver les notifications">
+            <span class="stg-switch-dot"></span>
+          </button>
+        </div>
+
+        <p class="stg-payment-toggle-desc" style="margin-bottom:20px;">
+          Un email est également envoyé à votre adresse pour ces mêmes événements, que le push soit activé ou non.
+        </p>
+
+        <!-- Types de notification -->
+        <div class="stg-payment-toggle" style="flex-direction:column;align-items:stretch;">
+          <div class="stg-payment-toggle-info" style="margin-bottom:12px;">
+            <div class="stg-payment-toggle-title">Types de notification</div>
+            <p class="stg-payment-toggle-desc">Désactivez les notifications (in-app, push et email) que vous ne souhaitez pas recevoir.</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <template x-for="item in notifTypeList" :key="item.type">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid rgba(0,0,0,0.05);">
+                <span style="font-size:13px;color:#374151;" x-text="item.label"></span>
+                <button type="button" class="stg-switch" :class="!isNotifMuted(item.type) ? 'stg-switch-on' : ''"
+                        @click="toggleNotifType(item.type)" :disabled="notifPrefsSaving"
+                        :aria-pressed="!isNotifMuted(item.type) ? 'true' : 'false'" :aria-label="'Activer ou désactiver : ' + item.label">
+                  <span class="stg-switch-dot"></span>
+                </button>
+              </div>
+            </template>
+          </div>
         </div>
       </div>
     </div>

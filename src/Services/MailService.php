@@ -435,6 +435,22 @@ HTML;
     }
 
     // =========================================================================
+    // 4d. ALERTE SUPERADMIN — événements plateforme (nouvel établissement, retrait…)
+    // =========================================================================
+    public static function superadminAlert(string $to, string $name, string $title, string $message): void
+    {
+        if (!$to) return;
+        $dashUrl = rtrim(APP_URL, '/') . '/admin';
+
+        $content = "<h1 style='margin:0 0 8px;font-family:Georgia,serif;font-size:24px;font-weight:400;color:#1B4332;'>"
+            . htmlspecialchars($title) . "</h1>"
+            . "<p style='margin:0 0 24px;font-size:14px;color:#374151;line-height:1.7;'>" . htmlspecialchars($message) . "</p>"
+            . self::btn($dashUrl, "Voir dans l'admin →");
+
+        self::send($to, $name ?: 'Admin', $title . ' — Afristay Admin', self::layout($content, $title));
+    }
+
+    // =========================================================================
     // 5. ENVOI DE FACTURE
     // =========================================================================
     public static function sendContact(array $data): void

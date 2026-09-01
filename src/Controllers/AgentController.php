@@ -3,7 +3,7 @@
 namespace Controllers;
 
 use Core\{Request, Response, RateLimiter};
-use Models\{Agent, AgentEstablishment, AgentReferral, AgentPayout, AgentBonusAward, Establishment};
+use Models\{Agent, AgentEstablishment, AgentReferral, AgentPayout, AgentBonusAward, AgentProspect, Establishment};
 use Services\{AuthService, CommissionService};
 
 /**
@@ -275,22 +275,131 @@ class AgentController
         ]);
     }
 
-    /** GET /api/agent/ranking — classement nominatif du mois en cours (vue "Classement" du dashboard). */
-    public function ranking(Request $req, array $params = []): void
+    /** GET /api/agent/prospects — carte + liste personnelle de prospection de l'agent connecté. */
+    public function prospects(Request $req, array $params = []): void
+    {
+        $this->guardEnabled();
+
+        $agentId = (int) ($_REQUEST['_user']['agent_id'] ?? 0);
+        Response::success(AgentProspect::forAgent($agentId));
+    }
+
+    /** POST /api/agent/prospects — enregistre un établissement démarché, pas encore inscrit sur la plateforme. */
+    public function createProspect(Request $req, array $params = []): void
     {
         $this->guardEnabled();
 
         $agentId = (int) ($_REQUEST['_user']['agent_id'] ?? 0);
 
-        $thisMonthStart = (new \DateTime('first day of this month'))->format('Y-m-d');
-        $nextMonthStart = (new \DateTime('first day of next month'))->format('Y-m-d');
-        $ranking = AgentReferral::rankingWithNames($thisMonthStart, $nextMonthStart, 10);
+        $name  = trim((string) $req->input('establishment_name', ''));
+        $phone = preg_replace('/\D/', '', (string) $req->input('phone', ''));
+        if (str_starts_with($phone, '225')) $phone = substr($phone, 3);
+        $notes = trim((string) $req->input('notes', ''));
 
-        Response::success([
-            'ranking'      => $ranking,
-            'my_agent_id'  => $agentId,
-            'reward'       => CommissionService::monthlyTopAmount(),
-        ]);
+        if ($name === '') Response::error('Le nom de l\'établissement est requis');
+        if (mb_strlen($name) > 150) Response::error('Nom trop long (150 caractères max)');
+        if (!$this->isValidCiPhone($phone)) {
+            Response::error('Numéro invalide : 10 chiffres commençant par 01, 05 ou 07');
+        }
+
+        $data = [
+            'agent_id'           => $agentId,
+            'establishment_name' => $name,
+            'phone'              => $phone,
+            'notes'              => $notes !== '' ? $notes : null,
+            'latitude'           => null,
+            'longitude'          => null,
+        ];
+
+        [$lat, $lng] = $this->parseLatLng($req);
+        $data['latitude']  = $lat;
+        $data['longitude'] = $lng;
+
+        $id = AgentProspect::create($data);
+
+        Response::success(AgentProspect::find($id), 'Prospect enregistré', 201);
+    }
+
+    /** PUT /api/agent/prospects/{id} — édition des infos et/ou changement de statut. */
+    public function updateProspect(Request $req, array $params = []): void
+    {
+        $this->guardEnabled();
+
+        $agentId  = (int) ($_REQUEST['_user']['agent_id'] ?? 0);
+        $id       = (int) ($params['id'] ?? 0);
+        $prospect = AgentProspect::findForAgent($id, $agentId);
+        if (!$prospect) Response::notFound('Prospect introuvable');
+
+        $input = $req->all();
+        $data  = [];
+
+        if (array_key_exists('establishment_name', $input)) {
+            $name = trim((string) $req->input('establishment_name', ''));
+            if ($name === '') Response::error('Le nom de l\'établissement est requis');
+            if (mb_strlen($name) > 150) Response::error('Nom trop long (150 caractères max)');
+            $data['establishment_name'] = $name;
+        }
+
+        if (array_key_exists('phone', $input)) {
+            $phone = preg_replace('/\D/', '', (string) $req->input('phone', ''));
+            if (str_starts_with($phone, '225')) $phone = substr($phone, 3);
+            if (!$this->isValidCiPhone($phone)) {
+                Response::error('Numéro invalide : 10 chiffres commençant par 01, 05 ou 07');
+            }
+            $data['phone'] = $phone;
+        }
+
+        if (array_key_exists('notes', $input)) {
+            $notes = trim((string) $req->input('notes', ''));
+            $data['notes'] = $notes !== '' ? $notes : null;
+        }
+
+        if (array_key_exists('status', $input)) {
+            $status = (string) $req->input('status', '');
+            if (!in_array($status, AgentProspect::STATUSES, true)) {
+                Response::error('Statut invalide');
+            }
+            $data['status'] = $status;
+        }
+
+        if (array_key_exists('latitude', $input) || array_key_exists('longitude', $input)) {
+            [$lat, $lng] = $this->parseLatLng($req);
+            $data['latitude']  = $lat;
+            $data['longitude'] = $lng;
+        }
+
+        if (!empty($data)) AgentProspect::update($id, $data);
+
+        Response::success(AgentProspect::find($id), 'Prospect mis à jour');
+    }
+
+    /** DELETE /api/agent/prospects/{id} */
+    public function deleteProspect(Request $req, array $params = []): void
+    {
+        $this->guardEnabled();
+
+        $agentId  = (int) ($_REQUEST['_user']['agent_id'] ?? 0);
+        $id       = (int) ($params['id'] ?? 0);
+        $prospect = AgentProspect::findForAgent($id, $agentId);
+        if (!$prospect) Response::notFound('Prospect introuvable');
+
+        AgentProspect::delete($id);
+
+        Response::success(null, 'Prospect supprimé');
+    }
+
+    /** Latitude/longitude optionnelles (géolocalisation navigateur) — bornées, sinon NULL plutôt qu'une erreur bloquante. */
+    private function parseLatLng(Request $req): array
+    {
+        $lat = $req->input('latitude');
+        $lng = $req->input('longitude');
+        if ($lat === null || $lat === '' || $lng === null || $lng === '') return [null, null];
+
+        $lat = (float) $lat;
+        $lng = (float) $lng;
+        if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) return [null, null];
+
+        return [$lat, $lng];
     }
 
     /** Progression vers le prochain lot de 5 pour un plan — forfait effectif (Core\Settings). */

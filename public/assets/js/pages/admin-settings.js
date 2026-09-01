@@ -1,9 +1,15 @@
 /* ============================================================
    Afristay — Admin plateforme : Paramètres (src/templates/admin/settings.php)
-   Trois sections : Mon profil (comptes /api/auth/*, mêmes endpoints que
-   saas-settings.js), Réglages plateforme (/api/admin/settings) et Sauvegarde
-   de la base de données (reprend l'ancien admin-backups.js).
+   Quatre sections : Mon profil (comptes /api/auth/*, mêmes endpoints que
+   saas-settings.js — sessions actives + empreinte incluses), Réglages
+   plateforme (/api/admin/settings), Notifications et Sauvegarde de la base
+   de données (reprend l'ancien admin-backups.js).
    ============================================================ */
+
+/* Même flag que public/assets/js/pages/saas-settings.js et login.js — à
+   modifier en même temps qu'eux pour réactiver la fonctionnalité (code
+   backend intact, désactivé le 2026-08-11 à la demande de l'utilisateur). */
+const BIOMETRIC_LOGIN_ENABLED = false;
 
 function adminSettingsPage(baseUrl) {
   return {
@@ -13,7 +19,246 @@ function adminSettingsPage(baseUrl) {
 
     async init() {
       this.profileForm = { name: this.currentUser.name || '', phone: this.currentUser.phone || '' };
+      this.initPush();       // indépendant du reste, ne bloque pas le chargement
+      this.loadNotifPrefs(); // idem
+      this.loadSessions();
+      this.loadBiometricCredentials();
       await Promise.all([this.loadBackups(), this.loadPlatformSettings()]);
+    },
+
+    // ── Appareils connectés (sessions actives + historique) — même infra que saas-settings.js ──
+    sessions: [],
+    sessionsLoading: false,
+    sessionsActionLoading: false,
+    get activeSessionsCount() { return this.sessions.filter(s => s.is_active).length; },
+
+    async loadSessions() {
+      this.sessionsLoading = true;
+      try {
+        const res  = await fetch(baseUrl + '/api/auth/sessions', { headers: this.apiHeaders() });
+        const data = await res.json();
+        if (data.success) this.sessions = data.data ?? [];
+      } catch (e) { /* liste vide si hors-ligne */ }
+      finally { this.sessionsLoading = false; }
+    },
+
+    async revokeSession(id) {
+      this.sessionsActionLoading = true;
+      try {
+        const res  = await fetch(baseUrl + '/api/auth/sessions/' + id + '/revoke', { method: 'POST', headers: this.apiHeaders() });
+        const data = await res.json();
+        if (data.success) {
+          this.showToast('Appareil déconnecté.', 'success');
+          await this.loadSessions();
+        }
+      } catch (e) {
+        this.showToast('Erreur réseau.', 'error');
+      } finally {
+        this.sessionsActionLoading = false;
+      }
+    },
+
+    async revokeOtherSessions() {
+      this.sessionsActionLoading = true;
+      try {
+        const res  = await fetch(baseUrl + '/api/auth/sessions/revoke-others', { method: 'POST', headers: this.apiHeaders() });
+        const data = await res.json();
+        if (data.success) {
+          this.showToast(data.message || 'Appareils déconnectés.', 'success');
+          await this.loadSessions();
+        }
+      } catch (e) {
+        this.showToast('Erreur réseau.', 'error');
+      } finally {
+        this.sessionsActionLoading = false;
+      }
+    },
+
+    // ── Connexion par empreinte digitale (WebAuthn/passkey) — facultative, même infra que saas-settings.js ──
+    biometricSupported: BIOMETRIC_LOGIN_ENABLED && !!(window.AfristayPWA && window.AfristayPWA.webauthnSupported()),
+    biometricCredentials: [],
+    biometricLoading: false,
+    biometricEnrolling: false,
+    biometricActionLoading: false,
+    biometricError: null,
+
+    async loadBiometricCredentials() {
+      if (!this.biometricSupported) return;
+      this.biometricLoading = true;
+      try {
+        const res  = await fetch(baseUrl + '/api/auth/webauthn/login-credential', { headers: this.apiHeaders() });
+        const data = await res.json();
+        if (data.success) this.biometricCredentials = data.data ?? [];
+      } catch (e) { /* liste vide si hors-ligne */ }
+      finally { this.biometricLoading = false; }
+    },
+
+    async enrollBiometric() {
+      if (this.biometricEnrolling) return;
+      this.biometricError = null;
+      this.biometricEnrolling = true;
+      try {
+        const optRes  = await fetch(baseUrl + '/api/auth/webauthn/login-credential/register-options', {
+          method: 'POST', headers: this.apiHeaders(),
+        });
+        const optData = await optRes.json();
+        const { state, publicKey } = optData?.data ?? {};
+        if (!optData.success || !state || !publicKey) {
+          this.biometricError = optData.message || "Impossible de démarrer l'activation.";
+          return;
+        }
+
+        const publicKeyOptions = {
+          ...publicKey,
+          challenge: window.AfristayPWA.b64urlToBuffer(publicKey.challenge),
+          user: { ...publicKey.user, id: window.AfristayPWA.b64urlToBuffer(publicKey.user.id) },
+          excludeCredentials: (publicKey.excludeCredentials || []).map(c => ({ ...c, id: window.AfristayPWA.b64urlToBuffer(c.id) })),
+        };
+
+        const credential = await navigator.credentials.create({ publicKey: publicKeyOptions });
+        if (!credential) { this.biometricError = 'Cérémonie annulée.'; return; }
+
+        const credentialJson = {
+          id: credential.id,
+          rawId: window.AfristayPWA.bufferToB64url(credential.rawId),
+          type: credential.type,
+          response: {
+            clientDataJSON: window.AfristayPWA.bufferToB64url(credential.response.clientDataJSON),
+            attestationObject: window.AfristayPWA.bufferToB64url(credential.response.attestationObject),
+            transports: credential.response.getTransports ? credential.response.getTransports() : [],
+          },
+        };
+
+        const verifyRes  = await fetch(baseUrl + '/api/auth/webauthn/login-credential/register-verify', {
+          method: 'POST', headers: this.apiHeaders(),
+          body: JSON.stringify({ state, credential: credentialJson }),
+        });
+        const verifyData = await verifyRes.json();
+        if (verifyData.success) {
+          this.showToast('Empreinte activée sur cet appareil.', 'success');
+          await this.loadBiometricCredentials();
+        } else {
+          this.biometricError = verifyData.message || "Échec de l'activation.";
+        }
+      } catch (e) {
+        this.biometricError = e?.name === 'NotAllowedError' ? null : "Impossible d'activer l'empreinte sur cet appareil.";
+      } finally {
+        this.biometricEnrolling = false;
+      }
+    },
+
+    async revokeBiometric(id) {
+      this.biometricActionLoading = true;
+      try {
+        const res  = await fetch(baseUrl + '/api/auth/webauthn/login-credential/' + id, { method: 'DELETE', headers: this.apiHeaders() });
+        const data = await res.json();
+        if (data.success) {
+          this.showToast('Empreinte désactivée.', 'success');
+          await this.loadBiometricCredentials();
+        }
+      } catch (e) {
+        this.showToast('Erreur réseau.', 'error');
+      } finally {
+        this.biometricActionLoading = false;
+      }
+    },
+
+    /* formatDate local : 'Aucune' pour null, mois en toutes lettres — même
+       override que saas-settings.js (remplace saasHelpers.formatDate, plus
+       court, pour les sessions/empreintes). */
+    formatDate(d) {
+      if (!d) return 'Aucune';
+      return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    },
+
+    // ── Notifications push (hors application) — même infra que saas-settings.js ──
+    pushEnabled: false,
+    pushUnsupported: false,
+    pushLoading: false,
+    pushError: null,
+
+    async initPush() {
+      this.pushUnsupported = !(window.AfristayPWA && window.AfristayPWA.pushSupported());
+      if (this.pushUnsupported) return;
+      try {
+        const sub = await window.AfristayPWA.syncPushSubscription(baseUrl, localStorage.getItem('token'));
+        this.pushEnabled = !!sub;
+      } catch (e) { /* laisse pushEnabled à false */ }
+    },
+
+    async togglePush() {
+      if (this.pushUnsupported || this.pushLoading) return;
+      this.pushLoading = true; this.pushError = null;
+      const token = localStorage.getItem('token');
+      try {
+        if (this.pushEnabled) {
+          await window.AfristayPWA.disablePush(baseUrl, token);
+          this.pushEnabled = false;
+          this.showToast('Notifications désactivées.', 'success');
+        } else {
+          const ok = await window.AfristayPWA.enablePush(baseUrl, token);
+          if (ok) {
+            this.pushEnabled = true;
+            this.showToast('Notifications activées.', 'success');
+          } else {
+            this.pushError = "Autorisation refusée ou indisponible. Vérifiez les réglages de notifications de votre navigateur pour ce site.";
+          }
+        }
+      } catch (e) {
+        this.pushError = 'Erreur lors de la mise à jour.';
+      } finally {
+        this.pushLoading = false;
+      }
+    },
+
+    // ── Préférences de notification (types désactivables, alertes superadmin uniquement) ──
+    notifTypeLabels: {
+      new_establishment:      'Nouvel établissement inscrit',
+      payout_requested:       'Demande de retrait',
+      subscription_activated: 'Abonnement activé',
+    },
+    notifMutedTypes: [],
+    notifPrefsLoading: false,
+    notifPrefsSaving: false,
+
+    get notifTypeList() {
+      return Object.entries(this.notifTypeLabels).map(([type, label]) => ({ type, label }));
+    },
+
+    async loadNotifPrefs() {
+      this.notifPrefsLoading = true;
+      try {
+        const res  = await fetch(baseUrl + '/api/notifications/preferences', { headers: this.apiHeaders() });
+        const data = await res.json();
+        if (data.success) this.notifMutedTypes = data.data?.muted_types ?? [];
+      } catch (e) { /* laisse la liste vide — tout reste activé par défaut */ }
+      finally { this.notifPrefsLoading = false; }
+    },
+
+    isNotifMuted(type) { return this.notifMutedTypes.includes(type); },
+
+    async toggleNotifType(type) {
+      if (this.notifPrefsSaving) return;
+      const next = this.isNotifMuted(type)
+        ? this.notifMutedTypes.filter(t => t !== type)
+        : [...this.notifMutedTypes, type];
+
+      const previous = this.notifMutedTypes;
+      this.notifMutedTypes = next; // optimiste
+      this.notifPrefsSaving = true;
+      try {
+        const res  = await fetch(baseUrl + '/api/notifications/preferences', {
+          method: 'PUT',
+          headers: this.apiHeaders(),
+          body: JSON.stringify({ muted_types: next }),
+        });
+        const data = await res.json();
+        if (!data.success) this.notifMutedTypes = previous; // repli si échec serveur
+      } catch (e) {
+        this.notifMutedTypes = previous;
+      } finally {
+        this.notifPrefsSaving = false;
+      }
     },
 
     // ── Mon profil ──────────────────────────────────────────────────────────

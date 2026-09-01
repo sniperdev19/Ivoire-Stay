@@ -22,7 +22,7 @@ class User extends BaseModel
     public static function allOwners(): array
     {
         return Database::query(
-            "SELECT u.id, u.name, u.email, u.phone, u.created_at, u.email_verified_at,
+            "SELECT u.id, u.name, u.email, u.phone, u.created_at, u.email_verified_at, u.suspended_at,
                     COUNT(e.id) as establishment_count
              FROM users u
              LEFT JOIN establishments e ON e.owner_id = u.id

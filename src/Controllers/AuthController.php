@@ -86,6 +86,12 @@ class AuthController
 
         RateLimiter::clear($key);
 
+        // Suspension manuelle par le superadmin (AdminController::suspendOwner) —
+        // distincte du gel d'établissement, bloque la connexion elle-même.
+        if (!empty($user['suspended_at'])) {
+            Response::error('Ce compte a été suspendu. Contactez le support.', 403);
+        }
+
         $token = AuthService::encode([
             'id'               => $user['id'],
             'role'             => $user['role'],
