@@ -87,6 +87,7 @@ CREATE TABLE `establishments` (
   `plan_expires_at` datetime DEFAULT NULL,
   `frozen_at` datetime DEFAULT NULL COMMENT 'Date d’entrée en phase A du gel (NULL = non gelé)',
   `frozen_hard_at` datetime DEFAULT NULL COMMENT 'Échéance du passage en phase B (gel total)',
+  `banned_at` datetime DEFAULT NULL COMMENT 'Bannissement manuel par le superadmin (NULL = non banni) — distinct du gel automatique frozen_at/frozen_hard_at, jamais touché par EstablishmentFreezeService',
   `is_boosted` tinyint(1) NOT NULL DEFAULT '0',
   `online_payment_enabled` tinyint(1) NOT NULL DEFAULT '1',
   `check_in_time` time NOT NULL DEFAULT '14:00:00',
@@ -329,6 +330,7 @@ CREATE TABLE `users` (
   `phone` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `avatar_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `notification_muted_types` text COLLATE utf8mb4_unicode_ci COMMENT 'JSON array des types de notification désactivés par l’utilisateur',
+  `suspended_at` datetime DEFAULT NULL COMMENT 'Suspension manuelle par le superadmin (NULL = actif) — bloque la connexion, voir AuthController::login()',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
@@ -640,6 +642,31 @@ CREATE TABLE `agent_bonus_awards` (
   KEY `payout_id` (`payout_id`),
   CONSTRAINT `agent_bonus_awards_ibfk_1` FOREIGN KEY (`agent_id`) REFERENCES `agents` (`id`) ON DELETE CASCADE,
   CONSTRAINT `agent_bonus_awards_ibfk_2` FOREIGN KEY (`payout_id`) REFERENCES `agent_payouts` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Un prospect est un établissement démarché par l'agent, PAS ENCORE inscrit
+-- sur la plateforme (pas de establishment_id : juste un nom + un numéro
+-- saisis sur le terrain). Géolocalisé via navigator.geolocation au moment de
+-- la saisie pour la carte personnelle de prospection de l'agent. Statut suivi
+-- manuellement ; le passage à 'inscrit' est déclaratif, sans lien automatique
+-- avec agent_establishments (qui reste la seule source du rattachement réel
+-- via scan QR) — cf. scripts/migration_agent_prospects.sql.
+DROP TABLE IF EXISTS `agent_prospects`;
+CREATE TABLE `agent_prospects` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `agent_id` int NOT NULL,
+  `establishment_name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `phone` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `latitude` decimal(10,7) DEFAULT NULL,
+  `longitude` decimal(10,7) DEFAULT NULL,
+  `status` enum('a_contacter','contacte','interesse','inscrit','perdu') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'a_contacter',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `agent_id` (`agent_id`),
+  KEY `status` (`status`),
+  CONSTRAINT `agent_prospects_ibfk_1` FOREIGN KEY (`agent_id`) REFERENCES `agents` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Automatisation "par code" des tâches quotidiennes (rappels arrivée/départ,

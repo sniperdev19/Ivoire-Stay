@@ -16,9 +16,38 @@ function adminOwnersPage(baseUrl) {
     selected: null,
     ownerEstablishments: [],
     establishmentsLoading: false,
+    suspendingId: null,
 
     async init() {
       await this.loadOwners();
+    },
+
+    /** Suspend/réactive la connexion du propriétaire (AuthController::login()) —
+        révoque aussi ses sessions actives côté serveur (AdminController::suspendOwner). */
+    async toggleSuspend(owner) {
+      const suspending = !owner.suspended_at;
+      const label = suspending ? 'suspendre' : 'réactiver';
+      if (!confirm(`Confirmer : ${label} le compte de « ${owner.name} » ?`)) return;
+
+      this.suspendingId = owner.id;
+      try {
+        const action = suspending ? 'suspend' : 'unsuspend';
+        const res  = await fetch(baseUrl + '/api/admin/owners/' + owner.id + '/' + action, {
+          method: 'POST', headers: this.apiHeaders(),
+        });
+        const data = await res.json();
+        if (data.success) {
+          owner.suspended_at = suspending ? new Date().toISOString() : null;
+          if (this.selected && this.selected.id === owner.id) this.selected.suspended_at = owner.suspended_at;
+          this.showToast(suspending ? 'Propriétaire suspendu.' : 'Propriétaire réactivé.', 'success');
+        } else {
+          this.showToast(data.message ?? 'Erreur.', 'error');
+        }
+      } catch (e) {
+        this.showToast('Erreur réseau.', 'error');
+      } finally {
+        this.suspendingId = null;
+      }
     },
 
     async loadOwners() {

@@ -42,6 +42,12 @@ $currentPage = $page ?? 'dashboard';
   <meta name="theme-color" content="#1e1b4b">
   <link rel="icon" href="<?= $base ?>/assets/icons/icon-192.png" type="image/png">
 
+  <!-- Manifest partagé avec l'espace hôtelier (scope racine) : uniquement pour que
+       pwa.js déduise la bonne base et enregistre/réutilise le même service worker
+       racine — condition pour que les notifications push fonctionnent ici aussi. -->
+  <link rel="manifest" href="<?= $base ?>/manifest.webmanifest">
+  <script src="<?= $base ?>/assets/js/pwa.js"></script>
+
   <link rel="stylesheet" href="<?= $base ?>/assets/css/fonts.css">
 
   <?php $saasCssPath = BASE_PATH . '/public/assets/css/saas.css'; ?>

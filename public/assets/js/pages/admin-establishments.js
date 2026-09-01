@@ -150,6 +150,35 @@ function adminEstablishmentsPage(baseUrl) {
       }
     },
 
+    /** Bannit/débannit manuellement un établissement (AdminController::banEstablishment) —
+        distinct du toggle Actif/Désactivé (is_active, modifiable par le owner lui-même) :
+        masque de la vitrine et bloque les nouvelles réservations (PublicController,
+        BookingController::store), réservé au superadmin. */
+    async toggleBan(estab) {
+      const banning = !estab.banned_at;
+      const label   = banning ? 'bannir' : 'débannir';
+      if (!confirm(`Confirmer : ${label} « ${estab.name} » ?`)) return;
+
+      this.savingId = estab.id;
+      try {
+        const action = banning ? 'ban' : 'unban';
+        const res  = await fetch(baseUrl + '/api/admin/establishments/' + estab.id + '/' + action, {
+          method: 'POST', headers: this.apiHeaders(),
+        });
+        const data = await res.json();
+        if (data.success) {
+          estab.banned_at = banning ? new Date().toISOString() : null;
+          this.showToast(banning ? 'Établissement banni.' : 'Établissement débanni.', 'success');
+        } else {
+          this.showToast(data.message ?? 'Erreur.', 'error');
+        }
+      } catch (e) {
+        this.showToast('Erreur réseau.', 'error');
+      } finally {
+        this.savingId = null;
+      }
+    },
+
     async changePlan(estab, newPlan) {
       const previous = estab.plan;
       if (newPlan === previous) return;

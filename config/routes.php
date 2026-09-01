@@ -32,6 +32,7 @@ $router->get('/agent/register',  'PageController@agentRegister');
 $router->get('/agent/login',     'PageController@agentLogin');
 $router->get('/agent/dashboard', 'PageController@agentDashboard');
 $router->get('/agent/profile',   'PageController@agentProfile');
+$router->get('/agent/prospects', 'PageController@agentProspects');
 
 // ─── Pages HTML (Admin plateforme) — réservées au superadmin, garde de rôle côté JS ──
 $router->get('/admin',                'AdminPageController@dashboard');
@@ -92,10 +93,13 @@ $router->post('/api/agent/register', 'AgentController@register');
 $router->post('/api/agent/login',    'AgentController@login');
 $router->post('/api/agent/logout',   'AgentController@logout', ['auth', 'role:agent']);
 $router->get('/api/agent/me',        'AgentController@me',     ['auth', 'role:agent']);
-$router->get('/api/agent/ranking',   'AgentController@ranking', ['auth', 'role:agent']);
 $router->post('/api/agent/scan',     'AgentController@scanQr', ['auth', 'role:agent']);
 $router->put('/api/agent/profile',          'AgentController@updateProfile',  ['auth', 'role:agent']);
 $router->post('/api/agent/change-password', 'AgentController@changePassword', ['auth', 'role:agent']);
+$router->get('/api/agent/prospects',        'AgentController@prospects',      ['auth', 'role:agent']);
+$router->post('/api/agent/prospects',       'AgentController@createProspect', ['auth', 'role:agent']);
+$router->put('/api/agent/prospects/{id}',   'AgentController@updateProspect', ['auth', 'role:agent']);
+$router->delete('/api/agent/prospects/{id}', 'AgentController@deleteProspect', ['auth', 'role:agent']);
 
 // ─── API Establishments ───────────────────────────────────────────────────────
 $router->get('/api/establishments',       'EstablishController@index',   ['auth']);
@@ -200,6 +204,10 @@ $router->get('/api/admin/establishments-analytics', 'AdminController@establishme
 $router->get('/api/admin/settings', 'AdminSettingsController@index',  ['auth', 'role:superadmin']);
 $router->put('/api/admin/settings', 'AdminSettingsController@update', ['auth', 'role:superadmin']);
 $router->post('/api/admin/notifications/broadcast', 'AdminController@broadcastNotification', ['auth', 'role:superadmin']);
+$router->post('/api/admin/owners/{id}/suspend',          'AdminController@suspendOwner',        ['auth', 'role:superadmin']);
+$router->post('/api/admin/owners/{id}/unsuspend',        'AdminController@unsuspendOwner',      ['auth', 'role:superadmin']);
+$router->post('/api/admin/establishments/{id}/ban',      'AdminController@banEstablishment',    ['auth', 'role:superadmin']);
+$router->post('/api/admin/establishments/{id}/unban',    'AdminController@unbanEstablishment',  ['auth', 'role:superadmin']);
 
 // ─── API Messages de contact (superadmin uniquement) ───────────────────────────
 $router->get('/api/admin/contact-messages',            'AdminContactController@index',    ['auth', 'role:superadmin']);
@@ -264,6 +272,7 @@ $router->post('/api/public/booking',                        'PublicController@bo
 $router->post('/api/public/booking/find',                   'PublicController@bookingFind');
 $router->get('/api/public/booking/{id}',                    'PublicController@bookingShow');
 $router->get('/api/public/booking/{id}/pdf',                'PublicController@bookingPdf');
+$router->post('/api/public/booking/{id}/cancel',            'PublicController@bookingCancel');
 $router->post('/api/public/booking-payment/initiate',       'BookingPaymentController@initiate');
 $router->post('/api/public/booking-payment/callback',       'BookingPaymentController@callback');
 $router->get('/api/public/booking-payment/verify/{ref}',    'BookingPaymentController@verify');

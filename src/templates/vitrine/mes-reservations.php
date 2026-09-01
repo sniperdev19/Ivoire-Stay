@@ -40,7 +40,22 @@
               <div class="mr-card-item" x-show="b.booking_type === 'passage'"><span>Durée</span><strong x-text="(b.hours || '?') + ' heure(s)'"></strong></div>
               <div class="mr-card-item"><span>Total</span><strong x-text="formatPrice(b.total_amount)"></strong></div>
             </div>
-            <a :href="pdfUrl(b)" class="mr-card-btn">📄 Télécharger le PDF</a>
+            <div class="mr-card-actions">
+              <a :href="pdfUrl(b)" class="mr-card-btn">📄 Télécharger le PDF</a>
+              <button type="button" class="mr-card-btn mr-card-btn-cancel" x-show="canCancel(b) && cancelConfirmId !== b.id" @click="askCancel(b.id)">Annuler la réservation</button>
+            </div>
+
+            <div class="mr-cancel-confirm" x-show="cancelConfirmId === b.id" x-transition>
+              <p class="mr-cancel-confirm-text">Confirmer l'annulation de cette réservation ? Cette action est définitive.</p>
+              <p class="mr-search-error" x-show="cancelError" x-text="cancelError"></p>
+              <div class="mr-card-actions">
+                <button type="button" class="mr-card-btn mr-card-btn-cancel" :disabled="cancelling" @click="confirmCancel(b)">
+                  <span x-show="!cancelling">Oui, annuler</span>
+                  <span x-show="cancelling">Annulation…</span>
+                </button>
+                <button type="button" class="mr-card-btn" :disabled="cancelling" @click="cancelConfirmId = null; cancelError = null">Non, garder</button>
+              </div>
+            </div>
           </div>
         </template>
       </div>

@@ -47,13 +47,13 @@ class Establishment extends BaseModel
     public static function platformStats(): array
     {
         $establishments = (int) Database::query(
-            "SELECT COUNT(*) FROM establishments WHERE is_active = 1 AND frozen_at IS NULL"
+            "SELECT COUNT(*) FROM establishments WHERE is_active = 1 AND frozen_at IS NULL AND banned_at IS NULL"
         )->fetchColumn();
 
         $rooms = (int) Database::query(
             "SELECT COUNT(*) FROM rooms r
              JOIN establishments e ON e.id = r.establishment_id
-             WHERE e.is_active = 1 AND e.frozen_at IS NULL"
+             WHERE e.is_active = 1 AND e.frozen_at IS NULL AND e.banned_at IS NULL"
         )->fetchColumn();
 
         $bookings = (int) Database::query(
@@ -62,7 +62,7 @@ class Establishment extends BaseModel
 
         $cities = (int) Database::query(
             "SELECT COUNT(DISTINCT city) FROM establishments
-             WHERE is_active = 1 AND frozen_at IS NULL AND city IS NOT NULL AND city != ''"
+             WHERE is_active = 1 AND frozen_at IS NULL AND banned_at IS NULL AND city IS NOT NULL AND city != ''"
         )->fetchColumn();
 
         return [

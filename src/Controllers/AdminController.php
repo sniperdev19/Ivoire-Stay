@@ -4,7 +4,7 @@ namespace Controllers;
 
 use Core\{Request, Response, Database};
 use Models\{Establishment, User};
-use Services\{NotificationService, PlanPricingService};
+use Services\{AuthService, NotificationService, PlanPricingService};
 
 /**
  * Vue d'ensemble plateforme réservée au superadmin (propriétaire d'AfriStay).
@@ -244,5 +244,76 @@ class AdminController
         $count = NotificationService::broadcastToOwners($title, $message);
 
         Response::success(['recipients' => $count], "Notification envoyée à {$count} propriétaire(s)");
+    }
+
+    // ─── Suspension de compte owner ─────────────────────────────────────────────
+
+    /**
+     * POST /api/admin/owners/{id}/suspend — bloque la connexion du propriétaire
+     * (AuthController::login()) et révoque immédiatement ses sessions actives
+     * (même mécanisme que AuthController::revokeOtherSessions) : une suspension
+     * doit couper l'accès tout de suite, pas seulement à la prochaine connexion.
+     */
+    public function suspendOwner(Request $req, array $params = []): void
+    {
+        $id    = (int) ($params['id'] ?? 0);
+        $owner = User::find($id);
+        if (!$owner || $owner['role'] !== 'owner') Response::notFound('Propriétaire introuvable');
+
+        User::update($id, ['suspended_at' => date('Y-m-d H:i:s')]);
+
+        $sessions = Database::query(
+            "SELECT jti, expires_at FROM user_sessions WHERE user_id = ? AND revoked_at IS NULL AND expires_at > NOW()",
+            [$id]
+        )->fetchAll();
+        foreach ($sessions as $s) {
+            AuthService::revoke($s['jti'], strtotime($s['expires_at']));
+        }
+
+        Response::success(null, 'Propriétaire suspendu');
+    }
+
+    /** POST /api/admin/owners/{id}/unsuspend */
+    public function unsuspendOwner(Request $req, array $params = []): void
+    {
+        $id    = (int) ($params['id'] ?? 0);
+        $owner = User::find($id);
+        if (!$owner || $owner['role'] !== 'owner') Response::notFound('Propriétaire introuvable');
+
+        User::update($id, ['suspended_at' => null]);
+
+        Response::success(null, 'Propriétaire réactivé');
+    }
+
+    // ─── Bannissement d'établissement ───────────────────────────────────────────
+
+    /**
+     * POST /api/admin/establishments/{id}/ban — masque l'établissement de la
+     * vitrine publique et bloque toute nouvelle réservation (PublicController,
+     * BookingController::store). Distinct du gel automatique lié au plan
+     * d'abonnement (EstablishmentFreezeService, colonnes frozen_at/frozen_hard_at) :
+     * n'écrit jamais dans ces colonnes, pilotées uniquement par ce service.
+     */
+    public function banEstablishment(Request $req, array $params = []): void
+    {
+        $id    = (int) ($params['id'] ?? 0);
+        $estab = Establishment::find($id);
+        if (!$estab) Response::notFound('Établissement introuvable');
+
+        Establishment::update($id, ['banned_at' => date('Y-m-d H:i:s')]);
+
+        Response::success(null, 'Établissement banni');
+    }
+
+    /** POST /api/admin/establishments/{id}/unban */
+    public function unbanEstablishment(Request $req, array $params = []): void
+    {
+        $id    = (int) ($params['id'] ?? 0);
+        $estab = Establishment::find($id);
+        if (!$estab) Response::notFound('Établissement introuvable');
+
+        Establishment::update($id, ['banned_at' => null]);
+
+        Response::success(null, 'Établissement réhabilité');
     }
 }

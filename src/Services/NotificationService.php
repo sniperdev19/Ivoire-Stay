@@ -38,11 +38,19 @@ class NotificationService
         return is_array($muted) && in_array($type, $muted, true);
     }
 
-    /** Notifie tous les superadmins de la plateforme (alertes d'administration globale). */
+    /**
+     * Notifie tous les superadmins de la plateforme (alertes d'administration globale) :
+     * in-app + push (via create()) et email — seul canal qui les atteint quand ils ne sont
+     * pas connectés à l'appli et n'ont pas activé le push navigateur.
+     */
     public static function forSuperadmins(string $type, string $title, string $message = '', array $data = []): void
     {
         foreach (User::where(['role' => 'superadmin']) as $admin) {
-            self::create((int) $admin['id'], $type, $title, $message, $data);
+            $adminId = (int) $admin['id'];
+            self::create($adminId, $type, $title, $message, $data);
+            if (!empty($admin['email']) && !self::isMuted($adminId, $type)) {
+                MailService::superadminAlert($admin['email'], $admin['name'] ?? '', $title, $message);
+            }
         }
     }
 

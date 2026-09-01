@@ -46,6 +46,11 @@ class PageController
         Response::render('agent/profile', ['title' => 'Mon profil agent – Afristay', 'page' => 'profile']);
     }
 
+    public function agentProspects(Request $req, array $params = []): void
+    {
+        Response::render('agent/prospects', ['title' => 'Mes prospects – Afristay', 'page' => 'prospects']);
+    }
+
     public function forgotPassword(Request $req, array $params = []): void
     {
         Response::render('saas/forgot-password', ['title' => 'Mot de passe oublié – Afristay']);

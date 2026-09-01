@@ -3,6 +3,7 @@
 .env.local
 .env.*.local
 *.sql
+memoire.md
 # Données runtime (uploads, sauvegardes DB, sessions) — pas du code
 /storage/
 /public/assets/uploads/*

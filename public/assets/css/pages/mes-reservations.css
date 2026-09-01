@@ -205,6 +205,36 @@
 
 .mr-card-btn:hover { background: #C9A84C; color: #fff; }
 
+.mr-card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.mr-card-actions .mr-card-btn { flex: 1; }
+
+.mr-card-btn-cancel {
+  color: #DC2626;
+  border-color: rgba(220, 38, 38, 0.4);
+}
+
+.mr-card-btn-cancel:hover { background: #DC2626; border-color: #DC2626; color: #fff; }
+.mr-card-btn-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.mr-cancel-confirm {
+  margin-top: 12px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(220, 38, 38, 0.3);
+}
+
+.mr-cancel-confirm-text {
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  color: #6B7280;
+  margin: 0 0 12px;
+}
+
+.mr-cancel-confirm .mr-search-error { margin-bottom: 12px; }
+
 .mr-toggle-search {
   display: block;
   width: 100%;

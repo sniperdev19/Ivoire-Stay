@@ -183,6 +183,126 @@ comme canal (décision produit). `NotificationService::broadcastToOwners()`
 
 ## Journal des évolutions récentes
 
+- **2026-08-26** — Annulation de réservation en libre-service depuis la
+  vitrine (`/mes-reservations`), pour le voyageur sans compte qui veut
+  annuler sans passer par l'établissement.
+  - **Backend** : `PublicController::bookingCancel()` (nouveau),
+    `POST /api/public/booking/{id}/cancel`, body `{token}`. Même preuve de
+    propriété que `bookingShow`/`bookingPdf` (`guest_token`, via
+    `verifyGuestBooking()`). Rate-limité comme les autres endpoints publics
+    mutants (10/h/IP). Refuse si la résa est déjà `cancelled`/`checked_in`/
+    `checked_out` (409) — au-delà du check-in, seule l'équipe de
+    l'établissement peut agir (`BookingController::checkOut`). Même
+    séquence que `BookingController::destroy()` : `status = cancelled`,
+    `Invoice::cancelForBooking()`, `NotificationService::bookingCancelled()`
+    (propriétaire), `MailService::bookingCancelledGuest()` (voyageur).
+  - **Frontend** : `vitrine/mes-reservations.php` + `mes-reservations.js` —
+    bouton "Annuler la réservation" sur chaque carte (visible seulement si
+    statut `pending`/`confirmed`), confirmation inline avant l'appel API,
+    mise à jour de la carte en place (pas de rechargement de page).
+  - Pas de restriction de délai (ex. "pas d'annulation à moins de 24h de
+    l'arrivée") — non demandé, à ajouter si besoin métier futur.
+  - **Validation** : `php -l` + `node --check` sur les fichiers touchés.
+    Logique métier validée en CLI PHP direct (process séparé car
+    `Response::json()` fait `exit()`) : booking jetable créé →
+    mauvais token rejeté (403) → bon token accepté (annule booking +
+    facture + notif propriétaire) → second appel rejeté (409, déjà
+    annulée) → données de test nettoyées. Parcours UI validé en
+    navigateur réel (Playwright, `npx playwright`, Chromium déjà
+    installé) : tunnel de réservation public de bout en bout → carte
+    visible sur `/mes-reservations` → clic "Annuler la réservation" →
+    confirmation inline → badge passe à "Annulée" et le bouton
+    disparaît, sans rechargement de page, aucune erreur console.
+    Piège rencontré : l'appel d'annulation déclenche un envoi SMTP réel
+    (`MailService::bookingCancelledGuest`, credentials Gmail de
+    `.env`) qui peut prendre plusieurs secondes — un `waitForTimeout`
+    trop court dans le script de test faisait croire à un badge non
+    mis à jour ; `page.waitForResponse()` sur l'appel `/cancel` a
+    confirmé que le serveur avait bien traité la requête (juste plus
+    lentement que l'attente fixe).
+
+- **2026-08-19** — Suspension manuelle de compte owner + bannissement manuel
+  d'établissement, depuis `/admin` (lacune « aucune gestion de compte
+  owner/établissement » identifiée dans l'audit des manques de l'espace
+  admin — décision explicite de l'utilisateur de traiter ces deux-là et
+  PAS l'impersonation pour l'instant, plus sensible et normalement
+  adossée à un log d'audit, non traité non plus).
+  - **Schéma** : `scripts/migration_admin_suspension.sql` (appliqué en
+    local) — `users.suspended_at` et `establishments.banned_at`, toutes
+    deux `datetime NULL`. Consolidé dans `scripts/schema.sql`. **Distinct
+    à dessein** de `establishments.is_active` (déjà modifiable par le
+    owner lui-même via `PUT /api/establishments/{id}`, `EstablishController
+    ::update()` — inadapté à un vrai bannissement admin) et de
+    `frozen_at`/`frozen_hard_at` (gel automatique lié au plan
+    d'abonnement, piloté exclusivement par `EstablishmentFreezeService` —
+    `banned_at` n'y touche jamais).
+  - **Suspension owner** (`AdminController::suspendOwner()/unsuspendOwner()`,
+    `POST /api/admin/owners/{id}/suspend|unsuspend`) : bloque la connexion
+    (`AuthController::login()`, check juste après vérification du mot de
+    passe) ET révoque immédiatement les sessions actives déjà ouvertes
+    (même mécanisme que `AuthController::revokeOtherSessions()`,
+    `AuthService::revoke()` → `token_blacklist` + `user_sessions.revoked_at`)
+    — une suspension qui n'aurait pris effet qu'à la prochaine connexion
+    aurait été trop faible pour l'usage prévu (compte compromis/abusif).
+  - **Bannissement établissement** (`banEstablishment()/unbanEstablishment()`,
+    `POST /api/admin/establishments/{id}/ban|unban`) : masque de la vitrine
+    publique (`PublicController` — tous les `WHERE`/vérifs déjà filtrés sur
+    `frozen_at`, `banned_at IS NULL` ajouté en `AND` partout, même pattern)
+    et bloque la création de nouvelle réservation (`BookingController::store()`,
+    message dédié distinct de celui du gel plan). Périmètre volontairement
+    limité à ces deux effets (pas de blocage de la gestion des chambres/
+    réservations existantes comme le hard-freeze — hors périmètre demandé).
+  - **UI** : badge "Suspendu"/"Banni" + bouton dédié dans `/admin/owners`
+    et `/admin/establishments`, à côté du toggle Actif/Désactivé existant
+    (gardé séparé, pas fusionné avec lui pour la raison ci-dessus).
+- **2026-08-19** — Parité sécurité `/admin/settings` avec `/saas/settings` :
+  ajout des cartes **Appareils connectés** (sessions actives + révocation,
+  `/api/auth/sessions*`) et **Connexion par empreinte digitale**
+  (WebAuthn/passkey, `/api/auth/webauthn/login-credential*`) dans l'onglet
+  "Mon profil", en reprenant tel quel le code déjà en place dans
+  `saas-settings.js`/`saas/settings.php` — ces endpoints sont scopés
+  uniquement sur `user_id` (`AuthController::sessions()` etc.), aucune
+  restriction de rôle, donc réutilisables sans adaptation pour un
+  superadmin. Le flag `BIOMETRIC_LOGIN_ENABLED = false` (désactivé
+  plateforme-wide depuis le 2026-08-11, voir `login.js`) est repris à
+  l'identique dans `admin-settings.js` — la carte empreinte reste donc
+  masquée côté admin aussi tant que la fonctionnalité n'est pas
+  réactivée globalement. Décision explicite de l'utilisateur de NE PAS
+  traiter dans la foulée les sous-rôles/permissions granulaires
+  superadmin (support vs finance) — périmètre volontairement exclu, reste
+  une lacune ouverte (voir Journal 2026-08-19 précédent / lacunes espace
+  admin : pas de log d'audit, rôle plat, pas de suspension manuelle
+  d'owner/établissement, pas de remboursement paiement en ligne).
+- **2026-08-19** — Notifications hors application côté admin (superadmin) :
+  jusqu'ici seul le centre de notifications in-app fonctionnait pour eux
+  (push et email inopérants en pratique, voir détails ci-dessous).
+  - **Email** : `NotificationService::forSuperadmins()` envoie désormais un
+    email (`MailService::superadminAlert()`, nouveau template générique
+    titre+message+bouton `/admin`) en plus du in-app/push, pour les 4
+    raccourcis superadmin existants (`newEstablishment`, `payoutRequested`,
+    `subscriptionActivated`, `agentPayoutReady`) — respecte la préférence
+    de mute déjà en place (`isMuted()`), pas de nouveau mécanisme de
+    préférences séparé.
+  - **Push** : `src/templates/admin/layout.php` ne chargeait ni `pwa.js` ni
+    le `<link rel="manifest">` — condition manquante pour que
+    `AfristayPWA` puisse déduire sa base et enregistrer/réutiliser le
+    service worker racine (`public/sw.js`, déjà actif sur toute l'origine
+    via le manifest de l'espace saas). Ajoutés, en réutilisant le manifest
+    racine (`manifest.webmanifest`) plutôt qu'un manifest dédié admin — but
+    unique : permettre `navigator.serviceWorker.ready`, pas
+    l'installabilité PWA de l'espace admin.
+  - **UI** : nouvel onglet "Notifications" dans `/admin/settings`
+    (`src/templates/admin/settings.php`) avec toggle push + liste des
+    types désactivables, réutilisant tel quel le pattern déjà en place
+    côté `saas-settings.js`/`saas/settings.php` (mêmes endpoints
+    `/api/push/*` et `/api/notifications/preferences`, génériques
+    `['auth']` sans restriction de rôle — aucune route/contrôleur/modèle
+    nouveau nécessaire). Logique dupliquée dans
+    `public/assets/js/pages/admin-settings.js` (types limités aux 3
+    événements superadmin mutables : `new_establishment`,
+    `payout_requested`, `subscription_activated` — `agent_payout_ready`
+    n'est pas dans `NotificationController::MUTABLE_TYPES`, donc jamais
+    proposé au mute, ni ici ni côté saas).
 - **2026-08-18** — Réforme du calcul du prix week-end
   (`Booking::calculateAmount()`) : le tarif week-end n'est plus un **forfait
   fixe pour un bloc complet vendredi+samedi+dimanche** mais un **vrai prix

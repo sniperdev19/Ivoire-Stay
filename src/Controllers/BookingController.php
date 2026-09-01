@@ -64,6 +64,9 @@ class BookingController
         // plan effectif (voir EstablishmentFreezeService) — plus d'ajout tant que
         // le owner n'a pas remis son abonnement à niveau.
         $estab = Establishment::find($room['establishment_id']);
+        if (!empty($estab['banned_at'])) {
+            Response::error("Cet établissement a été suspendu par la plateforme, impossible d'ajouter une nouvelle réservation. Contactez le support.", 403);
+        }
         if (PlanGate::isFrozen($estab ?? [])) {
             Response::error("Cet établissement dépasse la limite d'établissements de votre plan actuel, impossible d'ajouter une nouvelle réservation. Mettez à niveau votre abonnement pour le réactiver.", 403);
         }
