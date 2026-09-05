@@ -101,6 +101,14 @@ $router->post('/api/agent/prospects',       'AgentController@createProspect', ['
 $router->put('/api/agent/prospects/{id}',   'AgentController@updateProspect', ['auth', 'role:agent']);
 $router->delete('/api/agent/prospects/{id}', 'AgentController@deleteProspect', ['auth', 'role:agent']);
 
+// Connexion optionnelle par empreinte digitale (WebAuthn/passkey) — équivalent des routes /api/auth/webauthn/* pour un compte agent.
+$router->post('/api/agent/webauthn/login-credential/register-options', 'AgentController@webauthnLoginCredentialRegisterOptions', ['auth', 'role:agent']);
+$router->post('/api/agent/webauthn/login-credential/register-verify',  'AgentController@webauthnLoginCredentialRegisterVerify',  ['auth', 'role:agent']);
+$router->get('/api/agent/webauthn/login-credential',                   'AgentController@webauthnLoginCredentials',               ['auth', 'role:agent']);
+$router->delete('/api/agent/webauthn/login-credential/{id}',           'AgentController@webauthnLoginCredentialRevoke',          ['auth', 'role:agent']);
+$router->post('/api/agent/webauthn/login-options', 'AgentController@webauthnLoginOptions');
+$router->post('/api/agent/webauthn/login-verify',  'AgentController@webauthnLoginVerify');
+
 // ─── API Establishments ───────────────────────────────────────────────────────
 $router->get('/api/establishments',       'EstablishController@index',   ['auth']);
 $router->get('/api/establishment/qr',     'EstablishController@qr',      ['auth', 'role:owner|superadmin']);

@@ -77,6 +77,41 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
       </div>
     </div>
 
+    <div class="ag-section" x-show="biometricSupported">
+      <h2>Connexion par empreinte digitale</h2>
+      <div class="ag-card">
+        <p class="ag-form-hint" style="margin-top:0;">
+          Ajoutez un raccourci de connexion plus rapide (empreinte, Face ID,
+          Windows Hello selon votre appareil) — le mot de passe reste
+          toujours disponible, cette option ne le remplace jamais.
+        </p>
+
+        <template x-if="biometricCredentials.length">
+          <div class="ag-form-group">
+            <template x-for="cred in biometricCredentials" :key="cred.id">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
+                <span x-text="cred.device_label || 'Appareil'"></span>
+                <button type="button" class="ag-btn" style="padding:6px 12px;font-size:12px;"
+                  @click="revokeBiometric(cred.id)" :disabled="biometricActionLoading">Retirer</button>
+              </div>
+            </template>
+          </div>
+        </template>
+
+        <template x-if="biometricError">
+          <div class="ag-form-msg err" x-text="biometricError"></div>
+        </template>
+        <template x-if="biometricOk">
+          <div class="ag-form-msg ok">Empreinte activée sur cet appareil.</div>
+        </template>
+
+        <button type="button" class="ag-btn ag-btn-gold" @click="enrollBiometric()" :disabled="biometricEnrolling" style="margin-top:6px;">
+          <span x-show="!biometricEnrolling">Activer sur cet appareil</span>
+          <span x-show="biometricEnrolling">Activation…</span>
+        </button>
+      </div>
+    </div>
+
     <div class="ag-section">
       <h2>Changer le mot de passe</h2>
       <div class="ag-card">
