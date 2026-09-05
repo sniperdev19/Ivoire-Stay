@@ -721,9 +721,7 @@ function settingsPage(baseUrl, onlinePaymentsEnabled, commissionPct, estabShareP
       }
     } catch (e) {
       // Annulation utilisateur (navigator.credentials.create rejeté) ou appareil sans authentificateur.
-      this.biometricError = e?.name === 'NotAllowedError'
-        ? null
-        : `Impossible d'activer l'empreinte sur cet appareil (${e?.name || 'erreur'}${e?.message ? ' : ' + e.message : ''}).`;
+      this.biometricError = e?.name === 'NotAllowedError' ? null : "Impossible d'activer l'empreinte sur cet appareil.";
     } finally {
       this.biometricEnrolling = false;
     }

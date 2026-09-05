@@ -141,9 +141,7 @@ function adminSettingsPage(baseUrl) {
           this.biometricError = verifyData.message || "Échec de l'activation.";
         }
       } catch (e) {
-        this.biometricError = e?.name === 'NotAllowedError'
-          ? null
-          : `Impossible d'activer l'empreinte sur cet appareil (${e?.name || 'erreur'}${e?.message ? ' : ' + e.message : ''}).`;
+        this.biometricError = e?.name === 'NotAllowedError' ? null : "Impossible d'activer l'empreinte sur cet appareil.";
       } finally {
         this.biometricEnrolling = false;
       }
