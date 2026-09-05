@@ -5,7 +5,7 @@
 /* Désactivé le 2026-08-11 à la demande explicite de l'utilisateur — même
    flag que public/assets/js/pages/login.js, à modifier en même temps que
    lui pour réactiver la fonctionnalité (code backend intact). */
-const BIOMETRIC_LOGIN_ENABLED = false;
+const BIOMETRIC_LOGIN_ENABLED = true;
 
 function settingsPage(baseUrl, onlinePaymentsEnabled, commissionPct, estabSharePct) {
   return {

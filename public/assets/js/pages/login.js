@@ -9,7 +9,7 @@
    que ONLINE_PAYMENTS_ENABLED. Repasser à true pour réactiver le bouton
    secondaire et l'écran verrouillé prioritaire sur /login (voir aussi le
    même flag dans saas-settings.js pour la carte d'activation). */
-const BIOMETRIC_LOGIN_ENABLED = false;
+const BIOMETRIC_LOGIN_ENABLED = true;
 
 function loginPage(baseUrl) {
   return {
