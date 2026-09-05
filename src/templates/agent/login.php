@@ -202,6 +202,17 @@ $base_url = $base_url ?? rtrim(APP_URL, '/');
         </svg>
       </button>
 
+      <!-- Raccourci facultatif : empreinte/Face ID/Windows Hello, en plus du mot de passe ci-dessus (jamais un remplacement) -->
+      <button class="lg-btn lg-btn-secondary" style="margin-top:10px;"
+        type="button" x-show="biometricAvailable" @click="loginWithBiometric()" :disabled="loading || biometricLoading">
+        <div class="lg-spinner" x-show="biometricLoading"></div>
+        <svg x-show="!biometricLoading" xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5c0-2.76 2.24-5 5-5s5 2.24 5 5v1.5m-9-1.5c0-.5.05-1 .15-1.46M17 13v1a5 5 0 01-9.9 1M12 8.5v6M9.5 9.8v6.7M14.5 9.8V15"/>
+        </svg>
+        <span x-show="!biometricLoading">Se connecter avec l'empreinte</span>
+        <span x-show="biometricLoading">Vérification…</span>
+      </button>
+
       <p class="lg-form-footer" style="margin-top:20px;">
         Pas encore agent ?
         <a href="<?= $base_url ?>/agent/register">Créer un compte agent →</a>

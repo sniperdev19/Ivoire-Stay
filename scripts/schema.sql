@@ -669,6 +669,32 @@ CREATE TABLE `agent_prospects` (
   CONSTRAINT `agent_prospects_ibfk_1` FOREIGN KEY (`agent_id`) REFERENCES `agents` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Connexion optionnelle par empreinte digitale / Face ID / Windows Hello pour
+-- un compte agent — équivalent de webauthn_login_credentials (comptes users)
+-- mais table séparée puisqu'un agent n'est pas dans `users` (2026-09-05).
+DROP TABLE IF EXISTS `agent_webauthn_login_credentials`;
+CREATE TABLE `agent_webauthn_login_credentials` (
+  `id`               int NOT NULL AUTO_INCREMENT,
+  `agent_id`         int NOT NULL,
+  `credential_id`    varchar(255) NOT NULL COMMENT 'base64 de l’ID de credential, retrouve l’agent à la connexion',
+  `credential_type`  varchar(20) NOT NULL DEFAULT 'public-key',
+  `transports`       varchar(255) DEFAULT NULL COMMENT 'JSON array',
+  `aaguid`           char(36) NOT NULL,
+  `public_key`       mediumtext NOT NULL COMMENT 'base64 de la clé publique COSE/CBOR',
+  `user_handle`      varchar(255) NOT NULL COMMENT 'base64, généré à l’enrôlement — requis par la cérémonie WebAuthn (assertion)',
+  `counter`          bigint unsigned NOT NULL DEFAULT '0',
+  `device_label`     varchar(150) DEFAULT NULL COMMENT 'même heuristique que user_sessions.device_label',
+  `backup_eligible`  tinyint(1) DEFAULT NULL,
+  `backup_status`    tinyint(1) DEFAULT NULL,
+  `created_at`       datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_used_at`     datetime DEFAULT NULL,
+  `revoked_at`       datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `credential_id` (`credential_id`),
+  KEY `agent_id` (`agent_id`),
+  CONSTRAINT `agent_webauthn_login_credentials_ibfk_1` FOREIGN KEY (`agent_id`) REFERENCES `agents` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Automatisation "par code" des tâches quotidiennes (rappels arrivée/départ,
 -- abonnements expirants) : pas de cron/Task Scheduler externe requis, le
 -- déclenchement se fait depuis Core\Middleware sur toute requête authentifiée

@@ -4,7 +4,7 @@ namespace Controllers;
 
 use Core\{Request, Response, RateLimiter};
 use Models\{Agent, AgentEstablishment, AgentReferral, AgentPayout, AgentBonusAward, AgentProspect, Establishment};
-use Services\{AuthService, CommissionService};
+use Services\{AuthService, CommissionService, AgentWebauthnLoginService};
 
 /**
  * Espace agents commerciaux — fonctionnalité temporaire (cf. AGENTS_ENABLED
@@ -250,6 +250,108 @@ class AgentController
         Agent::update($agentId, ['password_hash' => Agent::hashPassword($new)]);
 
         Response::success(null, 'Mot de passe modifié avec succès.');
+    }
+
+    // ─── Connexion optionnelle par empreinte digitale (WebAuthn/passkey) ───────
+    // Raccourci FACULTATIF en plus du mot de passe, jamais un remplacement ni
+    // une obligation — équivalent de AuthController::webauthnLoginCredential*
+    // pour un compte agent (entité séparée, cf. AgentWebauthnLoginService).
+
+    /** POST /api/agent/webauthn/login-credential/register-options — depuis le profil, agent déjà connecté. */
+    public function webauthnLoginCredentialRegisterOptions(Request $req, array $params = []): void
+    {
+        $this->guardEnabled();
+
+        $agentId = (int) ($_REQUEST['_user']['agent_id'] ?? 0);
+        $agent   = Agent::find($agentId);
+        if (!$agent) Response::unauthorized();
+
+        Response::success(AgentWebauthnLoginService::registrationOptions(
+            $agentId,
+            (string) $agent['numero'],
+            (string) $agent['nom']
+        ));
+    }
+
+    public function webauthnLoginCredentialRegisterVerify(Request $req, array $params = []): void
+    {
+        $this->guardEnabled();
+
+        $agentId = (int) ($_REQUEST['_user']['agent_id'] ?? 0);
+
+        $state      = (string) $req->input('state', '');
+        $credential = $req->input('credential');
+
+        if (!$state || !is_array($credential)) {
+            Response::error('Requête invalide');
+        }
+
+        $ua = substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
+
+        try {
+            $id = AgentWebauthnLoginService::verifyRegistration($state, $credential, $agentId, AuthService::deviceLabel($ua));
+        } catch (\Throwable $e) {
+            error_log('[AgentController] webauthnLoginCredentialRegisterVerify échec — ' . get_class($e) . ' : ' . $e->getMessage());
+            Response::error("Échec de l'enregistrement de l'empreinte", 400);
+        }
+
+        Response::success(['id' => $id], 'Empreinte activée sur cet appareil');
+    }
+
+    public function webauthnLoginCredentials(Request $req, array $params = []): void
+    {
+        $this->guardEnabled();
+
+        $agentId = (int) ($_REQUEST['_user']['agent_id'] ?? 0);
+        Response::success(AgentWebauthnLoginService::listForAgent($agentId));
+    }
+
+    public function webauthnLoginCredentialRevoke(Request $req, array $params = []): void
+    {
+        $this->guardEnabled();
+
+        $agentId = (int) ($_REQUEST['_user']['agent_id'] ?? 0);
+        $id      = (int) ($params['id'] ?? $_GET['_route_id'] ?? 0);
+
+        if (!AgentWebauthnLoginService::revoke($id, $agentId)) {
+            Response::error('Empreinte introuvable', 404);
+        }
+        Response::success(null, 'Empreinte retirée');
+    }
+
+    /** POST /api/agent/webauthn/login-options — public, depuis /agent/login. */
+    public function webauthnLoginOptions(Request $req, array $params = []): void
+    {
+        $this->guardEnabled();
+        Response::success(AgentWebauthnLoginService::loginOptions());
+    }
+
+    /** POST /api/agent/webauthn/login-verify — public, depuis /agent/login. */
+    public function webauthnLoginVerify(Request $req, array $params = []): void
+    {
+        $this->guardEnabled();
+
+        $state      = (string) $req->input('state', '');
+        $credential = $req->input('credential');
+
+        if (!$state || !is_array($credential)) {
+            Response::error('Requête invalide');
+        }
+
+        $agentId = AgentWebauthnLoginService::verifyLogin($state, $credential);
+        if (!$agentId) {
+            Response::error('Échec de la connexion par empreinte', 401);
+        }
+
+        $agent = Agent::find($agentId);
+        if (!$agent) {
+            Response::error('Compte introuvable', 401);
+        }
+
+        Response::success([
+            'token' => $this->issueToken($agent),
+            'agent' => Agent::safe($agent),
+        ], 'Connexion réussie');
     }
 
     /** GET /api/agent/me — tableau de bord de l'agent connecté. */
