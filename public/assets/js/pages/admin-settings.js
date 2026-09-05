@@ -9,7 +9,7 @@
 /* Même flag que public/assets/js/pages/saas-settings.js et login.js — à
    modifier en même temps qu'eux pour réactiver la fonctionnalité (code
    backend intact, désactivé le 2026-08-11 à la demande de l'utilisateur). */
-const BIOMETRIC_LOGIN_ENABLED = false;
+const BIOMETRIC_LOGIN_ENABLED = true;
 
 function adminSettingsPage(baseUrl) {
   return {
